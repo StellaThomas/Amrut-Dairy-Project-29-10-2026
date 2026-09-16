@@ -1,0 +1,297 @@
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+
+import SettingsIcon from "@mui/icons-material/Settings";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import DescriptionIcon from "@mui/icons-material/Description";
+import PostAddIcon from "@mui/icons-material/PostAdd";
+
+export const menuItems = [
+  {
+    title: "Masters",
+    path: "/master",
+    icon: <PostAddIcon />,
+    submenus: [
+      {
+        title: "Customer Master",
+        path: "/customermaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Supplier Master",
+        path: "/suppliermaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+      {
+        title: "Product Master",
+        path: "/productmaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+      {
+        title: "Material Master",
+        path: "materialmaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+      {
+        title: "Account Master",
+        path: "/accountmaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "User Master",
+        path: "/usermaster",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+    ],
+  },
+
+  {
+    title: "Transaction",
+    path: "/transaction",
+    icon: <ReceiptIcon />,
+
+    submenus: [
+      // =====================================================
+      // SALES
+      // =====================================================
+
+     {
+  title: "Sales",
+  path: "/salesentry",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+{
+  title: "Sales Dealer",
+  path: "/salesdealer",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+{
+  title: "Sales Caterers",
+  path: "/salescaterers",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+      // =====================================================
+      // SALES B2B
+      // =====================================================
+
+      // {
+      //   title: "SalesB2B",
+      //   path: "/salesB2B",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
+
+      // =====================================================
+      // PURCHASE
+      // =====================================================
+
+      {
+        title: "Purchase",
+        path: "/Purchase",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // PURCHASE OTHER
+      // =====================================================
+
+      {
+        title: "Purchase Other",
+        path: "/Purchaseother",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // PRODUCTION ENTRY
+      // =====================================================
+
+      {
+        title: "Production Entry",
+        path: "/productionentry",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // DELIVERY CHALLAN
+      // =====================================================
+
+      {
+        title: "Delivery Challan At Godwon",
+        path: "/deliverychallan",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // INWORD AT STORE
+      // =====================================================
+
+      {
+        title: "Inword at store",
+        path: "/inwordatstore",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // PLANNING
+      // =====================================================
+
+      {
+        title: "Planning",
+        path: "/commonpage",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // RECEIPTS
+      // =====================================================
+
+      {
+        title: "Receipts",
+        path: "/receipts",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // PAYMENTS
+      // =====================================================
+
+      {
+        title: "Payments",
+        path: "/payments",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // PACKING ENTRY
+      // =====================================================
+
+      {
+        title: "Packing Entry",
+        path: "/packingEntry",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // DAILY STOCK ENTRY - NEW
+      // =====================================================
+
+      {
+        title: "Daily Stock Entry",
+        path: "/dailystockentry",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // =====================================================
+      // DAILY STOCK ENTRY AT MAIN OFFICE
+      // =====================================================
+
+      {
+        title: "Daily Stock Entry at Main Office",
+        path: "/dailystockentry-main-office",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+       {
+  title: "Denomination Entry",
+  path: "/denominationentry",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+
+    ],
+  },
+
+  {
+    title: "Reports",
+    path: "/commonpage",
+    icon: <DescriptionIcon />,
+    submenus: [
+      {
+        title: "Sales Report",
+        path: "/salesReport ",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Productwise Sales",
+        path: "/productwisesales",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+      {
+        title: "Customerwise Sales",
+        path: "/customerwisesales",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Sales HSN Wise ",
+        path: "/saleshsnwise",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Customerwise monthly sales",
+        path: "/customerwisemonthlysales",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Stock Report",
+        path: "/stockreport",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Account Receivable",
+        path: "/accountreceivable",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Account Payable",
+        path: "/accountpayable",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Purchase Report",
+        path: "/purchasereport",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Purchase HSN Wise ",
+        path: "/purchasehsnwise",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      {
+        title: "Product-Group wise Stock",
+        path: "/product-group-wise-Stock",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+
+      // {
+      //   title: " Production Report",
+      //   path: "/productionReport ",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
+
+      {
+        title: "  Stock Report For Row Material",
+        path: "/stockreportforrowmaterial ",
+        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      },
+    ],
+  },
+
+  {
+    title: "Settings",
+    path: "/setting",
+    icon: <SettingsIcon />,
+    submenus: [],
+  },
+];
