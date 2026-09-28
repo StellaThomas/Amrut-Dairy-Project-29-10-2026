@@ -17,32 +17,32 @@ export const menuItems = [
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
 
-      {
-        title: "Supplier Master",
-        path: "/suppliermaster",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Supplier Master",
+      //   path: "/suppliermaster",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
       {
         title: "Product Master",
         path: "/productmaster",
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
-      {
-        title: "Material Master",
-        path: "materialmaster",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Material Master",
+      //   path: "materialmaster",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
       {
         title: "Account Master",
         path: "/accountmaster",
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
 
-      {
-        title: "User Master",
-        path: "/usermaster",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "User Master",
+      //   path: "/usermaster",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
     ],
   },
 
@@ -74,6 +74,20 @@ export const menuItems = [
   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
 },
 
+
+
+
+// =====================================================
+// INVOICE EDIT HISTORY
+// =====================================================
+
+{
+  title: "Invoice Edit History",
+  path: "/invoiceedithistory",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+
       // =====================================================
       // SALES B2B
       // =====================================================
@@ -88,61 +102,61 @@ export const menuItems = [
       // PURCHASE
       // =====================================================
 
-      {
-        title: "Purchase",
-        path: "/Purchase",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Purchase",
+      //   path: "/Purchase",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // PURCHASE OTHER
       // =====================================================
 
-      {
-        title: "Purchase Other",
-        path: "/Purchaseother",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Purchase Other",
+      //   path: "/Purchaseother",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // PRODUCTION ENTRY
       // =====================================================
 
-      {
-        title: "Production Entry",
-        path: "/productionentry",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Production Entry",
+      //   path: "/productionentry",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // DELIVERY CHALLAN
       // =====================================================
 
-      {
-        title: "Delivery Challan At Godwon",
-        path: "/deliverychallan",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Delivery Challan At Godwon",
+      //   path: "/deliverychallan",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // INWORD AT STORE
       // =====================================================
 
-      {
-        title: "Inword at store",
-        path: "/inwordatstore",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Inword at store",
+      //   path: "/inwordatstore",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // PLANNING
       // =====================================================
 
-      {
-        title: "Planning",
-        path: "/commonpage",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Planning",
+      //   path: "/commonpage",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // RECEIPTS
@@ -168,18 +182,18 @@ export const menuItems = [
       // PACKING ENTRY
       // =====================================================
 
-      {
-        title: "Packing Entry",
-        path: "/packingEntry",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Packing Entry",
+      //   path: "/packingEntry",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // =====================================================
       // DAILY STOCK ENTRY - NEW
       // =====================================================
 
       {
-        title: "Daily Stock Entry",
+        title: "Daily Stock Entry-Shop",
         path: "/dailystockentry",
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
@@ -189,7 +203,7 @@ export const menuItems = [
       // =====================================================
 
       {
-        title: "Daily Stock Entry at Main Office",
+        title: " Stock Entry at Main Office",
         path: "/dailystockentry-main-office",
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
@@ -210,10 +224,10 @@ export const menuItems = [
     icon: <DescriptionIcon />,
     submenus: [
       {
-        title: "Sales Report",
-        path: "/salesReport ",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+  title: "Sales Report",
+  path: "/salesReport",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
 
       {
         title: "Productwise Sales",
@@ -250,29 +264,29 @@ export const menuItems = [
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
 
-      {
-        title: "Account Payable",
-        path: "/accountpayable",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Account Payable",
+      //   path: "/accountpayable",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
-      {
-        title: "Purchase Report",
-        path: "/purchasereport",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Purchase Report",
+      //   path: "/purchasereport",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
-      {
-        title: "Purchase HSN Wise ",
-        path: "/purchasehsnwise",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Purchase HSN Wise ",
+      //   path: "/purchasehsnwise",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
-      {
-        title: "Product-Group wise Stock",
-        path: "/product-group-wise-Stock",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "Product-Group wise Stock",
+      //   path: "/product-group-wise-Stock",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
 
       // {
       //   title: " Production Report",
@@ -280,11 +294,11 @@ export const menuItems = [
       //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       // },
 
-      {
-        title: "  Stock Report For Row Material",
-        path: "/stockreportforrowmaterial ",
-        icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
-      },
+      // {
+      //   title: "  Stock Report For Row Material",
+      //   path: "/stockreportforrowmaterial ",
+      //   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+      // },
     ],
   },
 
@@ -295,3 +309,88 @@ export const menuItems = [
     submenus: [],
   },
 ];
+
+
+
+export const getMenuItemsByRole = (role) => {
+  const normalizedRole = String(role || "")
+    .trim()
+    .toUpperCase();
+
+  // ============================================================
+  // SALE2 USER
+  // ============================================================
+ if (normalizedRole === "SALE2") {
+  return [
+    {
+      title: "Transaction",
+      path: "/transaction",
+      icon: <ReceiptIcon />,
+      submenus: [
+        {
+          title: "Sales",
+          path: "/salesentry",
+          icon: (
+            <FiberManualRecordIcon sx={{ fontSize: 15 }} />
+          ),
+        },
+
+        {
+          title: "Sales Dealer",
+          path: "/salesdealer",
+          icon: (
+            <FiberManualRecordIcon sx={{ fontSize: 15 }} />
+          ),
+        },
+
+        {
+          title: "Sales Caterers",
+          path: "/salescaterers",
+          icon: (
+            <FiberManualRecordIcon sx={{ fontSize: 15 }} />
+          ),
+        },
+
+        {
+          title: "Denomination Entry",
+          path: "/denominationentry",
+          icon: (
+            <FiberManualRecordIcon sx={{ fontSize: 15 }} />
+          ),
+        },
+
+        // ✅ ADD THIS
+       {
+  title: "Daily Stock Entry-Shop",
+  path: "/dailystockentry",
+  icon: (
+    <FiberManualRecordIcon
+      sx={{ fontSize: 15 }}
+    />
+  ),
+},
+      ],
+    },
+
+    {
+      title: "Reports",
+      path: "/reports",
+      icon: <DescriptionIcon />,
+      submenus: [
+        {
+          title: "Sales Report",
+          path: "/salesReport",
+          icon: (
+            <FiberManualRecordIcon sx={{ fontSize: 15 }} />
+          ),
+        },
+      ],
+    },
+  ];
+}
+
+  // ============================================================
+  // ALL OTHER USERS
+  // ============================================================
+  return menuItems;
+};

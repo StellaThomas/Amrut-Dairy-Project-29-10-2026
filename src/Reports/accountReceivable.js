@@ -18,8 +18,8 @@ import moment from 'moment';
 import { MRT_TablePagination as MUITablePagination } from "material-react-table";
 
 const AccountReceivable = () => {
-    const [fromDate, setFromDate] = useState(null);
-    const [toDate, setToDate] = useState(null);
+   const [fromDate, setFromDate] = useState(new Date());
+const [toDate, setToDate] = useState(new Date());
 
     const [salesData, setSalesData] = useState([]);
     const [showTable, setShowTable] = useState(false);
@@ -522,121 +522,149 @@ const exportToExcel = async (data) => {
                     </Box>
 
                 </Box>
-                {showTable && salesData.length === 0 && (
-                    <Typography textAlign="center" mt={5} color="error">
-                        No data found for the selected details.
-                    </Typography>
-                )}
+               
 
-                {/* table */}
-                {/* {showTable && salesData.length > 0 && ( */}
                     <>
-                        {showTable && salesData.length > 0 && (
+                        {showTable && (
                             <>
-                                <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xlg" fullWidth>
-                                    <DialogTitle sx={{ textAlign: 'center' }}>
-                                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                            <img src={logonew} alt="Logo" style={{ borderRadius: 50, width: "70px", height: 70 }} />
-                                            <Typography >Aarohan Agro Kolhapur</Typography>
-                                        </Box>
-                                        <Typography sx={{ mt: 1 }}>
-                                            Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003
-                                        </Typography>
-                                        <Typography sx={{ fontWeight: 'bold', mt: 1 }}>
-                                            Account Receivable form  {fromDate ? new Date(fromDate).toLocaleDateString('en-GB') : '-'}  to  {toDate ? new Date(toDate).toLocaleDateString('en-GB') : '-'} For  {selectedAccountOption
-                                                ? (selectedAccountOption.label)
-                                                : '-'}
-                                        </Typography>
-                                    </DialogTitle>
-                                    <DialogContent dividers>
-                                        <Box>
-                                            {salesData.length > 0 ? (
-                                                <Box>
+                               <Dialog
+    open={previewOpen}
+    onClose={() => setPreviewOpen(false)}
+    maxWidth="xlg"
+    fullWidth
+>
+    {/* ================= HEADER ================= */}
+    <DialogTitle
+        sx={{
+            textAlign: "center",
+            borderBottom: "2px solid #222",
+            pb: 2,
+        }}
+    >
+        {/* Company Name */}
+        <Typography
+            sx={{
+                fontSize: "38px",
+                fontWeight: 900,
+                letterSpacing: "1px",
+                color: "#111",
+            }}
+        >
+            AMRUT MILK PRODUCTS 2
+        </Typography>
+
+        {/* Address */}
+        <Typography
+            sx={{
+                fontSize: "20px",
+                color: "#555",
+                mt: 1,
+            }}
+        >
+            E-18 UDYAM CO-OP. SOCIETY, Y.P. POWAR NAGER, KOLHAPUR
+        </Typography>
+
+        {/* Phone + State */}
+        <Typography
+            sx={{
+                fontSize: "18px",
+                color: "#555",
+                mt: 1,
+            }}
+        >
+            Phone: 8830261523
+            &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+            State: 27-Maharashtra
+        </Typography>
+
+        {/* Report Title */}
+        <Typography
+            sx={{
+                fontSize: "22px",
+                fontWeight: "bold",
+                mt: 3,
+                color: "#222",
+            }}
+        >
+            Account Receivable from{" "}
+            {fromDate
+                ? new Date(fromDate).toLocaleDateString("en-GB")
+                : "-"}
+            {" "}to{" "}
+            {toDate
+                ? new Date(toDate).toLocaleDateString("en-GB")
+                : "-"}
+            {" "}For{" "}
+            {selectedAccountOption
+                ? selectedAccountOption.label
+                : "-"}
+        </Typography>
+    </DialogTitle>
 
 
-
-                                                    
-                                                    <Box>
-                                                        <MaterialReactTable table={table}
-                                                            enableColumnResizing
-                                                            muiTableHeadCellProps={{
-                                                                sx: { color: 'var(--primary-color)', },
-                                                            }}
-                                                        />
-                                                    </Box>
-
-
-                                                </Box>
-                                            ) : (
-                                                <Typography>No data to preview</Typography>
-                                            )}
-                                        </Box>
-                                    </DialogContent>
-                                   
-                                          <DialogActions sx={{ p: 0 }}>
-                                                                            <Box
-                                                                                display="flex"
-                                                                                justifyContent="space-between"
-                                                                                alignItems="center"
-                                                                                width="100%"
-                                                                                sx={{ borderTop: "2px solid #ddd", backgroundColor: "#f8f9fa", p: 2 }}
-                                                                            >
-                                                                                {/* ✅ Left side: Buttons */}
-                                                                                <Box display="flex" gap={2}>
-                                                                                    <Button onClick={generatePDF} color="primary">
-                                                                                        <PrintIcon sx={{ fontSize: 35 }} />
-                                                                                    </Button>
-                                                                                    <Button
-                                                                                        variant="contained"
-                                                                                        endIcon={<FileDownloadIcon />}
-                                                                                        onClick={() => exportToExcel(salesData)}
-                                                                                    >
-                                                                                        Excel Data
-                                                                                    </Button>
-                                                                                    <Button
-                                                                                        variant="contained"
-                                                                                        onClick={() => setPreviewOpen(false)}
-                                                                                        color="primary"
-                                                                                    >
-                                                                                        Close
-                                                                                    </Button>
-                                                                                </Box>
-                                    
-                                                                                
-                                            {/* <Box display="flex" alignItems="center" fontWeight="bold" gap={2}>
-                                                <Box display={'flex'}>
-                                                    <Typography variant="h6" sx={{ mr: 2 }}>
-                                                        <b> Credit Total:</b>
-                                                    </Typography>
-                                                    <Typography variant="h6" color="primary">
-                                                        <b> {grandTotal.toLocaleString("en-IN")} </b>
-                                                    </Typography>
-                                                </Box>
+    {/* ================= TABLE ================= */}
+    <DialogContent dividers>
+        <Box>
+            <MaterialReactTable
+                table={table}
+                enableColumnResizing
+                muiTableHeadCellProps={{
+                    sx: {
+                        color: "var(--primary-color)",
+                    },
+                }}
+                renderEmptyRowsFallback={() => null}
+            />
+        </Box>
+    </DialogContent>
 
 
-                                                  <Box display={'flex'}>
-                                                    <Typography variant="h6" sx={{ mr: 2 }}>
-                                                        <b> Debit Total:</b>
-                                                    </Typography>
-                                                    <Typography variant="h6" color="primary">
-                                                        <b> {grandDebitTotal.toLocaleString("en-IN")} </b>
-                                                    </Typography>
-                                                </Box>
+    {/* ================= ACTION BUTTONS ================= */}
+    <DialogActions sx={{ p: 0 }}>
+        <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            width="100%"
+            sx={{
+                borderTop: "2px solid #ddd",
+                backgroundColor: "#f8f9fa",
+                p: 2,
+            }}
+        >
+            {/* Left side buttons */}
+            <Box display="flex" gap={2}>
 
-                                                 <Box display={'flex'}>
-                                                    <Typography variant="h6" sx={{ mr: 2 }}>
-                                                        <b> ClosingBal Total:</b>
-                                                    </Typography>
-                                                    <Typography variant="h6" color="primary">
-                                                        <b> {grandClosingBalTotal.toLocaleString("en-IN")} </b>
-                                                    </Typography>
-                                                </Box>
-                                                
+                {/* Print */}
+                <Button
+                    onClick={generatePDF}
+                    color="primary"
+                >
+                    <PrintIcon sx={{ fontSize: 35 }} />
+                </Button>
 
-                                            </Box> */}
-                                        </Box>
-                                    </DialogActions>
-                                </Dialog>
+                {/* Excel */}
+                <Button
+                    variant="contained"
+                    endIcon={<FileDownloadIcon />}
+                    onClick={() => exportToExcel(salesData)}
+                >
+                    Excel Data
+                </Button>
+
+                {/* Close */}
+                <Button
+                    variant="contained"
+                    onClick={() => setPreviewOpen(false)}
+                    color="primary"
+                >
+                    Close
+                </Button>
+
+            </Box>
+        </Box>
+    </DialogActions>
+</Dialog>
                             </>
                         )}
                     </>

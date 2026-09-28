@@ -1,96 +1,4 @@
-// import { HashRouter, Routes, Route } from 'react-router-dom';
-// import Sidebar from './Components/Sidebar';
-// import ProtectedRoute from './ProtectedRoute';
 
-// import CustomerMaster from './Masters/CustomerMaster';
-// import SupplierMaster from './Masters/SupplierMaster';
-// import ProductMaster from './Masters/ProductMaster';
-// import MaterialMaster from './Masters/MaterialMaster';
-// import AccountMaster from './Masters/AccountMaster';
-// import LoginPage from './LogIn-SignUp/Login';
-// import Purchase from './Transaction/PurchaseEntry';
-// import { Navigate } from 'react-router-dom';
-// import Settings from './Settings/Setting';
-// import SalesEntry from './Transaction/Sales';
-// import SalesB2B from './Transaction/SalesB2B';
-// import ProductionEntry from './Transaction/ProductionEntry';
-// import Commonpage from './Commonpage';
-// import InwordAtStore from './Transaction/InwordAtStore';
-// import DeliveryChallan from './Transaction/DeliveryChallan';
-// import PurchaseOther from './Transaction/PurchaseOther';
-// import UserMaster from './Masters/UserMaster';
-// import Receipt from './Transaction/Receipt';
-// import CoverPage from './LogIn-SignUp/coverpage';
-// import Payment from './Transaction/Payment';
-// import PackingEntry from './Transaction/PackingEntry';
-// import Salesreport from './Reports/salesreport';
-// import ProductwiseSales from './Reports/productwiseSales';
-// import CustomerWiseSales from './Reports/customerWiseSales';
-// import StockReport from './Reports/stockReport';
-// import AccountReceivable from './Reports/accountReceivable';
-// import AccountPayable from './Reports/accountPayable';
-// import PurchaseReport from './Reports/PurchaseReport';
-// import ProductGroupwiseStock from './Reports/ProductGroupwiseStock';
-// import ProductionReport from './Reports/ProductionReport';
-// import StockReportForRowMaterial from './Reports/StockReportForRowMaterial';
-// import SalesHSN from './Reports/SalesHSN';
-// import PurchaseHSN from './Reports/PurchaseHSN';
-// import Customerwisemonthlysales from './Reports/Customerwisemonthlysales';
-// import DailyStockEntryForm from './Transaction/DailyStockEntryForm';
-
-// function App() {
-//   return (
-//     <HashRouter>
-
-//       <Routes>
-//         <Route index element={<Navigate to="/login" />} />
-//         <Route path='/login' element={<LoginPage />} />
-//         <Route path='/coverpage' element={<CoverPage />} />
-//         <Route path="/" element={<Sidebar />}>
-//           <Route path="/customermaster" element={<CustomerMaster />} />
-//           <Route path="/suppliermaster" element={<SupplierMaster />} />
-//           <Route path="/productmaster" element={<ProductMaster />} />
-//           <Route path="/materialmaster" element={<MaterialMaster />} />
-//           <Route path="/accountmaster" element={<AccountMaster />} />
-//           <Route path="/usermaster" element={<UserMaster />} />
-//           {/* transactions */}
-//           <Route path="/Purchase" element={<Purchase />} />
-//           <Route path="/salesentry" element={<SalesEntry />} />
-
-//           <Route path="/salesB2B" element={<SalesB2B />} />
-
-//           <Route path="/productionentry" element={<ProductionEntry />} />
-//           <Route path='/setting' element={<Settings />} />
-//           <Route path='/inwordatstore' element={<InwordAtStore />} />
-//           <Route path='/deliverychallan' element={<DeliveryChallan />} />
-//           <Route path='/Purchaseother' element={<PurchaseOther />} />
-//           <Route path='/receipts' element={<Receipt />} />
-//           <Route path='/payments' element={<Payment />} />
-//           <Route path='/packingEntry' element={<PackingEntry />} />
-//           {/* Reports */}
-//           <Route path="/salesReport" element={<Salesreport />} />
-//           <Route path="/productwisesales" element={<ProductwiseSales />} />
-//           <Route path="/customerwisesales" element={<CustomerWiseSales />} />
-//           <Route path="/stockreport" element={<StockReport />} />
-//           <Route path="/accountreceivable" element={<AccountReceivable />} />
-//           <Route path="/accountpayable" element={<AccountPayable />} />
-//           <Route path="/purchasereport" element={<PurchaseReport />} />
-//           <Route path="/product-group-wise-Stock" element={<ProductGroupwiseStock />} />
-//           <Route path="/productionReport" element={<ProductionReport />} />
-//           <Route path="/stockreportforrowmaterial" element={<StockReportForRowMaterial />} />
-//           <Route path="/saleshsnwise" element={<SalesHSN />} />
-//           <Route path="/purchasehsnwise" element={<PurchaseHSN />} />
-//           <Route path="/customerwisemonthlysales" element={<Customerwisemonthlysales />} />
-//           <Route path="/dailystockentry" element={<DailyStockEntryForm />} />
-
-//           <Route path="/commonpage" element={<Commonpage />} />
-//         </Route>
-//       </Routes>
-//     </HashRouter>
-//   );
-// }
-
-// export default App;
 
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -158,6 +66,7 @@ import StockReportForRowMaterial from "./Reports/StockReportForRowMaterial";
 import SalesHSN from "./Reports/SalesHSN";
 import PurchaseHSN from "./Reports/PurchaseHSN";
 import Customerwisemonthlysales from "./Reports/Customerwisemonthlysales";
+import InvoiceHistory from "./Transaction/InvoiceHistory";
 
 // ============================================================
 // COMMON PAGE
@@ -271,7 +180,7 @@ function App() {
           <Route
             path="/salesentry"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "SALE"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE" , "SALE2"]}>
                 <SalesEntry />
               </ProtectedRoute>
             }
@@ -280,7 +189,7 @@ function App() {
           <Route
             path="/salesdealer"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "SALE"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE" , "SALE2"]}>
                 <SalesDealer />
               </ProtectedRoute>
             }
@@ -289,7 +198,7 @@ function App() {
           <Route
             path="/salescaterers"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "SALE"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE" , "SALE2"]}>
                 <SalesCaterers />
               </ProtectedRoute>
             }
@@ -303,7 +212,7 @@ function App() {
           <Route
             path="/dailystockentry"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "SALE"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE" , "SALE2"]}>
                 <DailyStockEntryForm />
               </ProtectedRoute>
             }
@@ -312,11 +221,25 @@ function App() {
           <Route
             path="/dailystockentry-main-office"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN" , "SALE" ,"SALE2"]}>
                 <DailyStockEntryAtMainOffice />
               </ProtectedRoute>
             }
           />
+
+        {/* ==================================================
+    INVOICE EDIT HISTORY
+    ADMIN + SALE
+================================================== */}
+
+<Route
+  path="/invoiceedithistory"
+  element={
+    <ProtectedRoute allowedRoles={["ADMIN"]}>
+      <InvoiceHistory />
+    </ProtectedRoute>
+  }
+/>
 
           <Route
             path="/denominationentry"
@@ -465,7 +388,7 @@ function App() {
           <Route
             path="/salesReport"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "SALE"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE", "SALE2"]}>
                 <Salesreport />
               </ProtectedRoute>
             }

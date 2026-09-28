@@ -1,3 +1,16153 @@
+// import { useMemo, useState, useEffect, useRef } from "react";
+// import { useNavigate, useLocation } from "react-router-dom";
+// import {
+//   IconButton,
+//   Menu,
+//   Table,
+//   Autocomplete,
+//   TableBody,
+//   TableCell,
+//   TableContainer,
+//   TableHead,
+//   TableRow,
+//   Paper,
+//   Box,
+//   useMediaQuery,
+//   Button,
+//   Typography,
+//   TextField,
+//   Drawer,
+//   Divider,
+//   MenuItem,
+//   InputAdornment,
+//   Grid,
+//   Dialog,
+//   DialogTitle,
+//   DialogContent,
+//   DialogContentText,
+//   DialogActions,
+// } from "@mui/material";
+
+// import CloseIcon from "@mui/icons-material/Close";
+// import { useTheme } from "@mui/material/styles";
+// import { DatePicker } from "@mui/x-date-pickers";
+// import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+// import "react-phone-input-2/lib/style.css";
+// import MoreVertIcon from "@mui/icons-material/MoreVert";
+// import PhoneInput from "react-phone-input-2";
+// import axios from "axios";
+// import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+// import qs from "qs";
+// import moment from "moment";
+// import { MaterialReactTable } from "material-react-table";
+// import { toast, ToastContainer } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
+// import AddCircleIcon from "@mui/icons-material/AddCircle";
+// import SearchIcon from "@mui/icons-material/Search";
+// import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+// import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+// import LastPageIcon from "@mui/icons-material/LastPage";
+// import FirstPageIcon from "@mui/icons-material/FirstPage";
+// import Cookies from "js-cookie";
+// import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import PrintIcon from "@mui/icons-material/Print";
+
+// import amrutLogo from "../imgs/amrutlogo.png";
+// import fremilaLogo from "../imgs/fremilalogo.png";
+
+// // import logonew from '../imgs/logo_white.png'
+
+// const SalesCaterers = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+
+//   const theme = useTheme();
+//   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+//   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [invoiceheaders, setInvoiceheaders] = useState([]);
+//   const [invoicedetails, setInvoicedetails] = useState([]);
+//   const [rows, setRows] = useState([]);
+
+//   // =====================================================
+//   // INVOICE EDIT HISTORY
+//   // =====================================================
+
+//   const [invoiceHistoryStatus, setInvoiceHistoryStatus] = useState({});
+
+//   const [historyOpen, setHistoryOpen] = useState(false);
+//   const [historyLoading, setHistoryLoading] = useState(false);
+
+//   const [selectedHistoryInvoice, setSelectedHistoryInvoice] = useState(null);
+
+//   const [historyHeader, setHistoryHeader] = useState([]);
+//   const [historyDetails, setHistoryDetails] = useState([]);
+
+//   const [currentHistoryHeader, setCurrentHistoryHeader] = useState(null);
+//   const [currentHistoryDetails, setCurrentHistoryDetails] = useState([]);
+
+//   const [selectedHistoryVersion, setSelectedHistoryVersion] = useState(null);
+//   const [selectedHistoryDetails, setSelectedHistoryDetails] = useState([]);
+
+//   const [userId, setUserId] = useState(
+//     () => sessionStorage.getItem("UserId") || "",
+//   );
+
+//   // =====================================================
+//   // SELECT HISTORY VERSION
+//   // =====================================================
+
+//   const handleHistoryVersionClick = (historyItem) => {
+//     if (!historyItem) {
+//       return;
+//     }
+
+//     const version = Number(historyItem?.VersionNo);
+
+//     if (!version) {
+//       toast.error("Version not found.");
+//       return;
+//     }
+
+//     console.log("======================================");
+//     console.log("HISTORY VERSION CLICK");
+//     console.log("Invoice No:", historyItem?.InvoiceNo);
+//     console.log("Invoice ID:", historyItem?.InvoiceId);
+//     console.log("Version:", version);
+//     console.log("======================================");
+
+//     setSelectedHistoryVersion(version);
+
+//     const versionDetails = historyDetails.filter(
+//       (detail) => Number(detail?.VersionNo) === version,
+//     );
+
+//     console.log("SELECTED VERSION DETAILS:", versionDetails);
+
+//     setSelectedHistoryDetails(versionDetails);
+//   };
+
+//   // =====================================================
+//   // GET PRODUCT NAME FROM PRODUCT ID
+//   // =====================================================
+//   const getHistoryProductName = (productId, detail = {}) => {
+//     if (productId === null || productId === undefined || productId === "") {
+//       return detail?.ProductName || detail?.productName || "-";
+//     }
+
+//     const matchedProduct = productOptions.find(
+//       (product) =>
+//         String(product?.value) === String(productId) ||
+//         String(product?.Id) === String(productId) ||
+//         String(product?.ProductId) === String(productId),
+//     );
+
+//     return (
+//       matchedProduct?.label ||
+//       matchedProduct?.ProductName ||
+//       detail?.ProductName ||
+//       detail?.productName ||
+//       "-"
+//     );
+//   };
+
+//   // =====================================================
+//   // FETCH CURRENT INVOICE FOR HISTORY
+//   // =====================================================
+
+//   const fetchCurrentInvoiceForHistory = async (invoiceId) => {
+//     try {
+//       // ==========================================
+//       // CURRENT HEADER
+//       // ==========================================
+
+//       const headerResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=Id&Colvalue=${invoiceId}`,
+//       );
+
+//       const headerData = headerResponse.data;
+
+//       const currentHeader = Array.isArray(headerData)
+//         ? headerData[0] || null
+//         : Array.isArray(headerData?.data)
+//           ? headerData.data[0] || null
+//           : headerData?.data || headerData || null;
+
+//       // ==========================================
+//       // CURRENT DETAILS
+//       // ==========================================
+
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       const detailData = detailResponse.data;
+
+//       const currentDetails = Array.isArray(detailData)
+//         ? detailData
+//         : Array.isArray(detailData?.data)
+//           ? detailData.data
+//           : detailData?.data
+//             ? [detailData.data]
+//             : detailData
+//               ? [detailData]
+//               : [];
+
+//       setCurrentHistoryHeader(currentHeader);
+//       setCurrentHistoryDetails(currentDetails);
+
+//       return {
+//         header: currentHeader,
+//         details: currentDetails,
+//       };
+//     } catch (error) {
+//       console.error("CURRENT INVOICE HISTORY FETCH ERROR:", error);
+
+//       throw error;
+//     }
+//   };
+
+//   // =====================================================
+//   // OPEN INVOICE EDIT HISTORY
+//   // =====================================================
+
+//   const handleInvoiceHistoryClick = async (invoice) => {
+//     try {
+//       const invoiceId = invoice?.Id || invoice?.InvoiceId;
+
+//       if (!invoiceId) {
+//         toast.error("Invoice ID not found.");
+//         return;
+//       }
+
+//       console.log("======================================");
+//       console.log("INVOICE HISTORY CLICK");
+//       console.log("Invoice ID:", invoiceId);
+//       console.log("======================================");
+
+//       setSelectedHistoryInvoice(invoice);
+//       setHistoryOpen(true);
+//       setHistoryLoading(true);
+
+//       setSelectedHistoryVersion(null);
+//       setSelectedHistoryDetails([]);
+
+//       // =================================================
+//       // 1. OLD HEADER HISTORY
+//       // =================================================
+
+//       const headerResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       console.log("OLD HEADER HISTORY:", headerResponse.data);
+
+//       const headerData = headerResponse.data;
+
+//       const oldHeaders = Array.isArray(headerData)
+//         ? headerData
+//         : Array.isArray(headerData?.data)
+//           ? headerData.data
+//           : headerData?.data
+//             ? [headerData.data]
+//             : headerData
+//               ? [headerData]
+//               : [];
+
+//       setHistoryHeader(oldHeaders);
+
+//       // =================================================
+//       // 2. OLD DETAIL HISTORY
+//       // =================================================
+
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       console.log("OLD DETAIL HISTORY:", detailResponse.data);
+
+//       const detailData = detailResponse.data;
+
+//       const oldDetails = Array.isArray(detailData)
+//         ? detailData
+//         : Array.isArray(detailData?.data)
+//           ? detailData.data
+//           : detailData?.data
+//             ? [detailData.data]
+//             : detailData
+//               ? [detailData]
+//               : [];
+
+//       setHistoryDetails(oldDetails);
+
+//       // =================================================
+//       // 3. CURRENT INVOICE
+//       // =================================================
+
+//       await fetchCurrentInvoiceForHistory(invoiceId);
+
+//       // =================================================
+//       // 4. DEFAULT LATEST OLD VERSION
+//       // =================================================
+
+//       if (oldHeaders.length > 0) {
+//         const latestVersionItem = [...oldHeaders].sort(
+//           (a, b) => Number(b?.VersionNo || 0) - Number(a?.VersionNo || 0),
+//         )[0];
+
+//         const latestVersion = Number(latestVersionItem?.VersionNo);
+
+//         if (latestVersion) {
+//           setSelectedHistoryVersion(latestVersion);
+
+//           const latestVersionDetails = oldDetails.filter(
+//             (detail) => Number(detail?.VersionNo) === latestVersion,
+//           );
+
+//           setSelectedHistoryDetails(latestVersionDetails);
+//         }
+//       }
+//     } catch (error) {
+//       console.error("INVOICE HISTORY ERROR:", error);
+
+//       toast.error("Unable to load invoice history.");
+//     } finally {
+//       setHistoryLoading(false);
+//     }
+//   };
+
+//   const [productOptions, setProductOptions] = useState([]);
+//   // =========================
+//   // INVOICE FILTERS
+//   // =========================
+//   const [searchText, setSearchText] = useState("");
+//   const [categoryFilter, setCategoryFilter] = useState("");
+//   const [fromDate, setFromDate] = useState("");
+//   const [toDate, setToDate] = useState("");
+
+//   const [balanceDue, setBalanceDue] = useState(0);
+
+//   const isSubmittingRef = useRef(false);
+
+//   // Customer's previous outstanding balance
+//   const [previousBalanceDue, setPreviousBalanceDue] = useState(0);
+
+//   // ======================================================
+//   // FILTER INVOICE DATA
+//   // ======================================================
+//   const filteredInvoiceData = useMemo(() => {
+//     const search = searchText.trim().toLowerCase();
+
+//     return invoiceheaders.filter((invoice) => {
+//       // ==============================
+//       // BILL NO
+//       // ==============================
+//       const billNo = String(invoice?.InvoiceNo || "").toLowerCase();
+
+//       // ==============================
+//       // CUSTOMER NAME
+//       // ==============================
+//       const customerName = String(
+//         invoice?.accountDetails?.AccountName || "",
+//       ).toLowerCase();
+
+//       // ==============================
+//       // CATEGORY
+//       // ==============================
+//       const customerType = String(invoice?.accountDetails?.CustomerType || "")
+//         .trim()
+//         .toUpperCase();
+
+//       let categoryName = "";
+
+//       if (customerType === "R") {
+//         categoryName = "retailer";
+//       } else if (customerType === "D") {
+//         categoryName = "dealer";
+//       } else if (customerType === "C") {
+//         categoryName = "caterers";
+//       }
+
+//       // ==============================
+//       // INVOICE DATE
+//       // ==============================
+//       const invoiceDate = invoice?.InvoiceDate?.date
+//         ? invoice.InvoiceDate.date.substring(0, 10)
+//         : "";
+
+//       // ==============================
+//       // CATEGORY FILTER
+//       // ==============================
+//       const categoryMatch =
+//         categoryFilter === "" || customerType === categoryFilter;
+
+//       // ==============================
+//       // SEARCH FILTER
+//       // ==============================
+//       const searchMatch =
+//         search === "" ||
+//         billNo.includes(search) ||
+//         customerName.includes(search) ||
+//         categoryName.includes(search);
+
+//       // ==============================
+//       // FROM DATE FILTER
+//       // ==============================
+//       const fromDateMatch =
+//         fromDate === "" || (invoiceDate !== "" && invoiceDate >= fromDate);
+
+//       // ==============================
+//       // TO DATE FILTER
+//       // ==============================
+//       const toDateMatch =
+//         toDate === "" || (invoiceDate !== "" && invoiceDate <= toDate);
+
+//       // ==============================
+//       // ALL FILTERS MUST MATCH
+//       // ==============================
+//       return categoryMatch && searchMatch && fromDateMatch && toDateMatch;
+//     });
+//   }, [invoiceheaders, searchText, categoryFilter, fromDate, toDate]);
+
+//   const discountRef = useRef(null);
+//   const receivedAmountRef = useRef(null);
+
+//   // =====================================================
+//   // FORMAT HISTORY DATE SAFELY
+//   // =====================================================
+//   const formatHistoryDate = (value) => {
+//     if (!value) {
+//       return "-";
+//     }
+
+//     // API may return:
+//     // { date, timezone_type, timezone }
+//     const dateValue = typeof value === "object" ? value?.date : value;
+
+//     if (!dateValue) {
+//       return "-";
+//     }
+
+//     const date = new Date(dateValue);
+
+//     if (Number.isNaN(date.getTime())) {
+//       return String(dateValue);
+//     }
+
+//     return date.toLocaleDateString("en-IN", {
+//       day: "2-digit",
+//       month: "2-digit",
+//       year: "numeric",
+//     });
+//   };
+
+//   // ======================================================
+//   // ESC = GO ONE STEP BACK
+//   // ======================================================
+//   useEffect(() => {
+//     if (!isDrawerOpen) return;
+
+//     const handleEscBack = (event) => {
+//       if (event.key !== "Escape") return;
+
+//       // Customer search popup open असेल तर आधी popup बंद होऊ द्या
+//       if (showDropdown) {
+//         return;
+//       }
+
+//       const activeElement = document.activeElement;
+
+//       event.preventDefault();
+//       event.stopPropagation();
+
+//       // Received Amount -> Discount
+//       if (receivedAmountRef.current === activeElement) {
+//         setTimeout(() => {
+//           discountRef.current?.focus();
+//           discountRef.current?.select();
+//         }, 50);
+//         return;
+//       }
+
+//       // Discount -> Payment Mode
+//       if (discountRef.current === activeElement) {
+//         setTimeout(() => {
+//           document.querySelector('[name="paymentMode"]')?.focus();
+//         }, 50);
+//         return;
+//       }
+
+//       // Payment Mode -> Quantity
+//       if (activeElement?.name === "paymentMode") {
+//         setTimeout(() => {
+//           quantityRef.current?.focus();
+//           quantityRef.current?.select();
+//         }, 50);
+//         return;
+//       }
+
+//       // Quantity -> Product
+//       if (quantityRef.current === activeElement) {
+//         setTimeout(() => {
+//           productRef.current?.focus();
+//         }, 50);
+//         return;
+//       }
+
+//       // Product -> Customer
+//       if (productRef.current === activeElement) {
+//         setTimeout(() => {
+//           const customerInput = document.querySelector(
+//             'input[placeholder="Select Customer"]',
+//           );
+
+//           customerInput?.focus();
+//         }, 50);
+
+//         return;
+//       }
+//     };
+
+//     window.addEventListener("keydown", handleEscBack, true);
+
+//     return () => {
+//       window.removeEventListener("keydown", handleEscBack, true);
+//     };
+//   }, [isDrawerOpen]);
+
+//   useEffect(() => {
+//     // fetchInvdetails();
+//   }, []);
+
+//   useEffect(() => {
+//     const storedUserId = sessionStorage.getItem("UserId");
+
+//     if (storedUserId) {
+//       setUserId(storedUserId);
+//     } else {
+//       toast.error("User is not logged in.");
+//     }
+//   }, []);
+
+//   // ======================================================
+//   // FETCH ALL INVOICE HEADERS
+//   // LATEST BILL FIRST
+//   // ======================================================
+//   const fetchInvoiceHeader = async () => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     try {
+//       // --------------------------------------------------
+//       // 1. GET FIRST PAGE
+//       // --------------------------------------------------
+//       const firstResponse = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=1`,
+//         requestOptions,
+//       );
+
+//       const firstResult = await firstResponse.json();
+
+//       console.log("========== INVOICE HEADER GET DATA ==========");
+//       console.log("First Invoice:", firstResult?.data?.[0]);
+//       console.log("BalanceDue:", firstResult?.data?.[0]?.BalanceDue);
+//       console.log("ReceivedAmount:", firstResult?.data?.[0]?.ReceivedAmount);
+//       console.log(
+//         "PreviousBalanceDue:",
+//         firstResult?.data?.[0]?.PreviousBalanceDue,
+//       );
+//       console.log("==============================================");
+
+//       const totalPages = Number(firstResult.total_pages || 1);
+
+//       let allInvoiceData = [...(firstResult.data || [])];
+
+//       // --------------------------------------------------
+//       // 2. GET REMAINING PAGES
+//       // --------------------------------------------------
+//       if (totalPages > 1) {
+//         for (let page = 2; page <= totalPages; page++) {
+//           const response = await fetch(
+//             `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=${page}`,
+//             requestOptions,
+//           );
+
+//           const result = await response.json();
+
+//           allInvoiceData = [...allInvoiceData, ...(result.data || [])];
+//         }
+//       }
+
+//       // --------------------------------------------------
+//       // 3. SORT BY BILL ID
+//       // LATEST / NEWEST BILL FIRST
+//       // --------------------------------------------------
+//       allInvoiceData.sort((a, b) => Number(b.Id || 0) - Number(a.Id || 0));
+
+//       // --------------------------------------------------
+//       // 4. FETCH CUSTOMER + ADDRESS DETAILS
+//       // --------------------------------------------------
+//       const invoicesList = await Promise.all(
+//         allInvoiceData.map(async (invoice) => {
+//           try {
+//             // ==========================================
+//             // ACCOUNT DETAILS
+//             // ==========================================
+//             let accountDetails = null;
+
+//             if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+//               const acctResponse = await fetch(
+//                 `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${invoice.AccountId}`,
+//                 requestOptions,
+//               );
+
+//               if (acctResponse.ok) {
+//                 const acctResult = await acctResponse.json();
+
+//                 accountDetails = Array.isArray(acctResult)
+//                   ? acctResult[0] || null
+//                   : acctResult?.data
+//                     ? Array.isArray(acctResult.data)
+//                       ? acctResult.data[0] || null
+//                       : acctResult.data
+//                     : null;
+//               }
+//             }
+
+//             // ==========================================
+//             // ADDRESS DETAILS
+//             // CustomerType is stored in Address
+//             // ==========================================
+//             let addressDetails = null;
+
+//             if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+//               const addressResponse = await fetch(
+//                 `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${invoice.AccountId}`,
+//                 requestOptions,
+//               );
+
+//               if (addressResponse.ok) {
+//                 const addressResult = await addressResponse.json();
+
+//                 addressDetails = Array.isArray(addressResult)
+//                   ? addressResult[0] || null
+//                   : Array.isArray(addressResult?.data)
+//                     ? addressResult.data[0] || null
+//                     : addressResult?.data || addressResult || null;
+//               }
+//             }
+
+//             // ==========================================
+//             // CUSTOMER TYPE / CATEGORY
+//             // ==========================================
+//             const customerType = String(
+//               addressDetails?.CustomerType ||
+//                 addressDetails?.customerType ||
+//                 accountDetails?.CustomerType ||
+//                 accountDetails?.customerType ||
+//                 invoice?.CustomerType ||
+//                 invoice?.customerType ||
+//                 "",
+//             )
+//               .trim()
+//               .toUpperCase();
+
+//             // ==========================================
+//             // FINAL INVOICE OBJECT
+//             // ==========================================
+//             return {
+//               ...invoice,
+
+//               accountDetails: {
+//                 ...(accountDetails || {}),
+//                 CustomerType: customerType,
+//               },
+
+//               addressDetails: addressDetails,
+//             };
+//           } catch (error) {
+//             console.error(
+//               `Failed to fetch customer details for invoice ${invoice.Id}:`,
+//               error,
+//             );
+
+//             // ==========================================
+//             // RETURN INVOICE EVEN IF CUSTOMER API FAILS
+//             // ==========================================
+//             return {
+//               ...invoice,
+
+//               accountDetails: {
+//                 AccountName: invoice?.AccountName || "",
+//                 CustomerType:
+//                   invoice?.CustomerType || invoice?.customerType || "",
+//               },
+
+//               addressDetails: null,
+//             };
+//           }
+//         }),
+//       );
+
+//       // --------------------------------------------------
+//       // 5. SAVE ALL INVOICES
+//       // --------------------------------------------------
+//       setInvoiceheaders(invoicesList);
+
+//       // IMPORTANT:
+//       // We already fetched ALL pages above,
+//       // so don't force totalPages to 1.
+//       await checkInvoiceHistory(invoicesList);
+//       setTotalPages(totalPages);
+
+//       console.log("ALL CATERERS INVOICES:", invoicesList);
+
+//       console.log("TOTAL INVOICE COUNT:", invoicesList.length);
+//     } catch (error) {
+//       console.error("Error fetching all invoice headers:", error);
+//     }
+//   };
+
+//   // =====================================================
+//   // CHECK INVOICE EDIT HISTORY
+//   // =====================================================
+//   const checkInvoiceHistory = async (invoiceList) => {
+//     try {
+//       const historyStatus = {};
+
+//       await Promise.all(
+//         invoiceList.map(async (invoice) => {
+//           const invoiceId = invoice?.Id;
+
+//           if (!invoiceId) {
+//             return;
+//           }
+
+//           try {
+//             const response = await axios.get(
+//               `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//             );
+
+//             const data = response.data;
+
+//             const historyList = Array.isArray(data)
+//               ? data
+//               : Array.isArray(data?.data)
+//                 ? data.data
+//                 : data?.data
+//                   ? [data.data]
+//                   : data
+//                     ? [data]
+//                     : [];
+
+//             // ==========================================
+//             // IMPORTANT
+//             // ==========================================
+//             const hasHistory = historyList.length > 0;
+
+//             historyStatus[String(invoiceId)] = hasHistory;
+
+//             console.log("HISTORY CHECK:", {
+//               InvoiceId: invoiceId,
+//               HistoryCount: historyList.length,
+//               HasHistory: hasHistory,
+//               HistoryData: historyList,
+//             });
+//           } catch (error) {
+//             console.error(
+//               `History check failed for InvoiceId ${invoiceId}:`,
+//               error,
+//             );
+
+//             historyStatus[String(invoiceId)] = false;
+//           }
+//         }),
+//       );
+
+//       console.log("========== FINAL INVOICE HISTORY STATUS ==========");
+
+//       console.log(historyStatus);
+
+//       setInvoiceHistoryStatus(historyStatus);
+//     } catch (error) {
+//       console.error("History status error:", error);
+//     }
+//   };
+
+//   const [anchorEl, setAnchorEl] = useState(null);
+
+//   const handleMenuOpen = () => {
+//     setIsDrawerOpen(true);
+//     //  handleEdit()
+//   };
+
+//   const handleMenuClose = () => {
+//     setAnchorEl(null);
+//     // handleMenuOpen(false);
+//   };
+
+//   const handleNewClick = () => {
+//     setIsDrawerOpen(true);
+//     resetForm();
+//     setIsEditing(false);
+//     setOpen(false);
+//   };
+
+//   // ======================================================
+//   // OPEN CATERERS BILL ENTRY DIRECTLY FROM SALES SHORTCUT
+//   // ======================================================
+
+//   useEffect(() => {
+//     if (location.state?.openCreateForm === true) {
+//       // Open Create Sales Entry - Caterers form
+//       handleNewClick();
+
+//       // Clear navigation state
+//       navigate(location.pathname, {
+//         replace: true,
+//         state: {},
+//       });
+//     }
+//   }, [location.state, location.pathname, navigate]);
+
+//   const handleDrawerClose = () => {
+//     setIsDrawerOpen(false);
+//     setShowDropdown(false);
+//     resetForm();
+//   };
+
+//   const handleDrawerCloseAndGoSalesEntry = () => {
+//     setIsDrawerOpen(false);
+//     setShowDropdown(false);
+//     resetForm();
+//     navigate("/salesentry");
+//   };
+
+//   //for delete Header
+//   const [open, setOpen] = useState(false);
+
+//   const handleClickOpen = () => {
+//     setOpen(true);
+//   };
+//   const handleClose = () => {
+//     setOpen(false);
+//   };
+
+//   const handleConfirmDelete = () => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     // const itemId = currentRow.original.Id;
+//     // console.log('itemId',currentRow.original.Id)
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=invoiceheader&Id=${editId}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.text())
+//       .then((result) => {
+//         console.log(result);
+
+//         handleDrawerClose();
+//         fetchInvoiceHeader();
+//         handleMenuClose();
+//         toast.success("Sales Entry - Caterers Deleted successfully!");
+//       })
+//       .catch((error) => console.error(error));
+//   };
+
+//   const [editId, setEditId] = useState("");
+//   // ======================================================
+//   // EDIT SAVED INVOICE
+//   // ======================================================
+//   const handleEdit = async (row) => {
+//     try {
+//       const originalData = row?.original;
+
+//       if (!originalData) {
+//         toast.error("Invoice data not found.");
+//         return;
+//       }
+
+//       const rowId = originalData.Id;
+
+//       if (!rowId) {
+//         toast.error("Invoice ID not found.");
+//         return;
+//       }
+
+//       // --------------------------------------------------
+//       // 1. GET INVOICE HEADER
+//       // --------------------------------------------------
+//       const invheader =
+//         invoiceheaders.find((h) => String(h.Id) === String(rowId)) ||
+//         originalData;
+
+//       if (!invheader) {
+//         toast.error("Invoice header not found.");
+//         return;
+//       }
+
+//       // --------------------------------------------------
+//       // 2. GET SAVED INVOICE DETAILS DIRECTLY
+//       // --------------------------------------------------
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${rowId}`,
+//       );
+
+//       let invdetail = [];
+
+//       if (Array.isArray(detailResponse.data)) {
+//         invdetail = detailResponse.data;
+//       } else if (Array.isArray(detailResponse.data?.data)) {
+//         invdetail = detailResponse.data.data;
+//       } else if (detailResponse.data) {
+//         invdetail = [detailResponse.data];
+//       }
+
+//       console.log("EDIT INVOICE DETAILS:", invdetail);
+
+//       // --------------------------------------------------
+//       // 3. MAP SAVED PRODUCTS INTO ROWS
+//       // --------------------------------------------------
+//       const mappedRows = invdetail.map((detail) => {
+//         const matchedProduct = productOptions.find(
+//           (item) => String(item.value) === String(detail.ProductId),
+//         );
+
+//         return {
+//           Id: detail.Id,
+//           InvoiceId: detail.InvoiceId,
+//           ProductId: detail.ProductId,
+
+//           ProductName: matchedProduct?.label || detail.ProductName || "",
+
+//           Quantity: parseFloat(detail.Quantity) || 0,
+//           Rate: parseFloat(detail.Rate) || 0,
+//           Amount: parseFloat(detail.Amount) || 0,
+
+//           CGSTPercentage: parseFloat(detail.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(detail.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(detail.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(detail.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(detail.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(detail.IGSTAmount) || 0,
+
+//           DiscountAmt: parseFloat(detail.DiscountAmt) || 0,
+//         };
+//       });
+
+//       console.log("EDIT MAPPED ROWS:", mappedRows);
+
+//       // --------------------------------------------------
+//       // 4. CUSTOMER
+//       // --------------------------------------------------
+//       fetchAccounts(invheader.AccountId);
+//       fetchAccountName(invheader.AccountId);
+
+//       // Fetch previous outstanding balance
+//       // Current edited invoice is excluded
+//       fetchPreviousBalance(invheader.AccountId, rowId);
+
+//       setSelectedAccount(invheader.AccountId);
+
+//       // --------------------------------------------------
+//       // 5. DATE
+//       // --------------------------------------------------
+//       const convertDateForInput = (dateValue) => {
+//         if (!dateValue) return "";
+
+//         const dateStr =
+//           typeof dateValue === "string" ? dateValue : dateValue?.date;
+
+//         if (!dateStr) return "";
+
+//         if (dateStr.includes("-")) {
+//           const [year, month, day] = dateStr.split(" ")[0].split("-");
+
+//           return `${year}-${month}-${day}`;
+//         }
+
+//         return "";
+//       };
+
+//       const invoiceDate = convertDateForInput(invheader.InvoiceDate);
+
+//       // --------------------------------------------------
+//       // 6. HEADER DATA
+//       // --------------------------------------------------
+//       setInvoiceNo(
+//         invheader.InvoiceNo != null ? String(invheader.InvoiceNo) : "",
+//       );
+//       setInvoiceDate(invoiceDate);
+//       setPhone(invheader.ContactNo || "");
+//       setDevice(getDeviceForLoggedInUser());
+
+//       setBillFor(invheader.BillFor || "");
+
+//       setMachineID(invheader.MachineID ? String(invheader.MachineID) : "");
+
+//       setIsGST(Number(invheader.IsGST) === 1);
+
+//       // --------------------------------------------------
+//       // 7. PAYMENT DATA
+//       // --------------------------------------------------
+//       setPaymentMode(invheader.PaymentMode || "");
+
+//       setCashAmount(
+//         invheader.CashAmount != null ? String(invheader.CashAmount) : "",
+//       );
+
+//       setOnlineAmount(
+//         invheader.OnlineAmount != null ? String(invheader.OnlineAmount) : "",
+//       );
+
+//       setDiscount(invheader.Discount != null ? String(invheader.Discount) : "");
+
+//       setReceivedAmount(
+//         invheader.ReceivedAmount != null
+//           ? String(invheader.ReceivedAmount)
+//           : "",
+//       );
+
+//       setTransport(
+//         invheader.Transport != null ? String(invheader.Transport) : "",
+//       );
+
+//       // --------------------------------------------------
+//       // 8. LOAD SAVED ROWS
+//       // --------------------------------------------------
+//       setRows(mappedRows);
+
+//       // --------------------------------------------------
+//       // 9. LOAD FIRST PRODUCT INTO EDIT INPUT
+//       // --------------------------------------------------
+//       if (mappedRows.length > 0) {
+//         const firstRow = mappedRows[0];
+
+//         setSelectedProductId(
+//           firstRow.ProductId ? String(firstRow.ProductId) : "",
+//         );
+
+//         setSelectedProductName(firstRow.ProductName || "");
+
+//         setProductName(firstRow.ProductName || "");
+
+//         setQuantity(firstRow.Quantity != null ? String(firstRow.Quantity) : "");
+
+//         setRate(firstRow.Rate != null ? String(firstRow.Rate) : "");
+
+//         SetAmount(firstRow.Amount != null ? String(firstRow.Amount) : "");
+
+//         setDiscount(
+//           firstRow.DiscountAmt != null ? String(firstRow.DiscountAmt) : "",
+//         );
+
+//         setCGST(firstRow.CGSTPercentage || 0);
+//         setCGSTAmount(firstRow.CGSTAmount || 0);
+
+//         setSGST(firstRow.SGSTPercentage || 0);
+//         setSGSTAmount(firstRow.SGSTAmount || 0);
+
+//         setIGST(firstRow.IGSTPercentage || 0);
+//         setIGSTAmount(firstRow.IGSTAmount || 0);
+//       } else {
+//         setSelectedProductId("");
+//         setSelectedProductName("");
+//         setProductName("");
+//         setQuantity("");
+//         setRate("");
+//         SetAmount("");
+//       }
+
+//       // --------------------------------------------------
+//       // 10. EDIT MODE
+//       // --------------------------------------------------
+//       setEditId(rowId);
+//       setIsEditing(true);
+//       setIsDrawerOpen(true);
+
+//       console.log("EDIT ID:", rowId);
+//       console.log("EDIT HEADER:", invheader);
+//       console.log("EDIT ROWS:", mappedRows);
+//     } catch (error) {
+//       console.error("EDIT INVOICE ERROR:", error);
+//       toast.error("Unable to load saved invoice.");
+//     }
+//   };
+
+//   //table
+//   const [pageNo, setPageNo] = useState(1);
+//   //for preview
+//   const [previewOpen, setPreviewOpen] = useState(false);
+//   const [previewData, setPreviewData] = useState(null);
+
+//   const columns = useMemo(
+//     () => [
+//       // ==================================================
+//       // BILL NO
+//       // ==================================================
+//       {
+//         accessorKey: "InvoiceNo",
+//         header: "Bill No",
+//         size: 80,
+
+//         Cell: ({ cell }) => <span>{cell.getValue() || "-"}</span>,
+//       },
+
+//       // ==================================================
+//       // INVOICE DATE
+//       // ==================================================
+//       {
+//         accessorKey: "InvoiceDate.date",
+//         header: "Invoice Date",
+//         size: 50,
+
+//         Cell: ({ cell }) => (
+//           <span>
+//             {cell.getValue()
+//               ? moment(cell.getValue()).format("DD-MM-YYYY")
+//               : "-"}
+//           </span>
+//         ),
+//       },
+
+//       // ==================================================
+//       // CUSTOMER NAME
+//       // ==================================================
+//       {
+//         header: "Customer Name",
+//         size: 100,
+
+//         accessorFn: (row) => row?.accountDetails?.AccountName || "N/A",
+
+//         Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+//       },
+
+//       // ==================================================
+//       // CATEGORY
+//       // ==================================================
+//       {
+//         header: "Category",
+//         size: 130,
+
+//         accessorFn: (row) => {
+//           const customerType = String(
+//             row?.accountDetails?.CustomerType || row?.CustomerType || "",
+//           )
+//             .trim()
+//             .toUpperCase();
+
+//           if (customerType === "R") {
+//             return "Retailer";
+//           }
+
+//           if (customerType === "D") {
+//             return "Dealer";
+//           }
+
+//           if (customerType === "C") {
+//             return "Caterers";
+//           }
+
+//           return "-";
+//         },
+
+//         Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+//       },
+
+//       // ==================================================
+//       // TOTAL
+//       // ==================================================
+//       {
+//         accessorKey: "Total",
+//         header: "Total",
+//         size: 50,
+//       },
+
+//       // ==================================================
+//       // ACTIONS
+//       // ==================================================
+//       {
+//         header: "Actions",
+//         size: 200,
+
+//         Cell: ({ row }) => (
+//           <Box display="flex" gap={1}>
+//             {/* EDIT */}
+//             <Button
+//               sx={{
+//                 background: "var(--primary-color)",
+//               }}
+//               variant="contained"
+//               size="small"
+//               onClick={() => {
+//                 handleEdit(row);
+//               }}
+//             >
+//               Edit
+//             </Button>
+
+//             {/* PREVIEW */}
+//             <Button
+//               variant="contained"
+//               sx={{
+//                 background: "var(--complementary-color)",
+//               }}
+//               size="small"
+//               onClick={async () => {
+//                 // तुमचा existing Preview code
+//               }}
+//             >
+//               Preview
+//             </Button>
+//           </Box>
+//         ),
+//       },
+
+//       // ==================================================
+//       // REMARK / EDITED
+//       // SAME LOGIC AS SALES ENTRY
+//       // ==================================================
+//       {
+//         header: "Remark",
+//         size: 140,
+
+//         accessorFn: (row) => {
+//           const createdOn = row?.CreatedOn?.date || row?.CreatedOn || "";
+
+//           const updatedOn = row?.UpdatedOn?.date || row?.UpdatedOn || "";
+
+//           const updateCount = Number(row?.UpdateCount ?? 0);
+
+//           const isEdited =
+//             updateCount > 1 ||
+//             (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+//           return isEdited ? "Edited" : "-";
+//         },
+
+//         Cell: ({ row }) => {
+//           const invoice = row.original;
+
+//           const createdOn =
+//             invoice?.CreatedOn?.date || invoice?.CreatedOn || "";
+
+//           const updatedOn =
+//             invoice?.UpdatedOn?.date || invoice?.UpdatedOn || "";
+
+//           const updateCount = Number(invoice?.UpdateCount ?? 0);
+
+//           const isEdited =
+//             updateCount > 1 ||
+//             (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+//           // ==========================================
+//           // NOT EDITED
+//           // ==========================================
+//           if (!isEdited) {
+//             return (
+//               <Typography
+//                 sx={{
+//                   color: "#999",
+//                   fontWeight: 500,
+//                 }}
+//               >
+//                 -
+//               </Typography>
+//             );
+//           }
+
+//           // ==========================================
+//           // EDITED
+//           // ==========================================
+//           return (
+//             <Button
+//               variant="contained"
+//               size="small"
+//               sx={{
+//                 background: "var(--primary-color)",
+//                 minWidth: "90px",
+//                 fontWeight: 600,
+//               }}
+//               onClick={() => {
+//                 handleInvoiceHistoryClick(invoice);
+//               }}
+//             >
+//               EDITED
+//             </Button>
+//           );
+//         },
+//       },
+//     ],
+
+//     // ==================================================
+//     // DEPENDENCIES
+//     // ==================================================
+//     [invoiceheaders, pageNo, productOptions, invoiceHistoryStatus],
+//   );
+
+//   useEffect(() => {
+//     fetchInvoiceHeader();
+//   }, [pageNo]);
+
+//   // =========================
+//   // Integration
+//   // =========================
+
+//   // Invoice Details
+//   const [invoiceNo, setInvoiceNo] = useState("");
+//   const [invoiceDate, setInvoiceDate] = useState("");
+
+//   const [phone, setPhone] = useState("");
+
+//   const [device, setDevice] = useState("");
+
+//   const [billFor, setBillFor] = useState("");
+
+//   const [machineID, setMachineID] = useState("");
+
+//   const [machineOptions, setMachineOptions] = useState([]);
+
+//   const [isGST, setIsGST] = useState(false);
+
+//   // Product Details
+//   const [product, setProduct] = useState("");
+//   const [quantity, setQuantity] = useState("");
+//   const [rate, setRate] = useState("");
+//   const [amount, SetAmount] = useState("");
+
+//   // Product Options
+
+//   // Keyboard navigation refs
+//   const quantityRef = useRef(null);
+//   const rateRef = useRef(null);
+//   const productRef = useRef(null);
+
+//   // Tax Details
+//   const [cgst, setCGST] = useState(0);
+//   const [cgstAmount, setCGSTAmount] = useState(0);
+
+//   const [sgst, setSGST] = useState(0);
+//   const [sgstAmount, setSGSTAmount] = useState(0);
+
+//   const [igst, setIGST] = useState(0);
+//   const [igstAmount, setIGSTAmount] = useState(0);
+
+//   // =========================
+//   // Payment Details
+//   // =========================
+//   const [paymentMode, setPaymentMode] = useState(null);
+
+//   // Received Amount
+//   const [receivedAmount, setReceivedAmount] = useState("");
+
+//   // Mix Payment
+//   const [cashAmount, setCashAmount] = useState("");
+//   const [onlineAmount, setOnlineAmount] = useState("");
+
+//   // Transport
+//   const [transport, setTransport] = useState("");
+
+//   const [productName, setProductName] = useState("");
+
+//   // =========================
+//   // Customer / Account
+//   // =========================
+
+//   const [accountOptions, setAccountOptions] = useState([]);
+//   const [selectedAccount, setSelectedAccount] = useState("");
+//   const [selectedCustomerName, setSelectedCustomerName] = useState("");
+
+//   const [selectedCustomerAddress, setSelectedCustomerAddress] = useState("");
+
+//   const [newCustomerAddress, setNewCustomerAddress] = useState("");
+
+//   const [acctGSTNo, setacctGSTNo] = useState("");
+
+//   const getDeviceForLoggedInUser = () => {
+//     const userRole = String(sessionStorage.getItem("UserRole") || "")
+//       .trim()
+//       .toUpperCase();
+
+//     if (userRole === "SALE") {
+//       return "Device1";
+//     }
+
+//     if (userRole === "SALE2") {
+//       return "Device2";
+//     }
+
+//     return "";
+//   };
+
+//   useEffect(() => {
+//     // fetchAccounts();
+
+//     fetchProduct();
+
+//     fetchMachines();
+
+//     fetchInvoiceHeader();
+
+//     setDevice(getDeviceForLoggedInUser());
+//   }, []);
+
+//   //fetch customer from  account table
+//   const fetchProduct = async () => {
+//     try {
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster&RateType=Caterer",
+//       );
+
+//       const data = await response.json();
+
+//       console.log("CATERER PRODUCT API RESPONSE:", data);
+
+//       productvalidation(data);
+//     } catch (error) {
+//       console.error("Error fetching caterer products:", error);
+//     }
+//   };
+
+//   // ======================================================
+//   // FETCH MACHINES
+//   // ======================================================
+
+//   const fetchMachines = async () => {
+//     try {
+//       const response = await axios.get(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=Machines",
+//       );
+
+//       console.log("Machines API Response:", response.data);
+
+//       const data = Array.isArray(response.data) ? response.data : [];
+
+//       const options = data.map((machine) => ({
+//         value: machine.Id,
+//         label: machine.MachineName || machine.Name || `Machine ${machine.Id}`,
+//       }));
+
+//       setMachineOptions(options);
+//     } catch (error) {
+//       console.error("Error fetching machines:", error);
+//     }
+//   };
+
+//   const [selectedProductID, setSelectedProductId] = useState("");
+//   const [selectedProductName, setSelectedProductName] = useState(null);
+
+//   const productvalidation = (data) => {
+//     const options = data
+//       .filter(
+//         (account) =>
+//           account?.ProductName && String(account.ProductName).trim() !== "",
+//       )
+//       .map((account) => ({
+//         value: account?.Id,
+//         label: account?.ProductName,
+//         cgst: account?.CGSTPercentage,
+//         sgst: account?.SGSTPercentage,
+//         igst: account?.IGSTPercentage,
+
+//         // Caterer API मधून automatic Caterer Rate
+//         purchaseRate: account?.Rate,
+//       }));
+
+//     setProductOptions(options);
+//   };
+
+//   const resetForm = () => {
+//     // =========================
+//     // Invoice Details
+//     // =========================
+//     setInvoiceNo("");
+//     setInvoiceDate(new Date());
+//     setPhone("");
+
+//     // Dynamic Device of logged-in user
+//     setDevice(getDeviceForLoggedInUser());
+
+//     // =========================
+//     // NEW BILL HEADER FIELDS
+//     // =========================
+//     setBillFor("");
+//     setMachineID("");
+//     setIsGST(false);
+
+//     // =========================
+//     // Customer
+//     // =========================
+//     setSelectedAccount("");
+//     setSelectedCustomerName("");
+//     setSelectedCustomerAddress("");
+
+//     // =========================
+//     // Product Details
+//     // =========================
+//     setProduct("");
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+
+//     // =========================
+//     // Discount
+//     // =========================
+//     setDiscount("");
+//     setBaseAmount(0);
+
+//     // =========================
+//     // Tax Details
+//     // =========================
+//     setCGST("");
+//     setCGSTAmount("");
+
+//     setSGST("");
+//     setSGSTAmount("");
+
+//     setIGST("");
+//     setIGSTAmount("");
+
+//     // =========================
+//     // Payment Details
+//     // =========================
+//     setPaymentMode("");
+//     setReceivedAmount("");
+//     setBalanceDue(0);
+//     setPreviousBalanceDue(0);
+//     setCashAmount("");
+//     setOnlineAmount("");
+
+//     // =========================
+//     // Transport
+//     // =========================
+//     setTransport("");
+
+//     // =========================
+//     // Validation Errors
+//     // =========================
+//     const newErrors = {
+//       invoiceDate: "",
+//       selectedAccount: "",
+//       paymentMode: "",
+//       rows: "",
+//       phone: "",
+//     };
+
+//     // जर errors साठी state असेल तर:
+//     // setErrors(newErrors);
+
+//     // =========================
+//     // Customer Search
+//     // =========================
+//     setAccountOptions([]);
+//     setAccountName("");
+//     setText("");
+//     setShowDropdown(false);
+
+//     // =========================
+//     // Product Table
+//     // =========================
+//     setRows([]);
+
+//     // =========================
+//     // Product Selection
+//     // =========================
+//     setSelectedProductId("");
+//     setSelectedProductName("");
+//     setProductName("");
+
+//     // =========================
+//     // Editing Row
+//     // =========================
+//     setEditingRow(null);
+
+//     // =========================
+//     // Tax / Amount Summary
+//     // =========================
+//     setSubTotalCal(0);
+//     setCgstTotal(0);
+//     setSgstTotal(0);
+//     setIgstTotal(0);
+//     setTotal(0);
+//   };
+
+//   const handleSubmit = async (e, shouldPrint = false) => {
+//     // ======================================================
+//     // 0. PREVENT DEFAULT FORM / BROWSER ACTION
+//     // ======================================================
+
+//     if (e) {
+//       e.preventDefault();
+//       e.stopPropagation();
+//     }
+
+//     // ======================================================
+//     // 1. PREVENT DOUBLE SUBMIT
+//     // ======================================================
+
+//     if (isSubmittingRef.current) {
+//       console.log("SUBMIT ALREADY IN PROGRESS - IGNORING");
+//       return;
+//     }
+
+//     // ======================================================
+//     // 2. MAIN FORM VALIDATION
+//     // ======================================================
+
+//     if (!validateForm()) {
+//       console.log("FORM VALIDATION FAILED");
+//       return;
+//     }
+
+//     // ======================================================
+//     // 3. RECEIVED AMOUNT VALIDATION
+//     // ======================================================
+
+//     if (!validateReceivedAmount()) {
+//       console.log("RECEIVED AMOUNT VALIDATION FAILED");
+//       isSubmittingRef.current = false;
+//       return;
+//     }
+
+//     // ======================================================
+//     // 4. MIX PAYMENT VALIDATION
+//     // ======================================================
+
+//     if (!validatePaymentSplit()) {
+//       console.log("PAYMENT VALIDATION FAILED");
+//       isSubmittingRef.current = false;
+//       return;
+//     }
+
+//     // ======================================================
+//     // 5. LOCK SUBMIT
+//     // ======================================================
+
+//     isSubmittingRef.current = true;
+
+//     // ======================================================
+//     // 6. OPEN PRINT WINDOW ONLY WHEN PRINT IS REQUESTED
+//     // ======================================================
+
+//     let printWindow = null;
+
+//     try {
+//       if (shouldPrint) {
+//         printWindow = window.open("", "_blank");
+
+//         if (!printWindow) {
+//           toast.error("Please allow popups for printing.");
+//           isSubmittingRef.current = false;
+//           return;
+//         }
+
+//         // ======================================================
+//         // TEMPORARY PRINT WINDOW CONTENT
+//         // ======================================================
+
+//         printWindow.document.write(`
+//         <!DOCTYPE html>
+//         <html>
+//           <head>
+//             <title>Preparing Invoice...</title>
+//           </head>
+
+//           <body
+//             style="
+//               font-family: Arial;
+//               display: flex;
+//               justify-content: center;
+//               align-items: center;
+//               height: 100vh;
+//               margin: 0;
+//             "
+//           >
+//             <h3>Preparing invoice for printing...</h3>
+//           </body>
+//         </html>
+//       `);
+
+//         printWindow.document.close();
+//       }
+
+//       // ======================================================
+//       // 7. FORMAT INVOICE DATE
+//       // ======================================================
+
+//       const formattedInvoicedate = moment(invoiceDate).format("YYYY-MM-DD");
+
+//       // ======================================================
+//       // 8. INVOICE HEADER DATA
+//       // ======================================================
+
+//       const invoiceheaderdata = {
+//         Id: isEditing ? editId : "",
+
+//         InvoiceNo: invoiceNo,
+
+//         InvoiceDate: formattedInvoicedate,
+
+//         AccountId: selectedAccount ? selectedAccount : customerName,
+
+//         ContactNo: phone,
+
+//         // ⭐ Dynamic logged-in user's device
+//         Device: device,
+
+//         BillFor: billFor || "",
+
+//         MachineID: machineID ? parseInt(machineID, 10) : 0,
+
+//         IsGST: isGST ? 1 : 0,
+
+//         PaymentMode: paymentMode || "",
+
+//         CashAmount: parseFloat(cashAmount) || 0,
+
+//         OnlineAmount: parseFloat(onlineAmount) || 0,
+
+//         Discount: parseFloat(discount) || 0,
+
+//         Transport: parseFloat(transport) || 0,
+
+//         CGSTAmount: parseFloat(cgstTotal) || 0,
+
+//         SGSTAmount: parseFloat(sgstTotal) || 0,
+
+//         IGSTAmount: parseFloat(igstTotal) || 0,
+
+//         Total: parseFloat(total) || 0,
+
+//         ReceivedAmount: parseFloat(receivedAmount) || 0,
+
+//         SubTotal: parseFloat(subTotalcal) || 0,
+
+//         // ⭐ Dynamic logged-in user
+//         CreatedBy: !isEditing ? userId : undefined,
+
+//         // ⭐ Dynamic logged-in user during edit
+//         UpdatedBy: isEditing ? userId : undefined,
+//       };
+
+//       // ======================================================
+//       // 9. CHECK DATA BEFORE API CALL
+//       // ======================================================
+
+//       console.log("========== INVOICE HEADER DATA TO API ==========");
+
+//       console.log("PaymentMode:", invoiceheaderdata.PaymentMode);
+
+//       console.log("CashAmount:", invoiceheaderdata.CashAmount);
+
+//       console.log("OnlineAmount:", invoiceheaderdata.OnlineAmount);
+
+//       console.log("Total:", invoiceheaderdata.Total);
+
+//       console.log("ReceivedAmount:", invoiceheaderdata.ReceivedAmount);
+
+//       console.log("INVOICE HEADER DATA TO API:", invoiceheaderdata);
+
+//       console.log("===============================================");
+
+//       // ======================================================
+//       // 10. SELECT HEADER API
+//       // ======================================================
+
+//       const invoiceurl = isEditing
+//         ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoiceheader.php"
+//         : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoiceheader.php";
+
+//       console.log("Saving invoice using:", invoiceurl);
+
+//       // ======================================================
+//       // 11. SAVE INVOICE HEADER
+//       // ======================================================
+
+//       const response = await axios.post(
+//         invoiceurl,
+//         qs.stringify(invoiceheaderdata),
+//         {
+//           headers: {
+//             "Content-Type": "application/x-www-form-urlencoded",
+//           },
+//         },
+//       );
+
+//       console.log("Invoice Header Response:", response.data);
+
+//       // ======================================================
+//       // 12. CALCULATE CURRENT INVOICE DUE
+//       // ======================================================
+
+//       const currentDueForSave = Math.max(
+//         (parseFloat(total) || 0) - (parseFloat(receivedAmount) || 0),
+//         0,
+//       );
+
+//       // ======================================================
+//       // 13. GET PREVIOUS CUSTOMER DUE
+//       //
+//       // ALL INVOICES
+//       // CURRENT EDITED INVOICE EXCLUDED
+//       // NO DATE FILTER
+//       // ======================================================
+
+//       const previousDueForSave = await fetchPreviousBalance(
+//         selectedAccount,
+//         isEditing ? editId : null,
+//       );
+
+//       // ======================================================
+//       // 14. TOTAL CUSTOMER OUTSTANDING
+//       // ======================================================
+
+//       const totalOutstandingForSave =
+//         Number(previousDueForSave || 0) + Number(currentDueForSave || 0);
+
+//       console.log("========== SAVE BALANCE ==========");
+
+//       console.log("Previous Due:", previousDueForSave);
+
+//       console.log("Current Bill Due:", currentDueForSave);
+
+//       console.log("Total Outstanding:", totalOutstandingForSave);
+
+//       console.log("=================================");
+
+//       // ======================================================
+//       // 15. UPDATE DISPLAY BALANCE
+//       // ======================================================
+
+//       setPreviousBalanceDue(Number(Number(previousDueForSave || 0).toFixed(2)));
+
+//       setBalanceDue(Number(Number(currentDueForSave || 0).toFixed(2)));
+
+//       // ======================================================
+//       // 16. GET INVOICE ID
+//       // ======================================================
+
+//       const invoiceId = isEditing ? editId : parseInt(response.data.Id, 10);
+
+//       const savedInvoiceNo = isEditing ? invoiceNo : response.data.InvoiceNo;
+
+//       console.log("Invoice ID:", invoiceId);
+//       console.log("Saved Invoice No:", savedInvoiceNo);
+
+//       if (!invoiceId) {
+//         throw new Error("Invoice ID was not received from server.");
+//       }
+
+//       // ======================================================
+//       // 17. SAVE INVOICE DETAILS
+//       // ======================================================
+
+//       for (const [index, row] of rows.entries()) {
+//         const rowData = {
+//           Id: row.Id ? parseInt(row.Id, 10) : "",
+
+//           InvoiceId: parseInt(invoiceId, 10),
+
+//           SerialNo: index + 1,
+
+//           ProductId: parseInt(row.ProductId, 10),
+
+//           Quantity: parseFloat(row.Quantity) || 0,
+
+//           Rate: parseFloat(row.Rate) || 0,
+
+//           Amount: parseFloat(row.Amount) || 0,
+
+//           CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(row.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(row.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+//         };
+
+//         console.log(`Invoice Detail ${index + 1}:`, rowData);
+
+//         const invoicdedetailurl = row.Id
+//           ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoicedetail.php"
+//           : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoicedetail.php";
+
+//         try {
+//           await axios.post(invoicdedetailurl, qs.stringify(rowData), {
+//             headers: {
+//               "Content-Type": "application/x-www-form-urlencoded",
+//             },
+//           });
+//         } catch (error) {
+//           console.error("Invoice detail save error:", error);
+
+//           throw error;
+//         }
+//       }
+
+//       // ======================================================
+//       // 18. CUSTOMER NAME FOR PRINT
+//       // ======================================================
+
+//       const customerNameForPrint =
+//         accountOptions.find(({ Id }) => String(Id) === String(selectedAccount))
+//           ?.AccountName ||
+//         accountName ||
+//         "-";
+
+//       console.log("Customer Name For Print:", customerNameForPrint);
+
+//       // ======================================================
+//       // 19. PREPARE PRINT DATA
+//       // ======================================================
+
+//       const printData = {
+//         ...invoiceheaderdata,
+
+//         // Invoice ID
+//         Id: invoiceId,
+
+//         // ACTUAL INVOICE NUMBER
+//         InvoiceNo: savedInvoiceNo,
+
+//         // ====================================================
+//         // BALANCE
+//         // ====================================================
+
+//         PreviousBalanceDue: Number(Number(previousDueForSave || 0).toFixed(2)),
+
+//         CurrentInvoiceDue: Number(Number(currentDueForSave || 0).toFixed(2)),
+
+//         BalanceDue: Number(Number(totalOutstandingForSave || 0).toFixed(2)),
+
+//         // ====================================================
+//         // DEVICE
+//         // ====================================================
+
+//         Device: device || "-",
+
+//         // ====================================================
+//         // PAYMENT MODE
+//         // ====================================================
+
+//         PaymentMode: paymentMode || "-",
+
+//         // ====================================================
+//         // CUSTOMER
+//         // ====================================================
+
+//         accountDetails: {
+//           AccountName: customerNameForPrint,
+//         },
+
+//         customerName: customerNameForPrint,
+
+//         // ====================================================
+//         // INVOICE DETAILS
+//         // ====================================================
+
+//         invdetail: rows.map((row) => ({
+//           ...row,
+
+//           ProductName:
+//             row.ProductName ||
+//             productOptions.find(
+//               (option) => String(option.value) === String(row.ProductId),
+//             )?.label ||
+//             "Unknown",
+
+//           Quantity: parseFloat(row.Quantity) || 0,
+
+//           Rate: parseFloat(row.Rate) || 0,
+
+//           Amount: parseFloat(row.Amount) || 0,
+
+//           DiscountAmt: parseFloat(row.DiscountAmt) || 0,
+
+//           CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(row.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(row.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+//         })),
+//       };
+
+//       // ======================================================
+//       // 20. PRINT DATA CONSOLE
+//       // ======================================================
+
+//       console.log("PRINT DATA:", printData);
+
+//       setPreviewData(printData);
+
+//       // ======================================================
+//       // 21. GENERATE PDF
+//       //
+//       // IMPORTANT:
+//       // generatePDF ONLY ONCE
+//       // ======================================================
+
+//       if (shouldPrint && printWindow) {
+//         console.log("CALLING generatePDF...");
+
+//         generatePDF(printData, printWindow);
+//       } else {
+//         console.log("SAVE ONLY - PRINT NOT REQUESTED");
+//       }
+
+//       // ======================================================
+//       // 22. SUCCESS MESSAGE
+//       // ======================================================
+
+//       toast.success(
+//         isEditing
+//           ? "Sales Entry- Caterers Updated successfully!"
+//           : "Sales Entry- Caterers Created successfully!",
+//       );
+
+//       // ======================================================
+//       // 23. CLOSE DRAWER
+//       // ======================================================
+
+//       setIsDrawerOpen(false);
+
+//       // ======================================================
+//       // 24. RESET FORM
+//       // ======================================================
+
+//       resetForm();
+
+//       // ======================================================
+//       // 25. REFRESH TABLE DATA
+//       // ======================================================
+
+//       await fetchInvoiceHeader();
+//     } catch (error) {
+//       // ======================================================
+//       // ERROR
+//       // ======================================================
+
+//       console.error("Error submitting invoice:", error);
+
+//       // ======================================================
+//       // CLOSE PRINT WINDOW IF SAVE FAILED
+//       // ======================================================
+
+//       if (printWindow && !printWindow.closed) {
+//         printWindow.close();
+//       }
+
+//       // ======================================================
+//       // CLOSE DRAWER
+//       // ======================================================
+
+//       setIsDrawerOpen(false);
+
+//       // ======================================================
+//       // ERROR MESSAGE
+//       // ======================================================
+
+//       toast.error(
+//         isEditing
+//           ? "Sales Entry- Caterers Updated unsuccessfully!"
+//           : "Sales Entry- Caterers unsuccessfully!",
+//       );
+//     } finally {
+//       // ======================================================
+//       // ALWAYS UNLOCK SUBMIT
+//       // ======================================================
+
+//       isSubmittingRef.current = false;
+
+//       console.log("SUBMIT LOCK RELEASED");
+//     }
+//   };
+
+//   // ======================================================
+//   // CTRL + S = SAVE ONLY
+//   // ======================================================
+
+//   useEffect(() => {
+//     const handleCtrlS = (event) => {
+//       // Ctrl + S
+//       if (event.ctrlKey && event.key.toLowerCase() === "s") {
+//         event.preventDefault();
+//         event.stopPropagation();
+
+//         // Drawer बंद असेल तर काही करू नका
+//         if (!isDrawerOpen) {
+//           return;
+//         }
+
+//         // Double submit prevent करण्यासाठी
+//         if (event.repeat) {
+//           return;
+//         }
+
+//         console.log("CTRL + S PRESSED - SAVE ONLY");
+
+//         // Save only - NO PRINT
+//         handleSubmit(event, false);
+//       }
+//     };
+
+//     // Capture phase मध्ये listener
+//     window.addEventListener("keydown", handleCtrlS, true);
+
+//     return () => {
+//       window.removeEventListener("keydown", handleCtrlS, true);
+//     };
+//   }, [isDrawerOpen]);
+
+//   const handleQuantityChange = (e) => {
+//     const qty = e.target.value;
+//     setQuantity(qty);
+//     calculateAmount(qty, rate);
+//   };
+
+//   const handleRateChange = (e) => {
+//     const rt = e.target.value;
+//     setRate(rt);
+//     // console.log("rateee", rate);
+//     calculateAmount(quantity, rt);
+//   };
+
+//   ///  for discount Amount
+//   const [discount, setDiscount] = useState("");
+
+//   // const calculateAmount = (qty, rt) => {
+//   //   const qtyNum = parseFloat(qty) || 0;
+//   //   const rateNum = parseFloat(rt) || 0;
+//   //   const amt = qtyNum * rateNum;
+//   //   SetAmount(amt);
+//   //   calculateCgstAmount(cgst, amt);
+//   //   calculateSgstAmount(sgst, amt);
+//   //   calculateIgstAmount(igst, amt);
+//   // };
+
+//   const [baseAmount, setBaseAmount] = useState(0);
+
+//   const calculateAmount = (qty, rt) => {
+//     const qtyNum = parseFloat(qty) || 0;
+
+//     const rateNum = parseFloat(rt) || 0;
+
+//     const baseAmt = qtyNum * rateNum;
+
+//     setBaseAmount(baseAmt);
+
+//     SetAmount(baseAmt);
+
+//     calculateCgstAmount(cgst, baseAmt);
+
+//     calculateSgstAmount(sgst, baseAmt);
+
+//     calculateIgstAmount(igst, baseAmt);
+//   };
+
+//   const calculateSgstAmount = (sgstValue, amt) => {
+//     let sgstNum = parseFloat(sgstValue) || 0;
+//     let sgstAmt = (sgstNum * amt) / 100;
+//     setSGSTAmount(sgstAmt);
+//   };
+
+//   const calculateCgstAmount = (cgstValue, amt) => {
+//     let cgstNum = parseFloat(cgstValue) || 0;
+//     let cgstAmt = (cgstNum * amt) / 100;
+//     setCGSTAmount(cgstAmt);
+//   };
+
+//   const calculateIgstAmount = (igstValue, amt) => {
+//     let igstNum = parseFloat(igstValue) || 0;
+//     let igstAmt = (igstNum * amt) / 100;
+//     setIGSTAmount(igstAmt);
+//   };
+
+//   const handleAddRow = () => {
+//     //  console.log("Selected Product ID:", selectedProductID);
+//     //  console.log("Selected Product Name:", selectedProductName);
+
+//     let newRow = {
+//       // id: rows.length + 1,
+//       InvoiceId: null,
+//       ProductId: selectedProductID,
+//       ProductName: productName,
+//       Quantity: quantity,
+//       Rate: rate,
+//       Amount: amount,
+//       CGSTPercentage: cgst,
+//       CGSTAmount: cgstAmount,
+//       SGSTPercentage: sgst,
+//       SGSTAmount: sgstAmount,
+//       IGSTPercentage: igst,
+//       IGSTAmount: igstAmount,
+//       DiscountAmt: discount,
+//     };
+//     // console.log("newRow", newRow);
+//     // Update rows state and ensure the new row is added to the table
+//     setRows((prevRows) => [...prevRows, newRow]);
+//   };
+
+//   const [subTotalcal, setSubTotalCal] = useState(0);
+//   const [cgstTotal, setCgstTotal] = useState(0);
+//   const [igstTotal, setIgstTotal] = useState(0);
+//   const [sgstTotal, setSgstTotal] = useState(0);
+//   const [total, setTotal] = useState(0);
+
+//   const received = parseFloat(receivedAmount) || 0;
+//   const grandTotal = parseFloat(total) || 0;
+
+//   const difference = received - grandTotal;
+
+//   const refund = difference > 0 ? difference : 0;
+
+//   // Current invoice balance only
+//   const currentInvoiceBalanceDue = difference < 0 ? Math.abs(difference) : 0;
+
+//   const handleReceivedAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     // Empty value
+//     if (value === "") {
+//       setReceivedAmount("");
+
+//       if (paymentMode === "C") {
+//         setCashAmount("");
+//         setOnlineAmount("");
+//       }
+
+//       if (paymentMode === "O") {
+//         setCashAmount("");
+//         setOnlineAmount("");
+//       }
+
+//       // Mix मध्ये cash + online manually enter होतात
+//       return;
+//     }
+
+//     const receivedValue = parseFloat(value);
+
+//     // Negative amount not allowed
+//     if (receivedValue < 0) {
+//       return;
+//     }
+
+//     // Main received amount
+//     setReceivedAmount(value);
+
+//     // Cash payment
+//     if (paymentMode === "C") {
+//       setCashAmount(value);
+//       setOnlineAmount("");
+//     }
+
+//     // Online payment
+//     if (paymentMode === "O") {
+//       setOnlineAmount(value);
+//       setCashAmount("");
+//     }
+
+//     // Mix payment
+//     // Cash + Online fields स्वतः भरले जातील
+//   };
+
+//   const handleCashAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     if (Number(value) < 0) {
+//       return;
+//     }
+
+//     setCashAmount(value);
+
+//     const cash = Number(value) || 0;
+//     const online = Number(onlineAmount) || 0;
+
+//     setReceivedAmount((cash + online).toString());
+//   };
+
+//   const handleOnlineAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     if (Number(value) < 0) {
+//       return;
+//     }
+
+//     setOnlineAmount(value);
+
+//     const cash = Number(cashAmount) || 0;
+//     const online = Number(value) || 0;
+
+//     setReceivedAmount((cash + online).toString());
+//   };
+
+//   const validatePaymentSplit = () => {
+//     if (paymentMode !== "M") {
+//       return true;
+//     }
+
+//     const received = parseFloat(receivedAmount) || 0;
+//     const cash = parseFloat(cashAmount) || 0;
+//     const online = parseFloat(onlineAmount) || 0;
+
+//     const splitTotal = cash + online;
+
+//     if (splitTotal !== received) {
+//       toast.error(`Cash + Online amount must be ₹${received.toFixed(2)}`);
+
+//       return false;
+//     }
+
+//     return true;
+//   };
+
+//   const isPaid = difference === 0 && received > 0;
+
+//   const calculations = () => {
+//     // =========================
+//     // SUBTOTAL
+//     // =========================
+
+//     const subtotal = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.Amount) || 0),
+//       0,
+//     );
+
+//     setSubTotalCal(subtotal.toFixed(2));
+
+//     // =========================
+//     // GST TOTALS
+//     // Keep internally for backend
+//     // =========================
+
+//     const totalCGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.CGSTAmount) || 0),
+//       0,
+//     );
+
+//     setCgstTotal(totalCGST.toFixed(2));
+
+//     const totalSGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.SGSTAmount) || 0),
+//       0,
+//     );
+
+//     setSgstTotal(totalSGST.toFixed(2));
+
+//     const totalIGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.IGSTAmount) || 0),
+//       0,
+//     );
+
+//     setIgstTotal(totalIGST.toFixed(2));
+
+//     // =========================
+//     // DISCOUNT
+//     // =========================
+
+//     const discountValue = parseFloat(discount) || 0;
+
+//     // =========================
+//     // TRANSPORT
+//     // =========================
+
+//     const transportValue = parseFloat(transport) || 0;
+
+//     // =========================
+//     // FINAL TOTAL
+//     // =========================
+
+//     const totalBeforeDiscount = subtotal;
+
+//     const afterDiscount = Math.max(totalBeforeDiscount - discountValue, 0);
+
+//     const grandTotal = afterDiscount + transportValue;
+
+//     setTotal(grandTotal.toFixed(2));
+//   };
+
+//   useEffect(() => {
+//     calculations();
+//   }, [rows, transport, discount]);
+//   //
+//   const [anchorEl1, setAnchorEl1] = useState(null);
+//   const [selectedRow, setSelectedRow] = useState(null);
+
+//   const handleMenutableOpen = (event, index) => {
+//     setAnchorEl1(event.currentTarget);
+//     setSelectedRow(index);
+//   };
+
+//   const handletableMenuClose = () => {
+//     setAnchorEl1(null);
+//     setSelectedRow(null);
+//   };
+
+//   const [editingRow, setEditingRow] = useState(null);
+
+//   const handleEditRow = (index) => {
+//     const row = rows[index];
+
+//     setEditingRow(index);
+
+//     setSelectedProductId(row.ProductId);
+//     setProductName(row.ProductName);
+
+//     const q = row.Quantity || "";
+//     const r = row.Rate || "";
+
+//     setQuantity(q);
+//     setRate(r);
+
+//     const qtyNum = parseFloat(q) || 0;
+//     const rateNum = parseFloat(r) || 0;
+
+//     const baseAmt = qtyNum * rateNum;
+
+//     setBaseAmount(baseAmt);
+//     SetAmount(baseAmt);
+
+//     setCGST(row.CGSTPercentage || 0);
+//     setSGST(row.SGSTPercentage || 0);
+//     setIGST(row.IGSTPercentage || 0);
+
+//     calculateCgstAmount(row.CGSTPercentage || 0, baseAmt);
+
+//     calculateSgstAmount(row.SGSTPercentage || 0, baseAmt);
+
+//     calculateIgstAmount(row.IGSTPercentage || 0, baseAmt);
+//   };
+
+//   const handleDeleteRow = (index) => {
+//     const updatedRows = [...rows];
+//     updatedRows.splice(index, 1);
+//     setRows(updatedRows);
+//   };
+
+//   const addProductRow = (productData = null) => {
+//     const productId = productData?.value || selectedProductID;
+
+//     if (!productId) {
+//       return;
+//     }
+
+//     const productLabel = productData?.label || productName || "";
+
+//     const qty = parseFloat(productData?.quantity ?? quantity) || 1;
+
+//     const rt = parseFloat(productData?.rate ?? rate) || 0;
+
+//     const cgstValue = parseFloat(productData?.cgst ?? cgst) || 0;
+
+//     const sgstValue = parseFloat(productData?.sgst ?? sgst) || 0;
+
+//     const igstValue = parseFloat(productData?.igst ?? igst) || 0;
+
+//     // Product Amount
+//     const baseAmt = qty * rt;
+
+//     // GST amounts
+//     const cgstValueAmount = (cgstValue * baseAmt) / 100;
+
+//     const sgstValueAmount = (sgstValue * baseAmt) / 100;
+
+//     const igstValueAmount = (igstValue * baseAmt) / 100;
+
+//     const newRow = {
+//       Id: null,
+//       InvoiceId: null,
+
+//       ProductId: productId,
+//       ProductName: productLabel,
+
+//       Quantity: qty,
+//       Rate: rt,
+
+//       // Product level discount नाही
+//       Amount: baseAmt,
+
+//       DiscountAmt: 0,
+
+//       CGSTPercentage: cgstValue,
+//       CGSTAmount: cgstValueAmount,
+
+//       SGSTPercentage: sgstValue,
+//       SGSTAmount: sgstValueAmount,
+
+//       IGSTPercentage: igstValue,
+//       IGSTAmount: igstValueAmount,
+//     };
+
+//     setRows((prevRows) => [...prevRows, newRow]);
+
+//     // Clear only product-entry fields
+//     setSelectedProductId("");
+//     setSelectedProductName("");
+//     setProductName("");
+
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+
+//     setCGST("");
+//     setCGSTAmount("");
+
+//     setSGST("");
+//     setSGSTAmount("");
+
+//     setIGST("");
+//     setIGSTAmount("");
+//   };
+
+//   const handleSaveOrAddRow = () => {
+//     // ============================================
+//     // 1. PRODUCT VALIDATION
+//     // ============================================
+//     if (!selectedProductID) {
+//       toast.error("Please select a product.");
+
+//       setTimeout(() => {
+//         productRef.current?.focus();
+//       }, 0);
+
+//       return;
+//     }
+
+//     // ============================================
+//     // 2. QUANTITY
+//     // ============================================
+//     const finalQuantity = parseFloat(quantity) || 1;
+
+//     // ============================================
+//     // 3. RATE
+//     // ============================================
+//     const finalRate = parseFloat(rate) || 0;
+
+//     // ============================================
+//     // 4. AMOUNT
+//     // ============================================
+//     const finalAmount = finalQuantity * finalRate;
+
+//     // ============================================
+//     // 5. PRODUCT NAME
+//     // ============================================
+//     const selectedOption = productOptions.find(
+//       (option) => String(option.value) === String(selectedProductID),
+//     );
+
+//     const finalProductName = productName || selectedOption?.label || "";
+
+//     // ============================================
+//     // 6. EDIT EXISTING ROW
+//     // ============================================
+//     if (editingRow !== null) {
+//       const updatedRows = [...rows];
+
+//       updatedRows[editingRow] = {
+//         ...updatedRows[editingRow],
+
+//         ProductId: selectedProductID,
+
+//         ProductName: finalProductName,
+
+//         Quantity: finalQuantity,
+
+//         Rate: finalRate,
+
+//         Amount: finalAmount,
+
+//         // Internal GST values
+//         CGSTPercentage: cgst || 0,
+//         CGSTAmount: cgstAmount || 0,
+
+//         SGSTPercentage: sgst || 0,
+//         SGSTAmount: sgstAmount || 0,
+
+//         IGSTPercentage: igst || 0,
+//         IGSTAmount: igstAmount || 0,
+//       };
+
+//       setRows(updatedRows);
+
+//       // Editing completed
+//       setEditingRow(null);
+//     }
+
+//     // ============================================
+//     // 7. ADD NEW ROW
+//     // ============================================
+//     else {
+//       const newRow = {
+//         Id: null,
+//         InvoiceId: null,
+
+//         ProductId: selectedProductID,
+
+//         ProductName: finalProductName,
+
+//         Quantity: finalQuantity,
+
+//         Rate: finalRate,
+
+//         Amount: finalAmount,
+
+//         DiscountAmt: 0,
+
+//         // Internal GST values
+//         CGSTPercentage: cgst || 0,
+//         CGSTAmount: cgstAmount || 0,
+
+//         SGSTPercentage: sgst || 0,
+//         SGSTAmount: sgstAmount || 0,
+
+//         IGSTPercentage: igst || 0,
+//         IGSTAmount: igstAmount || 0,
+//       };
+
+//       setRows((prevRows) => [...prevRows, newRow]);
+//     }
+
+//     // ============================================
+//     // 8. CLEAR PRODUCT ENTRY FIELDS
+//     // ============================================
+//     resetFields();
+//   };
+//   const resetFields = () => {
+//     setSelectedProductId("");
+//     setProductName("");
+//     setSelectedProductName("");
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+//     setCGST("");
+//     setCGSTAmount("");
+//     setSGST("");
+//     setSGSTAmount("");
+//     setIGST("");
+//     setIGSTAmount("");
+//   };
+
+//   //get company master
+//   const [gstNo, setGstNO] = useState("");
+
+//   const fetchCompanyMaster = async () => {
+//     try {
+//       const response = await axios.get(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=companymaster",
+//         { maxBodyLength: Infinity },
+//       );
+//       console.log(response.data);
+//       console.log(" Company GST NO:", response.data[0].GSTNo);
+//       setGstNO(response.data[0].GSTNo);
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchCompanyMaster();
+//   }, []);
+
+//   //for serchApi
+//   const [showDropdown, setShowDropdown] = useState(false);
+//   const [text, setText] = useState("");
+
+//   // Customer dropdown outside-click reference
+//   const customerDropdownRef = useRef(null);
+
+//   const serchCustomers = async () => {
+//     try {
+//       const requestOptions = {
+//         method: "GET",
+//         redirect: "follow",
+//       };
+
+//       // 1. Search Account
+//       const response = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/get/searchaccount.php?TypeCode=C&Text=${encodeURIComponent(text)}`,
+//         requestOptions,
+//       );
+
+//       const result = await response.json();
+
+//       console.log("Caterers Customer API Response:", result);
+
+//       if (!Array.isArray(result)) {
+//         setAccountOptions([]);
+//         return;
+//       }
+
+//       // 2. प्रत्येक Account साठी Address fetch करा
+//       const catererCustomers = [];
+
+//       for (const customer of result) {
+//         try {
+//           const addressResponse = await fetch(
+//             `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${customer.Id}`,
+//             requestOptions,
+//           );
+
+//           const addressResult = await addressResponse.json();
+
+//           console.log(`Address for ${customer.AccountName}:`, addressResult);
+
+//           const address = Array.isArray(addressResult)
+//             ? addressResult[0]
+//             : null;
+
+//           // 3. फक्त Caterers customers घ्या
+//           if (address && String(address.CustomerType).toUpperCase() === "C") {
+//             catererCustomers.push({
+//               ...customer,
+//               CustomerType: address.CustomerType,
+//               GSTNo: address.GSTNo || "",
+//               Address1:
+//                 address.Address1 ||
+//                 address.address1 ||
+//                 address.Address ||
+//                 address.address ||
+//                 address.AddressLine1 ||
+//                 address.addressLine1 ||
+//                 "",
+//               Address2:
+//                 address.Address2 ||
+//                 address.address2 ||
+//                 address.AddressLine2 ||
+//                 address.addressLine2 ||
+//                 "",
+//               Address3:
+//                 address.Address3 ||
+//                 address.address3 ||
+//                 address.AddressLine3 ||
+//                 address.addressLine3 ||
+//                 "",
+//             });
+//           }
+//         } catch (addressError) {
+//           console.error(
+//             `Address fetch failed for AccountId ${customer.Id}:`,
+//             addressError,
+//           );
+//         }
+//       }
+
+//       console.log("FILTERED CATERERS CUSTOMERS:", catererCustomers);
+
+//       // 4. Dropdown ला फक्त Caterers customers द्या
+//       setAccountOptions(catererCustomers);
+//     } catch (error) {
+//       console.error("Caterers customer search error:", error);
+
+//       setAccountOptions([]);
+//     }
+//   };
+
+//   useEffect(() => {
+//     serchCustomers();
+//   }, [text]);
+
+//   // ======================================================
+//   // CLOSE CUSTOMER DROPDOWN WHEN CLICKED OUTSIDE
+//   // ======================================================
+//   useEffect(() => {
+//     const handleClickOutside = (event) => {
+//       if (
+//         showDropdown &&
+//         customerDropdownRef.current &&
+//         !customerDropdownRef.current.contains(event.target)
+//       ) {
+//         setShowDropdown(false);
+//         setText("");
+//       }
+//     };
+
+//     document.addEventListener("mousedown", handleClickOutside);
+
+//     return () => {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//     };
+//   }, [showDropdown]);
+
+//   useEffect(() => {
+//     const storedUserId = sessionStorage.getItem("UserId");
+
+//     if (storedUserId) {
+//       setUserId(storedUserId);
+//     } else {
+//       toast.error("User is not logged in.");
+//     }
+//   }, []);
+
+//   // create new Customer
+//   const [accountName, setAccountName] = useState("");
+//   const [customerName, setCustomerName] = useState("");
+
+//   const [customerGSTNo, setCustomerGSTNo] = useState("");
+
+//   const CreateCustomerMaster = async () => {
+//     // ============================================================
+//     // CUSTOMER NAME CHECK
+//     // ============================================================
+
+//     const newCustomerName = accountName.trim();
+
+//     if (!newCustomerName) {
+//       toast.error("Please enter customer name");
+//       return;
+//     }
+
+//     // ============================================================
+//     // HEADERS
+//     // ============================================================
+
+//     const myHeaders = new Headers();
+
+//     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+//     // ============================================================
+//     // CREATE ACCOUNT
+//     // ============================================================
+
+//     const urlencoded = new URLSearchParams();
+
+//     urlencoded.append("AccountName", newCustomerName);
+
+//     urlencoded.append("GroupId", "3");
+
+//     urlencoded.append("SubGroupId", "1");
+
+//     urlencoded.append("OpeningBalance", "100");
+
+//     urlencoded.append("DrORCr", "D");
+
+//     urlencoded.append("TypeCode", "C");
+
+//     urlencoded.append("IsSystem", "false");
+
+//     try {
+//       // ==========================================================
+//       // 1. CREATE CUSTOMER ACCOUNT
+//       // ==========================================================
+
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/postaccount.php",
+//         {
+//           method: "POST",
+//           headers: myHeaders,
+//           body: urlencoded,
+//           redirect: "follow",
+//         },
+//       );
+
+//       const result = await response.json();
+
+//       console.log("NEW CUSTOMER CREATED:", result);
+
+//       if (!result || !result.Id) {
+//         throw new Error("Customer ID not received from API.");
+//       }
+
+//       const newCustomerId = result.Id;
+
+//       // ==========================================================
+//       // 2. CREATE CUSTOMER ADDRESS
+//       // ==========================================================
+
+//       const addressData = new URLSearchParams();
+
+//       addressData.append("AccountId", newCustomerId);
+
+//       // Customer type must remain C
+//       addressData.append("CustomerType", "C");
+
+//       // GST - keep existing logic
+
+//       // Address
+//       addressData.append("Address1", newCustomerAddress.trim());
+
+//       addressData.append("Address", newCustomerAddress.trim());
+
+//       const addressResponse = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/postaddress.php",
+//         {
+//           method: "POST",
+//           headers: myHeaders,
+//           body: addressData,
+//           redirect: "follow",
+//         },
+//       );
+
+//       let addressResult = null;
+
+//       try {
+//         addressResult = await addressResponse.json();
+//       } catch (error) {
+//         console.warn("Address response was not JSON:", error);
+//       }
+
+//       console.log("NEW CUSTOMER ADDRESS CREATED:", addressResult);
+
+//       // ==========================================================
+//       // 3. CREATE CUSTOMER OBJECT LOCALLY
+//       //
+//       // IMPORTANT:
+//       // Do NOT wait for page refresh.
+//       // Immediately add customer to dropdown.
+//       // ==========================================================
+
+//       const newCustomer = {
+//         Id: newCustomerId,
+//         AccountName: newCustomerName,
+//         CustomerType: "C",
+
+//         Address1: newCustomerAddress.trim(),
+
+//         Address: newCustomerAddress.trim(),
+//       };
+
+//       // ==========================================================
+//       // 4. ADD NEW CUSTOMER TO CURRENT DROPDOWN
+//       // ==========================================================
+
+//       setAccountOptions((previousOptions) => {
+//         const alreadyExists = previousOptions.some(
+//           (customer) => String(customer.Id) === String(newCustomerId),
+//         );
+
+//         if (alreadyExists) {
+//           return previousOptions;
+//         }
+
+//         return [newCustomer, ...previousOptions];
+//       });
+
+//       // ==========================================================
+//       // 5. IMMEDIATELY SELECT NEW CUSTOMER
+//       // ==========================================================
+
+//       setSelectedAccount(String(newCustomerId));
+
+//       setSelectedCustomerName(newCustomerName);
+
+//       setSelectedCustomerAddress(newCustomerAddress.trim());
+
+//       // ==========================================================
+//       // 6. SET GST
+//       // ==========================================================
+
+//       // ==========================================================
+//       // 7. CLOSE CUSTOMER POPUP
+//       // ==========================================================
+
+//       setShowDropdown(false);
+
+//       // ==========================================================
+//       // 8. CLEAR CREATE CUSTOMER INPUT
+//       // ==========================================================
+
+//       setAccountName("");
+
+//       // Keep search text clean
+//       setText("");
+
+//       // ==========================================================
+//       // 9. SUCCESS MESSAGE
+//       // ==========================================================
+
+//       toast.success("Customer added successfully");
+//     } catch (error) {
+//       console.error("Error creating customer:", error);
+
+//       toast.error("Unable to create customer");
+//     }
+//   };
+//   //set GSTno
+//   const fetchAccounts = (customerId) => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${customerId}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.json())
+//       .then((result) => {
+//         console.log("CUSTOMER ADDRESS RESPONSE:", result);
+
+//         const temp = Array.isArray(result) ? result[0] : result;
+
+//         if (!temp) {
+//           setacctGSTNo("");
+//           setSelectedCustomerAddress("");
+//           return;
+//         }
+
+//         // ========================================================
+//         // GST
+//         // ========================================================
+
+//         setacctGSTNo(String(temp?.GSTNo ?? ""));
+
+//         // ========================================================
+//         // ADDRESS
+//         // ========================================================
+
+//         const address =
+//           temp?.Address1 ||
+//           temp?.address1 ||
+//           temp?.Address ||
+//           temp?.address ||
+//           temp?.AddressLine1 ||
+//           temp?.addressLine1 ||
+//           "";
+
+//         setSelectedCustomerAddress(String(address));
+//       })
+//       .catch((error) => {
+//         console.error("Customer address fetch error:", error);
+
+//         setacctGSTNo("");
+//         setSelectedCustomerAddress("");
+//       });
+//   };
+
+//   // ======================================================
+//   // FETCH CUSTOMER PREVIOUS OUTSTANDING BALANCE
+//   // ======================================================
+//   // RULE:
+//   // Previous Due = ALL OTHER INVOICES of same customer
+//   // Current invoice is excluded
+//   //
+//   // Invoice Due = Total - ReceivedAmount
+//   // ======================================================
+
+//   const fetchPreviousBalance = async (customerId, excludeInvoiceId = null) => {
+//     if (!customerId) {
+//       setPreviousBalanceDue(0);
+//       return 0;
+//     }
+
+//     try {
+//       const response = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=AccountId&Colvalue=${encodeURIComponent(
+//           customerId,
+//         )}`,
+//       );
+
+//       if (!response.ok) {
+//         throw new Error(
+//           `Invoice header API failed with status ${response.status}`,
+//         );
+//       }
+
+//       const result = await response.json();
+
+//       const invoiceList = Array.isArray(result)
+//         ? result
+//         : Array.isArray(result?.data)
+//           ? result.data
+//           : result?.data
+//             ? [result.data]
+//             : [];
+
+//       // ======================================================
+//       // DEBUG - SHOW EXACT INVOICES RECEIVED FROM API
+//       // ======================================================
+
+//       console.log("==============================================");
+
+//       console.log("PREVIOUS BALANCE API RESPONSE");
+
+//       console.log("Customer ID:", customerId);
+
+//       console.log("Exclude Invoice ID:", excludeInvoiceId);
+
+//       console.log("Total Invoices Returned:", invoiceList.length);
+
+//       console.table(
+//         invoiceList.map((invoice) => ({
+//           Id: invoice?.Id,
+//           AccountId: invoice?.AccountId,
+//           Total: invoice?.Total,
+//           ReceivedAmount: invoice?.ReceivedAmount,
+//           CashAmount: invoice?.CashAmount,
+//           OnlineAmount: invoice?.OnlineAmount,
+//         })),
+//       );
+
+//       console.log("==============================================");
+
+//       // ======================================================
+//       // CALCULATE PREVIOUS BALANCE
+//       // ======================================================
+
+//       let previousBalance = 0;
+
+//       for (const invoice of invoiceList) {
+//         const invoiceId = Number(invoice?.Id || 0);
+
+//         // ====================================================
+//         // IMPORTANT:
+//         // Current invoice must NOT be included
+//         // ====================================================
+
+//         if (
+//           excludeInvoiceId !== null &&
+//           excludeInvoiceId !== undefined &&
+//           invoiceId === Number(excludeInvoiceId)
+//         ) {
+//           console.log("SKIPPING CURRENT INVOICE:", invoiceId);
+
+//           continue;
+//         }
+
+//         // ====================================================
+//         // TOTAL
+//         // ====================================================
+
+//         const invoiceTotal = Number(invoice?.Total || 0);
+
+//         // ====================================================
+//         // RECEIVED
+//         //
+//         // Prefer ReceivedAmount.
+//         // If unavailable use Cash + Online.
+//         // ====================================================
+
+//         let invoiceReceived = 0;
+
+//         if (
+//           invoice?.ReceivedAmount !== null &&
+//           invoice?.ReceivedAmount !== undefined &&
+//           invoice?.ReceivedAmount !== ""
+//         ) {
+//           invoiceReceived = Number(invoice.ReceivedAmount) || 0;
+//         } else {
+//           invoiceReceived =
+//             (Number(invoice?.CashAmount) || 0) +
+//             (Number(invoice?.OnlineAmount) || 0);
+//         }
+
+//         // ====================================================
+//         // INVOICE DUE
+//         // ====================================================
+
+//         const invoiceDue = Math.max(invoiceTotal - invoiceReceived, 0);
+
+//         // ====================================================
+//         // ADD TO PREVIOUS BALANCE
+//         // ====================================================
+
+//         previousBalance += invoiceDue;
+
+//         // ====================================================
+//         // DEBUG EACH INVOICE
+//         // ====================================================
+
+//         console.log("PREVIOUS BALANCE INVOICE:", {
+//           InvoiceId: invoiceId,
+//           Total: invoiceTotal,
+//           ReceivedAmount: invoiceReceived,
+//           Due: invoiceDue,
+//           RunningPreviousBalance: previousBalance,
+//         });
+//       }
+
+//       // ======================================================
+//       // FINAL PREVIOUS BALANCE
+//       // ======================================================
+
+//       const finalPreviousBalance = Number(previousBalance.toFixed(2));
+
+//       console.log("==============================================");
+
+//       console.log("FINAL PREVIOUS BALANCE:", finalPreviousBalance);
+
+//       console.log("==============================================");
+
+//       setPreviousBalanceDue(finalPreviousBalance);
+
+//       return finalPreviousBalance;
+//     } catch (error) {
+//       console.error("Error fetching customer previous balance:", error);
+
+//       setPreviousBalanceDue(0);
+
+//       return 0;
+//     }
+//   };
+
+//   const fetchAccountName = (acctname) => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${acctname}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.json())
+//       .then((result) => {
+//         const accountList = Array.isArray(result)
+//           ? result
+//           : Array.isArray(result?.data)
+//             ? result.data
+//             : result?.data
+//               ? [result.data]
+//               : [];
+
+//         setAccountOptions(accountList);
+
+//         const savedCustomerName =
+//           accountList[0]?.AccountName || accountList[0]?.accountName || "";
+
+//         setSelectedCustomerName(savedCustomerName);
+//         setCustomerName(savedCustomerName);
+//       })
+//       .catch((error) => {
+//         console.error("Error fetching account name:", error);
+//       });
+//   };
+
+//   //
+
+//   const handleItemChange = (newValue) => {
+//     if (newValue) {
+//       setSelectedProductId(newValue.value);
+
+//       setProductName(newValue.label);
+
+//       setSelectedProductName(newValue.label);
+
+//       const defaultQty = 1;
+
+//       const defaultRate = parseFloat(newValue.purchaseRate) || 0;
+
+//       setQuantity(defaultQty);
+
+//       setRate(defaultRate);
+
+//       setTimeout(() => {
+//         quantityRef.current?.focus();
+//         quantityRef.current?.select();
+//       }, 0);
+
+//       const sameState = gstNo?.substring(0, 2) === acctGSTNo?.substring(0, 2);
+
+//       const cgstValue = sameState ? newValue.cgst : "0";
+
+//       const sgstValue = sameState ? newValue.sgst : "0";
+
+//       const igstValue = !sameState ? newValue.igst : "0";
+
+//       setCGST(cgstValue);
+//       setSGST(sgstValue);
+//       setIGST(igstValue);
+
+//       // Calculate current input amount
+//       calculateAmount(defaultQty, defaultRate);
+//     } else {
+//       setSelectedProductId("");
+//       setProductName("");
+//       setRate("");
+//       setQuantity("");
+//       setSelectedProductName("");
+
+//       setCGST("0");
+//       setSGST("0");
+//       setIGST("0");
+
+//       SetAmount("");
+//     }
+//   };
+
+//   ///Pagination
+//   const [totalPages, setTotalPages] = useState(1);
+//   //validation
+//   const [errors, setErrors] = useState({
+//     invoiceDate: "",
+//     selectedAccount: "",
+//     paymentMode: "",
+//     rows: "",
+//     phone: "",
+//   });
+
+//   const validateForm = () => {
+//     const newErrors = {
+//       invoiceDate: "",
+//       selectedAccount: "",
+//       paymentMode: "",
+//       rows: "",
+//       phone: "",
+//     };
+
+//     let isValid = true;
+
+//     // Invoice Date
+//     if (!invoiceDate) {
+//       newErrors.invoiceDate = "Invoice date is required";
+
+//       isValid = false;
+//     } else {
+//       const invoiceDateObj = new Date(invoiceDate);
+
+//       const fromDateObj = new Date(fromDate);
+
+//       const toDateObj = new Date(toDate);
+
+//       if (invoiceDateObj < fromDateObj) {
+//         newErrors.invoiceDate = `Invoice date cannot be before ${new Date(
+//           fromDate,
+//         ).toLocaleDateString()}`;
+
+//         isValid = false;
+//       } else if (invoiceDateObj > toDateObj) {
+//         newErrors.invoiceDate = `Invoice date cannot be after ${new Date(
+//           toDate,
+//         ).toLocaleDateString()}`;
+
+//         isValid = false;
+//       }
+//     }
+//     // Customer Name
+//     if (!selectedCustomerName?.trim()) {
+//       newErrors.selectedAccount = "Customer name is required";
+//       isValid = false;
+//     }
+
+//     // Mobile Number
+//     if (!phone || phone.trim().length <= 3) {
+//       newErrors.phone = "Mobile number is required";
+//       isValid = false;
+//     }
+
+//     // Payment Mode
+//     if (!paymentMode) {
+//       newErrors.paymentMode = "Payment mode is required";
+
+//       isValid = false;
+//     }
+
+//     // Product rows
+//     if (rows.length === 0) {
+//       newErrors.rows = "Please add at least one product";
+
+//       isValid = false;
+//     }
+
+//     setErrors(newErrors);
+
+//     return isValid;
+//   };
+
+//   const validateReceivedAmount = () => {
+//     const receivedValue = parseFloat(receivedAmount);
+//     const totalValue = parseFloat(total);
+
+//     // Received amount is empty
+//     if (receivedAmount === "" || Number.isNaN(receivedValue)) {
+//       toast.error(`Please enter received amount`);
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Received amount cannot be negative
+//     if (receivedValue < 0) {
+//       toast.error("Received amount cannot be negative.");
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Received amount cannot be greater than Total
+//     if (receivedValue > totalValue) {
+//       const refundAmount = receivedValue - totalValue;
+
+//       toast.error(
+//         `Received amount is ₹${receivedValue.toFixed(
+//           2,
+//         )}. Refund ₹${refundAmount.toFixed(2)} cannot be saved.`,
+//       );
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Partial payment is allowed
+//     return true;
+//   };
+
+//   //for yearId
+//   const [yearid, setYearId] = useState("");
+
+//   useEffect(() => {
+//     const storedYearId = Cookies.get("YearId");
+//     const storedfromDate = Cookies.get("FromDate");
+//     const storedtoDate = Cookies.get("ToDate");
+
+//     if (storedYearId) {
+//       setYearId(storedYearId);
+//       //console.log('storedYearId', storedYearId);
+//     } else {
+//       toast.error("Year is not set.");
+//     }
+//     if (storedfromDate) {
+//       setFromDate(storedfromDate);
+//       //console.log('storedfromDate', storedfromDate);
+//     } else {
+//       toast.error("FromDate is not set.");
+//     }
+
+//     if (storedtoDate) {
+//       setToDate(storedtoDate);
+//       // console.log('storedTodate', storedtoDate);
+//     } else {
+//       toast.error("ToDate is not set.");
+//     }
+//   }, [yearid, fromDate, toDate]);
+
+//   //for print
+
+//   // ============================================================
+//   // GENERATE PDF / DIRECT PRINT
+//   // ============================================================
+
+//   const generatePDF = async (printData = previewData, printWindow = null) => {
+//     // ============================================================
+//     // 1. CHECK INVOICE DATA
+//     // ============================================================
+
+//     if (!printData) {
+//       toast.error("No invoice data available for printing.");
+
+//       if (printWindow && !printWindow.closed) {
+//         printWindow.close();
+//       }
+
+//       return;
+//     }
+
+//     console.log("========================================");
+//     console.log("INVOICE PRINT START");
+//     console.log("PRINT DATA:", printData);
+//     console.log("SELECTED ACCOUNT:", selectedAccount);
+//     console.log("SELECTED CUSTOMER NAME:", selectedCustomerName);
+//     console.log("========================================");
+
+//     // ============================================================
+//     // 2. GET ACCOUNT ID
+//     // ============================================================
+
+//     let accountId = "";
+
+//     accountId =
+//       printData?.AccountId ||
+//       printData?.AccountID ||
+//       printData?.CustomerId ||
+//       printData?.CustomerID ||
+//       printData?.CustomerAccountId ||
+//       printData?.CustomerAccountID ||
+//       printData?.accountDetails?.Id ||
+//       printData?.accountDetails?.AccountId ||
+//       "";
+
+//     // ============================================================
+//     // 3. IF ACCOUNT ID NOT FOUND, GET FROM selectedAccount
+//     // ============================================================
+
+//     if (!accountId && selectedAccount) {
+//       if (typeof selectedAccount === "object") {
+//         accountId =
+//           selectedAccount?.Id ||
+//           selectedAccount?.ID ||
+//           selectedAccount?.AccountId ||
+//           selectedAccount?.AccountID ||
+//           selectedAccount?.CustomerId ||
+//           selectedAccount?.CustomerID ||
+//           selectedAccount?.value ||
+//           selectedAccount?.id ||
+//           "";
+//       } else {
+//         accountId = selectedAccount;
+//       }
+//     }
+
+//     // ============================================================
+//     // 4. IF STILL NOT FOUND, FIND ID FROM accountOptions
+//     // ============================================================
+
+//     if (!accountId && Array.isArray(accountOptions) && selectedCustomerName) {
+//       const matchedAccount = accountOptions.find(
+//         (account) =>
+//           String(
+//             account?.AccountName ||
+//               account?.accountName ||
+//               account?.label ||
+//               "",
+//           )
+//             .trim()
+//             .toLowerCase() ===
+//           String(selectedCustomerName).trim().toLowerCase(),
+//       );
+
+//       if (matchedAccount) {
+//         accountId =
+//           matchedAccount?.Id ||
+//           matchedAccount?.ID ||
+//           matchedAccount?.AccountId ||
+//           matchedAccount?.AccountID ||
+//           matchedAccount?.value ||
+//           matchedAccount?.id ||
+//           "";
+//       }
+//     }
+
+//     console.log("FINAL ACCOUNT ID:", accountId);
+
+//     // ============================================================
+//     // 5. CUSTOMER VARIABLES
+//     // ============================================================
+
+//     let customerName = "";
+//     let customerAddress1 = "";
+//     let customerAddress2 = "";
+//     let customerAddress3 = "";
+//     let customerGSTNo = "";
+//     let customerMobileNo = "";
+
+//     // ============================================================
+//     // 6. FETCH SELECTED CUSTOMER FROM ACCOUNT API
+//     // ============================================================
+
+//     if (accountId) {
+//       try {
+//         const accountResponse = await fetch(
+//           `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${encodeURIComponent(
+//             accountId,
+//           )}`,
+//         );
+
+//         if (!accountResponse.ok) {
+//           throw new Error(
+//             `Account API failed with status ${accountResponse.status}`,
+//           );
+//         }
+
+//         const accountResult = await accountResponse.json();
+
+//         console.log("FULL ACCOUNT API RESPONSE:", accountResult);
+
+//         const accountData = Array.isArray(accountResult)
+//           ? accountResult[0]
+//           : accountResult;
+
+//         console.log("SELECTED CUSTOMER DATA:", accountData);
+
+//         if (accountData) {
+//           customerName =
+//             accountData?.AccountName || accountData?.accountName || "";
+
+//           customerAddress1 =
+//             accountData?.Address1 || accountData?.address1 || "";
+
+//           customerAddress2 =
+//             accountData?.Address2 || accountData?.address2 || "";
+
+//           customerAddress3 =
+//             accountData?.Address3 || accountData?.address3 || "";
+
+//           customerGSTNo =
+//             accountData?.GSTNo ||
+//             accountData?.GSTNO ||
+//             accountData?.GstNo ||
+//             "";
+
+//           customerMobileNo =
+//             accountData?.MobileNo ||
+//             accountData?.MobileNumber ||
+//             accountData?.ContactNo ||
+//             accountData?.ContactNumber ||
+//             accountData?.PhoneNo ||
+//             accountData?.PhoneNumber ||
+//             "";
+//         }
+//       } catch (error) {
+//         console.error("CUSTOMER ACCOUNT API ERROR:", error);
+//       }
+//     } else {
+//       console.warn("ACCOUNT ID NOT FOUND. Customer API was not called.");
+//     }
+
+//     // ============================================================
+//     // 7. FALLBACK CUSTOMER NAME
+//     // ============================================================
+
+//     if (!customerName) {
+//       customerName =
+//         printData?.accountDetails?.AccountName ||
+//         printData?.accountDetails?.accountName ||
+//         printData?.CustomerName ||
+//         printData?.customerName ||
+//         printData?.AccountName ||
+//         printData?.CustomerAccountName ||
+//         selectedCustomerName ||
+//         "-";
+//     }
+
+//     // ============================================================
+//     // 8. FALLBACK ADDRESS 1
+//     // ============================================================
+
+//     if (!customerAddress1) {
+//       customerAddress1 =
+//         printData?.accountDetails?.Address1 || printData?.Address1 || "";
+//     }
+
+//     // ============================================================
+//     // 9. FALLBACK ADDRESS 2
+//     // ============================================================
+
+//     if (!customerAddress2) {
+//       customerAddress2 =
+//         printData?.accountDetails?.Address2 || printData?.Address2 || "";
+//     }
+
+//     // ============================================================
+//     // 10. FALLBACK ADDRESS 3
+//     // ============================================================
+
+//     if (!customerAddress3) {
+//       customerAddress3 =
+//         printData?.accountDetails?.Address3 || printData?.Address3 || "";
+//     }
+
+//     // ============================================================
+//     // 11. CONTACT NUMBER
+//     // ============================================================
+
+//     const contactNo =
+//       customerMobileNo ||
+//       printData?.ContactNo ||
+//       printData?.ContactNumber ||
+//       printData?.MobileNo ||
+//       printData?.MobileNumber ||
+//       printData?.PhoneNo ||
+//       "-";
+
+//     // ============================================================
+//     // 12. GST NUMBER
+//     // ============================================================
+
+//     const gstNumber =
+//       customerGSTNo ||
+//       printData?.GSTNo ||
+//       printData?.CustomerGSTNo ||
+//       printData?.customerGSTNo ||
+//       "";
+
+//     // ============================================================
+//     // 13. CUSTOMER DEBUG
+//     // ============================================================
+
+//     console.log("========================================");
+//     console.log("FINAL CUSTOMER INFORMATION");
+//     console.log("ACCOUNT ID:", accountId);
+//     console.log("CUSTOMER NAME:", customerName);
+//     console.log("ADDRESS 1:", customerAddress1);
+//     console.log("ADDRESS 2:", customerAddress2);
+//     console.log("ADDRESS 3:", customerAddress3);
+//     console.log("MOBILE:", contactNo);
+//     console.log("GST:", gstNumber);
+//     console.log("========================================");
+
+//     // ============================================================
+//     // 14. CREATE 80MM ROLL PDF
+//     // ============================================================
+
+//     const ROLL_WIDTH = 80;
+//     const ROLL_HEIGHT = 300;
+
+//     const doc = new jsPDF({
+//       orientation: "portrait",
+//       unit: "mm",
+//       format: [ROLL_WIDTH, ROLL_HEIGHT],
+//     });
+
+//     const pageWidth = doc.internal.pageSize.getWidth();
+//     const pageHeight = doc.internal.pageSize.getHeight();
+
+//     // ============================================================
+//     // 15. INVOICE NUMBER
+//     // ============================================================
+
+//     const invoiceNo =
+//       printData?.InvoiceNo ||
+//       printData?.InvoiceNumber ||
+//       printData?.BillNo ||
+//       printData?.BillNumber ||
+//       printData?.invoiceNo ||
+//       "";
+
+//     // ============================================================
+//     // 16. DATE
+//     // ============================================================
+
+//     let invoiceDateText = "-";
+
+//     try {
+//       if (printData?.InvoiceDate?.date) {
+//         invoiceDateText = moment(printData.InvoiceDate.date).format(
+//           "DD-MM-YYYY",
+//         );
+//       } else if (printData?.InvoiceDate) {
+//         invoiceDateText = moment(printData.InvoiceDate).format("DD-MM-YYYY");
+//       }
+//     } catch (error) {
+//       console.error("Invoice date formatting error:", error);
+//       invoiceDateText = "-";
+//     }
+
+//     // ============================================================
+//     // 17. TIME
+//     // ============================================================
+
+//     const invoiceTime = moment().format("hh:mm A");
+
+//     // ============================================================
+//     // 18. COMPANY DETAILS
+//     // ============================================================
+
+//     const companyName = "AMRUT MILK PRODUCTS 2";
+//     const companyAddress1 = "E-18 UDYAM CO-OP. SOCIETY, Y.P. POWAR NAGER";
+//     const companyAddress2 = "KOLHAPUR.";
+//     const companyPhone = "8830261523";
+//     const companyState = "27-Maharashtra";
+
+//     // ============================================================
+//     // 19. LOAD IMAGE AS DATA URL
+//     // ============================================================
+
+//     const imageToDataURL = (imageSource) => {
+//       return new Promise((resolve, reject) => {
+//         if (!imageSource) {
+//           reject(new Error("Image source is empty."));
+//           return;
+//         }
+
+//         if (
+//           typeof imageSource === "string" &&
+//           imageSource.startsWith("data:image")
+//         ) {
+//           resolve(imageSource);
+//           return;
+//         }
+
+//         const img = new Image();
+
+//         img.onload = () => {
+//           try {
+//             const canvas = document.createElement("canvas");
+
+//             canvas.width = img.naturalWidth || img.width;
+
+//             canvas.height = img.naturalHeight || img.height;
+
+//             const ctx = canvas.getContext("2d");
+
+//             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+//             resolve(canvas.toDataURL("image/png"));
+//           } catch (error) {
+//             reject(error);
+//           }
+//         };
+
+//         img.onerror = () => {
+//           reject(new Error(`Unable to load image: ${imageSource}`));
+//         };
+
+//         img.src = imageSource;
+//       });
+//     };
+
+//     // ============================================================
+//     // 20. LOAD BOTH LOGOS
+//     // ============================================================
+
+//     let amrutLogoData = null;
+//     let fremilaLogoData = null;
+
+//     try {
+//       amrutLogoData = await imageToDataURL(amrutLogo);
+//       console.log("Amrut Siddhi logo loaded.");
+//     } catch (error) {
+//       console.error("Amrut Siddhi logo error:", error);
+//     }
+
+//     try {
+//       fremilaLogoData = await imageToDataURL(fremilaLogo);
+//       console.log("Fremila logo loaded.");
+//     } catch (error) {
+//       console.error("Fremila logo error:", error);
+//     }
+
+//     // ============================================================
+//     // 21. ROLL PRINT MARGINS
+//     // ============================================================
+
+//     const leftMargin = 4;
+//     const rightMargin = 4;
+
+//     const contentWidth = pageWidth - leftMargin - rightMargin;
+
+//     // ============================================================
+//     // 22. OUTER BORDER
+//     // ============================================================
+
+//     doc.setLineWidth(0.4);
+
+//     doc.rect(leftMargin, 4, contentWidth, pageHeight - 8);
+
+//     // ============================================================
+//     // 23. HEADER
+//     // ============================================================
+
+//     let y = 11;
+
+//     // ============================================================
+//     // 23.1 AMRUT SIDDHI LOGO
+//     // ============================================================
+
+//     if (amrutLogoData) {
+//       try {
+//         doc.addImage(amrutLogoData, "PNG", pageWidth - 25, 7, 18, 12);
+//       } catch (error) {
+//         console.error("Amrut Siddhi PDF logo error:", error);
+//       }
+//     }
+
+//     // ============================================================
+//     // 23.2 FREMILA LOGO
+//     // ============================================================
+
+//     if (fremilaLogoData) {
+//       try {
+//         doc.addImage(fremilaLogoData, "PNG", pageWidth - 25, 20, 18, 12);
+//       } catch (error) {
+//         console.error("Fremila PDF logo error:", error);
+//       }
+//     }
+
+//     // ============================================================
+//     // 23.3 COMPANY NAME
+//     // ============================================================
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(9);
+
+//     doc.text(companyName, leftMargin + 2, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 23.4 COMPANY ADDRESS 1
+//     // ============================================================
+
+//     doc.setFont("helvetica", "normal");
+//     doc.setFontSize(5.5);
+
+//     const companyAddressLines = doc.splitTextToSize(companyAddress1, 52);
+
+//     doc.text(companyAddressLines, leftMargin + 2, y);
+
+//     y += companyAddressLines.length * 3.2;
+
+//     // ============================================================
+//     // 23.5 COMPANY ADDRESS 2
+//     // ============================================================
+
+//     doc.text(companyAddress2, leftMargin + 2, y);
+
+//     y += 3.2;
+
+//     // ============================================================
+//     // 23.6 COMPANY PHONE
+//     // ============================================================
+
+//     doc.text(`Phone no.: ${companyPhone}`, leftMargin + 2, y);
+
+//     y += 3.2;
+
+//     // ============================================================
+//     // 23.7 COMPANY STATE
+//     // ============================================================
+
+//     doc.text(`State: ${companyState}`, leftMargin + 2, y);
+
+//     // ============================================================
+//     // 24. TAX INVOICE
+//     // ============================================================
+
+//     y += 6;
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(9);
+
+//     doc.text("Tax Invoice", pageWidth / 2, y, {
+//       align: "center",
+//     });
+
+//     y += 5;
+
+//     // ============================================================
+//     // 25. HEADER LINE
+//     // ============================================================
+
+//     doc.setLineWidth(0.3);
+
+//     doc.line(leftMargin + 2, y, pageWidth - rightMargin - 2, y);
+
+//     y += 5;
+
+//     // ============================================================
+//     // 26. BILL TO / INVOICE DETAILS
+//     // ============================================================
+
+//     const leftX = 6;
+//     const rightX = 43;
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(7);
+
+//     doc.text("Bill To", leftX, y);
+
+//     doc.text("Invoice Details", rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 27. CUSTOMER NAME
+//     // ============================================================
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(6.5);
+
+//     const customerNameLines = doc.splitTextToSize(
+//       String(customerName || "-"),
+//       34,
+//     );
+
+//     doc.text(customerNameLines, leftX, y);
+
+//     // ============================================================
+//     // 28. INVOICE NUMBER
+//     // ============================================================
+
+//     doc.setFont("helvetica", "normal");
+//     doc.setFontSize(6);
+
+//     doc.text(`Invoice No.: ${invoiceNo || "-"}`, rightX, y);
+
+//     y += Math.max(customerNameLines.length * 3.2, 4);
+
+//     // ============================================================
+//     // 29. CUSTOMER ADDRESS 1
+//     // ============================================================
+
+//     if (customerAddress1) {
+//       const address1Lines = doc.splitTextToSize(String(customerAddress1), 34);
+
+//       doc.text(address1Lines, leftX, y);
+
+//       y += address1Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 30. DATE
+//     // ============================================================
+
+//     doc.text(`Date: ${invoiceDateText}`, rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 31. CUSTOMER ADDRESS 2
+//     // ============================================================
+
+//     if (customerAddress2) {
+//       const address2Lines = doc.splitTextToSize(String(customerAddress2), 34);
+
+//       doc.text(address2Lines, leftX, y);
+
+//       y += address2Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 32. TIME
+//     // ============================================================
+
+//     doc.text(`Time: ${invoiceTime}`, rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 33. CUSTOMER ADDRESS 3
+//     // ============================================================
+
+//     if (customerAddress3) {
+//       const address3Lines = doc.splitTextToSize(String(customerAddress3), 34);
+
+//       doc.text(address3Lines, leftX, y);
+
+//       y += address3Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 34. CONTACT NUMBER
+//     // ============================================================
+
+//     doc.text(`Contact No.: ${contactNo}`, leftX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 36. LINE BEFORE TABLE
+//     // ============================================================
+
+//     y += 2;
+
+//     doc.line(leftMargin + 2, y, pageWidth - rightMargin - 2, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 37. INVOICE DETAILS
+//     // ============================================================
+
+//     const invoiceDetails = Array.isArray(printData?.invdetail)
+//       ? printData.invdetail
+//       : [];
+
+//     // ============================================================
+//     // 38. PRODUCT TABLE DATA
+//     // ============================================================
+
+//     const tableData = invoiceDetails.map((item, index) => {
+//       const matchedProduct = Array.isArray(productOptions)
+//         ? productOptions.find(
+//             (option) => String(option?.value) === String(item?.ProductId),
+//           )
+//         : null;
+
+//       const productName =
+//         item?.ProductName ||
+//         item?.productName ||
+//         matchedProduct?.label ||
+//         "Unknown";
+
+//       const hsnSac =
+//         item?.HSNSAC ||
+//         item?.HsnSac ||
+//         item?.HSNCode ||
+//         item?.HsnCode ||
+//         item?.HSN ||
+//         item?.SAC ||
+//         item?.SACCode ||
+//         "";
+
+//       const quantity = Number(item?.Quantity || 0);
+
+//       const rate = Number(item?.Rate || 0);
+
+//       const amount = Number(item?.Amount || 0);
+
+//       return [
+//         index + 1,
+//         productName,
+//         hsnSac,
+//         quantity.toFixed(2),
+//         rate.toFixed(2),
+//         amount.toFixed(2),
+//       ];
+//     });
+
+//     // ============================================================
+//     // 39. PRODUCT TABLE
+//     // ============================================================
+
+//     autoTable(doc, {
+//       head: [["#", "Item", "HSN", "Qty", "Rate", "Amount"]],
+
+//       body:
+//         tableData.length > 0 ? tableData : [["", "No items", "", "", "", ""]],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.2,
+//         cellPadding: 1,
+//         lineWidth: 0.2,
+//         textColor: 0,
+//         valign: "middle",
+//         overflow: "linebreak",
+//       },
+
+//       headStyles: {
+//         font: "helvetica",
+//         fontSize: 5.2,
+//         fontStyle: "bold",
+//         fillColor: [240, 240, 240],
+//         textColor: 0,
+//         halign: "center",
+//         valign: "middle",
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 5,
+//           halign: "center",
+//         },
+
+//         1: {
+//           cellWidth: 25,
+//           halign: "left",
+//         },
+
+//         2: {
+//           cellWidth: 10,
+//           halign: "center",
+//         },
+
+//         3: {
+//           cellWidth: 8,
+//           halign: "right",
+//         },
+
+//         4: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+
+//         5: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+//       },
+//     });
+
+//     // ============================================================
+//     // 40. TOTAL QUANTITY
+//     // ============================================================
+
+//     const totalQuantity = invoiceDetails.reduce(
+//       (sum, item) => sum + Number(item?.Quantity || 0),
+//       0,
+//     );
+
+//     // ============================================================
+//     // 41. SUB TOTAL
+//     // ============================================================
+
+//     const subTotal = Number(printData?.SubTotal || 0);
+
+//     // ============================================================
+//     // 42. GRAND TOTAL
+//     // ============================================================
+
+//     const grandTotal = Number(printData?.Total || 0);
+
+//     const receivedAmount = Number(printData?.ReceivedAmount || 0);
+
+//     // Previous customer outstanding
+//     const previousDue = Number(printData?.PreviousBalanceDue || 0);
+
+//     // Current bill due
+//     const currentBillDue = Math.max(grandTotal - receivedAmount, 0);
+
+//     // Total customer outstanding
+//     const totalOutstanding = previousDue + currentBillDue;
+
+//     // ============================================================
+//     // 44. BALANCE
+//     // ============================================================
+
+//     const balance = Math.max(grandTotal - receivedAmount, 0);
+
+//     // ============================================================
+//     // 45. TOTAL ROW
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 4;
+
+//     autoTable(doc, {
+//       body: [
+//         [
+//           "",
+//           "Total",
+//           "",
+//           totalQuantity.toFixed(2),
+//           "",
+//           `Rs. ${grandTotal.toFixed(2)}`,
+//         ],
+//       ],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.3,
+//         cellPadding: 1,
+//         fontStyle: "bold",
+//         lineWidth: 0.2,
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 5,
+//         },
+
+//         1: {
+//           cellWidth: 25,
+//         },
+
+//         2: {
+//           cellWidth: 10,
+//         },
+
+//         3: {
+//           cellWidth: 8,
+//           halign: "right",
+//         },
+
+//         4: {
+//           cellWidth: 10,
+//         },
+
+//         5: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+//       },
+//     });
+
+//     // ============================================================
+//     // 46. NUMBER TO WORDS
+//     // ============================================================
+
+//     const numberToWords = (num) => {
+//       const ones = [
+//         "",
+//         "One",
+//         "Two",
+//         "Three",
+//         "Four",
+//         "Five",
+//         "Six",
+//         "Seven",
+//         "Eight",
+//         "Nine",
+//         "Ten",
+//         "Eleven",
+//         "Twelve",
+//         "Thirteen",
+//         "Fourteen",
+//         "Fifteen",
+//         "Sixteen",
+//         "Seventeen",
+//         "Eighteen",
+//         "Nineteen",
+//       ];
+
+//       const tens = [
+//         "",
+//         "",
+//         "Twenty",
+//         "Thirty",
+//         "Forty",
+//         "Fifty",
+//         "Sixty",
+//         "Seventy",
+//         "Eighty",
+//         "Ninety",
+//       ];
+
+//       const convertBelowThousand = (number) => {
+//         let result = "";
+
+//         if (number >= 100) {
+//           result += ones[Math.floor(number / 100)] + " Hundred ";
+
+//           number %= 100;
+//         }
+
+//         if (number >= 20) {
+//           result += tens[Math.floor(number / 10)] + " ";
+
+//           number %= 10;
+//         }
+
+//         if (number > 0) {
+//           result += ones[number] + " ";
+//         }
+
+//         return result.trim();
+//       };
+
+//       if (num === 0) {
+//         return "Zero";
+//       }
+
+//       num = Math.floor(num);
+
+//       let result = "";
+
+//       if (num >= 10000000) {
+//         result += convertBelowThousand(Math.floor(num / 10000000)) + " Crore ";
+
+//         num %= 10000000;
+//       }
+
+//       if (num >= 100000) {
+//         result += convertBelowThousand(Math.floor(num / 100000)) + " Lakh ";
+
+//         num %= 100000;
+//       }
+
+//       if (num >= 1000) {
+//         result += convertBelowThousand(Math.floor(num / 1000)) + " Thousand ";
+
+//         num %= 1000;
+//       }
+
+//       if (num > 0) {
+//         result += convertBelowThousand(num);
+//       }
+
+//       return result.trim();
+//     };
+
+//     // ============================================================
+//     // 47. AMOUNT IN WORDS
+//     // ============================================================
+
+//     const amountInWords = `${numberToWords(grandTotal)} Rupees only`;
+
+//     // ============================================================
+//     // 48. SUMMARY TABLE
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 4;
+
+//     autoTable(doc, {
+//       body: [
+//         [
+//           {
+//             content: "Invoice Amount In Words",
+//             styles: {
+//               fontStyle: "bold",
+//             },
+//           },
+
+//           {
+//             content: "Sub Total",
+//             styles: {
+//               fontStyle: "bold",
+//             },
+//           },
+
+//           `Rs. ${subTotal.toFixed(2)}`,
+//         ],
+
+//         [amountInWords, "Total", `Rs. ${grandTotal.toFixed(2)}`],
+
+//         ["", "Received", `Rs. ${receivedAmount.toFixed(2)}`],
+
+//         ["", "Previous Due", `Rs. ${previousDue.toFixed(2)}`],
+
+//         ["", "Current Bill Due", `Rs. ${currentBillDue.toFixed(2)}`],
+
+//         ["", "Total Outstanding", `Rs. ${totalOutstanding.toFixed(2)}`],
+//       ],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.3,
+//         cellPadding: 1.5,
+//         lineWidth: 0.2,
+//         valign: "middle",
+//         overflow: "linebreak",
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 39,
+//         },
+
+//         1: {
+//           cellWidth: 14,
+//           fontStyle: "bold",
+//         },
+
+//         2: {
+//           cellWidth: 15,
+//           halign: "right",
+//         },
+//       },
+//     });
+//     // ============================================================
+//     // 49. TERMS
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 5 : y + 5;
+
+//     doc.setFont("helvetica", "bold");
+
+//     doc.setFontSize(6.5);
+
+//     doc.text("Terms And Conditions", 6, y);
+
+//     y += 3.5;
+
+//     doc.setFont("helvetica", "normal");
+
+//     doc.setFontSize(5.5);
+
+//     doc.text("Thanks for doing business with us!", 6, y);
+
+//     y += 7;
+
+//     // ============================================================
+//     // 50. AUTHORIZED SIGNATORY
+//     // ============================================================
+
+//     doc.setFontSize(6);
+
+//     doc.text("For: AMRUT MILK PRODUCTS 2", pageWidth / 2, y, {
+//       align: "center",
+//     });
+
+//     y += 9;
+
+//     doc.line(pageWidth / 2 - 15, y, pageWidth / 2 + 15, y);
+
+//     y += 3.5;
+
+//     doc.setFont("helvetica", "bold");
+
+//     doc.text("Authorized Signatory", pageWidth / 2, y, {
+//       align: "center",
+//     });
+//     // ============================================================
+//     // 51. PRINT + DOWNLOAD PDF - 80MM ROLL
+//     // ============================================================
+
+//     try {
+//       // ----------------------------------------------------------
+//       // CREATE PDF BLOB
+//       // ----------------------------------------------------------
+
+//       const pdfBlob = doc.output("blob");
+
+//       if (!pdfBlob) {
+//         throw new Error("PDF could not be created.");
+//       }
+
+//       // ----------------------------------------------------------
+//       // CREATE TEMPORARY PDF URL
+//       // ----------------------------------------------------------
+
+//       const pdfBlobUrl = URL.createObjectURL(pdfBlob);
+
+//       console.log("========================================");
+//       console.log("80MM ROLL PDF CREATED");
+//       console.log("PDF URL:", pdfBlobUrl);
+//       console.log("========================================");
+
+//       // ----------------------------------------------------------
+//       // PDF FILE NAME
+//       // ----------------------------------------------------------
+
+//       const safeInvoiceNo = String(invoiceNo || "Invoice").replace(
+//         /[^a-zA-Z0-9-_]/g,
+//         "_",
+//       );
+
+//       const fileName = `Sales-Caterers-${safeInvoiceNo}.pdf`;
+
+//       // ----------------------------------------------------------
+//       // USE ALREADY OPENED PRINT WINDOW
+//       // ----------------------------------------------------------
+
+//       let targetWindow = printWindow;
+
+//       // ----------------------------------------------------------
+//       // IF WINDOW IS NOT AVAILABLE
+//       // ----------------------------------------------------------
+
+//       if (!targetWindow || targetWindow.closed) {
+//         targetWindow = window.open("", "_blank");
+//       }
+
+//       // ----------------------------------------------------------
+//       // POPUP BLOCKED
+//       // ----------------------------------------------------------
+
+//       if (!targetWindow) {
+//         URL.revokeObjectURL(pdfBlobUrl);
+
+//         toast.error("Please allow popups for printing.");
+
+//         return;
+//       }
+
+//       // ----------------------------------------------------------
+//       // CREATE PDF VIEWER PAGE
+//       // ----------------------------------------------------------
+
+//       targetWindow.document.open();
+
+//       targetWindow.document.write(`
+//     <!DOCTYPE html>
+
+//     <html>
+
+//       <head>
+
+//         <title>${fileName}</title>
+
+//         <style>
+
+//           * {
+//             box-sizing: border-box;
+//           }
+
+//           html,
+//           body {
+//             width: 100%;
+//             height: 100%;
+//             margin: 0;
+//             padding: 0;
+//           }
+
+//           body {
+//             background: #525659;
+//             font-family: Arial, sans-serif;
+//           }
+
+//           .toolbar {
+//             position: fixed;
+//             top: 0;
+//             left: 0;
+//             right: 0;
+
+//             height: 55px;
+
+//             background: #ffffff;
+
+//             display: flex;
+//             align-items: center;
+//             justify-content: flex-end;
+
+//             gap: 10px;
+
+//             padding: 8px 15px;
+
+//             z-index: 9999;
+
+//             box-shadow:
+//               0 2px 5px
+//               rgba(0, 0, 0, 0.3);
+//           }
+
+//           .download-btn {
+//             background: #087f23;
+//             color: white;
+
+//             text-decoration: none;
+
+//             padding: 10px 18px;
+
+//             border-radius: 5px;
+
+//             font-size: 14px;
+//             font-weight: bold;
+//           }
+
+//           .download-btn:hover {
+//             background: #05651b;
+//           }
+
+//           .print-btn {
+//             background: #1976d2;
+//             color: white;
+
+//             border: none;
+
+//             padding: 10px 18px;
+
+//             border-radius: 5px;
+
+//             font-size: 14px;
+//             font-weight: bold;
+
+//             cursor: pointer;
+//           }
+
+//           .print-btn:hover {
+//             opacity: 0.9;
+//           }
+
+//           .pdf-container {
+//             position: absolute;
+
+//             top: 55px;
+//             left: 0;
+//             right: 0;
+//             bottom: 0;
+//           }
+
+//           iframe {
+//             width: 100%;
+//             height: 100%;
+
+//             border: none;
+
+//             background: white;
+//           }
+
+//         </style>
+
+//       </head>
+
+//       <body>
+
+//         <div class="toolbar">
+
+//           <a
+//             id="downloadPdf"
+//             class="download-btn"
+//             href="${pdfBlobUrl}"
+//             download="${fileName}"
+//           >
+//             DOWNLOAD PDF
+//           </a>
+
+//           <button
+//             class="print-btn"
+//             onclick="printPDF()"
+//           >
+//             PRINT
+//           </button>
+
+//         </div>
+
+//         <div class="pdf-container">
+
+//           <iframe
+//             id="pdfFrame"
+//             src="${pdfBlobUrl}"
+//           ></iframe>
+
+//         </div>
+
+//         <script>
+
+//           function printPDF() {
+
+//             try {
+
+//               const iframe =
+//                 document.getElementById(
+//                   "pdfFrame"
+//                 );
+
+//               if (!iframe) {
+//                 alert("PDF is not ready.");
+//                 return;
+//               }
+
+//               iframe.contentWindow.focus();
+
+//               iframe.contentWindow.print();
+
+//             } catch (error) {
+
+//               console.error(
+//                 "PDF print error:",
+//                 error
+//               );
+
+//               alert(
+//                 "Unable to print PDF."
+//               );
+
+//             }
+
+//           }
+
+//         </script>
+
+//       </body>
+
+//     </html>
+//   `);
+
+//       targetWindow.document.close();
+
+//       targetWindow.focus();
+
+//       console.log("PDF opened successfully.");
+
+//       // ----------------------------------------------------------
+//       // KEEP BLOB URL ALIVE FOR PDF VIEWER
+//       // ----------------------------------------------------------
+
+//       setTimeout(
+//         () => {
+//           try {
+//             URL.revokeObjectURL(pdfBlobUrl);
+
+//             console.log("PDF Blob URL released successfully.");
+//           } catch (error) {
+//             console.warn("Unable to release PDF Blob URL:", error);
+//           }
+//         },
+//         5 * 60 * 1000,
+//       );
+//     } catch (error) {
+//       // ==========================================================
+//       // PDF GENERATION ERROR
+//       // ==========================================================
+
+//       console.error("Error generating invoice PDF:", error);
+
+//       // ----------------------------------------------------------
+//       // CLOSE PRINT WINDOW
+//       // ----------------------------------------------------------
+
+//       if (printWindow && !printWindow.closed) {
+//         try {
+//           printWindow.close();
+//         } catch (closeError) {
+//           console.warn("Unable to close print window:", closeError);
+//         }
+//       }
+
+//       // ----------------------------------------------------------
+//       // SHOW ERROR
+//       // ----------------------------------------------------------
+
+//       toast.error("Unable to generate invoice PDF.");
+//     }
+//   };
+
+//   return (
+//     <Box>
+//       <Box textAlign={"center"}>
+//         <Typography color="var(--complementary-color)" variant="h4">
+//           <b>Sales Entry - Caterers</b>
+//         </Typography>
+//       </Box>
+//       <Box
+//         sx={{
+//           //  background: 'rgb(236, 253, 230)',
+//           p: 5,
+//           height: "auto",
+//         }}
+//       >
+//         <Box sx={{ display: "flex", gap: 3 }}>
+//           <Button
+//             sx={{ background: "var(--complementary-color)" }}
+//             variant="contained"
+//             onClick={handleNewClick}
+//           >
+//             Create Sales Entry - Caterers
+//           </Button>
+//         </Box>
+//         {/* =========================
+//     INVOICE FILTERS
+// ========================= */}
+//         <Box
+//           sx={{
+//             display: "flex",
+//             gap: 2,
+//             alignItems: "center",
+//             flexWrap: "wrap",
+//             mt: 2,
+//             mb: 2,
+//           }}
+//         >
+//           {/* SEARCH */}
+//           <TextField
+//             size="small"
+//             label="Search"
+//             placeholder="Bill No / Customer / Category"
+//             value={searchText}
+//             onChange={(e) => setSearchText(e.target.value)}
+//             sx={{ minWidth: 250 }}
+//           />
+
+//           {/* FROM DATE */}
+//           <TextField
+//             size="small"
+//             type="date"
+//             label="From Date"
+//             value={fromDate}
+//             onChange={(e) => setFromDate(e.target.value)}
+//             InputLabelProps={{
+//               shrink: true,
+//             }}
+//             sx={{ minWidth: 160 }}
+//           />
+
+//           {/* TO DATE */}
+//           <TextField
+//             size="small"
+//             type="date"
+//             label="To Date"
+//             value={toDate}
+//             onChange={(e) => setToDate(e.target.value)}
+//             InputLabelProps={{
+//               shrink: true,
+//             }}
+//             sx={{ minWidth: 160 }}
+//           />
+
+//           {/* CATEGORY */}
+//           <TextField
+//             select
+//             size="small"
+//             label="Category"
+//             value={categoryFilter}
+//             onChange={(e) => setCategoryFilter(e.target.value)}
+//             sx={{ minWidth: 160 }}
+//           >
+//             <MenuItem value="">All</MenuItem>
+//             <MenuItem value="R">Retailer</MenuItem>
+//             <MenuItem value="D">Dealer</MenuItem>
+//             <MenuItem value="C">Caterers</MenuItem>
+//           </TextField>
+
+//           {/* CLEAR */}
+//           <Button
+//             variant="outlined"
+//             size="small"
+//             onClick={() => {
+//               setSearchText("");
+//               setFromDate("");
+//               setToDate("");
+//               setCategoryFilter("");
+//             }}
+//           >
+//             Clear
+//           </Button>
+//         </Box>
+//         <MaterialReactTable
+//           columns={columns}
+//           data={filteredInvoiceData}
+//           enablePagination={false}
+//           initialState={{
+//             sorting: [{ id: "Id", desc: true }],
+//           }}
+//           muiTableHeadCellProps={{
+//             sx: {
+//               backgroundColor: "#E9ECEF",
+//               color: "black",
+//               fontSize: "16px",
+//             },
+//           }}
+//           renderBottomToolbarCustomActions={() => (
+//             <Box
+//               mt={2}
+//               alignItems="center"
+//               display="flex"
+//               justifyContent="flex-end"
+//               width="100%"
+//             >
+//               <FirstPageIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo(1)}
+//               />
+//               <KeyboardArrowLeftIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() =>
+//                   setPageNo((prev) => Math.max(Number(prev) - 1, 1))
+//                 }
+//               />
+//               <Box ml={1}> Page No </Box>
+//               <TextField
+//                 sx={{
+//                   width: "4.5%",
+//                   ml: 1,
+//                   "@media (max-width: 768px)": {
+//                     width: "10%",
+//                   },
+//                 }}
+//                 value={pageNo}
+//                 onChange={(e) => setPageNo(e.target.value)}
+//                 size="small"
+//               />
+//               <KeyboardArrowRightIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo((prev) => Number(prev) + 1)}
+//               />
+//               <LastPageIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo(totalPages)}
+//               />
+//               <Box ml={1}>Total Pages: {totalPages}</Box>
+//             </Box>
+//           )}
+//         />
+//         {/* ///for preview///////// */}.
+//         <Dialog
+//           open={previewOpen}
+//           onClose={() => setPreviewOpen(false)}
+//           maxWidth="xlg"
+//           fullWidth
+//         >
+//           <DialogTitle sx={{ textAlign: "center" }}>
+//             <Box
+//               display="flex"
+//               alignItems="center"
+//               justifyContent="center"
+//               gap={1}
+//             >
+//               {/* <img src={logonew} alt="Logo" style={{ borderRadius: 50, width: "70px", height: 70 }} /> */}
+//               <Typography
+//                 variant="h5"
+//                 sx={{
+//                   fontWeight: "bold",
+//                   color: "#0B5E20",
+//                 }}
+//               >
+//                 Welcome To Amrut Dairy
+//               </Typography>
+//             </Box>
+//             <Typography sx={{ mt: 1 }}>
+//               Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park
+//               Pitali, Ganpati Road, Kolhapur, Maharashtra 416003
+//             </Typography>
+
+//             <Typography
+//               variant="h6"
+//               component="div"
+//               sx={{ fontWeight: "bold", mt: 1 }}
+//             >
+//               Sales Preview
+//             </Typography>
+//           </DialogTitle>
+//           <DialogContent dividers>
+//             <Box>
+//               {previewData ? (
+//                 <Box>
+//                   <Box
+//                     display={"flex"}
+//                     justifyContent={"space-between"}
+//                     gap={2}
+//                   >
+//                     <Typography>
+//                       <strong>Invoice No:</strong> {previewData.InvoiceNo}
+//                     </Typography>
+//                     <Typography>
+//                       <strong>Invoice Date:</strong>{" "}
+//                       {previewData?.InvoiceDate
+//                         ? new Date(
+//                             previewData.InvoiceDate?.date ||
+//                               previewData.InvoiceDate,
+//                           ).toLocaleDateString()
+//                         : "-"}
+//                     </Typography>
+//                   </Box>
+
+//                   <Box
+//                     display={"flex"}
+//                     justifyContent={"space-between"}
+//                     gap={2}
+//                     mt={2}
+//                   >
+//                     <Box>
+//                       <Typography>
+//                         <strong>Order No:</strong> {previewData.OrderNo}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Order Date:</strong>{" "}
+//                         {previewData?.OrderDate?.date
+//                           ? new Date(
+//                               previewData.OrderDate.date,
+//                             ).toLocaleDateString()
+//                           : "-"}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Customer Name:</strong>{" "}
+//                         {previewData.accountDetails.AccountName}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Contact No:</strong> {previewData.ContactNo}
+//                       </Typography>
+//                     </Box>
+//                   </Box>
+//                   <Divider sx={{ mt: 2 }} />
+
+//                   {/* ////////// */}
+
+//                   <Grid container spacing={4}>
+//                     <Grid item xs={12} md={8}>
+//                       <Typography
+//                         variant="h6"
+//                         fontWeight="bold"
+//                         gutterBottom
+//                         mt={2}
+//                       >
+//                         Sales Details
+//                       </Typography>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={2}
+//                         sx={{ width: "100%", mt: 2 }}
+//                       >
+//                         <Table size="small">
+//                           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Material</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Quantity (Lit)</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Rate</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Discount</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Amount (Rs)</strong>
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableHead>
+
+//                           <TableBody>
+//                             {previewData?.invdetail?.map((item, index) => {
+//                               const materialName =
+//                                 productOptions.find(
+//                                   (opt) =>
+//                                     String(opt.value) ===
+//                                     String(item.ProductId),
+//                                 )?.label ||
+//                                 item.ProductName ||
+//                                 "Unknown";
+
+//                               return (
+//                                 <TableRow key={item.Id || index}>
+//                                   <TableCell>{materialName}</TableCell>
+
+//                                   <TableCell>{item.Quantity || 0}</TableCell>
+
+//                                   <TableCell>{item.Rate || 0}</TableCell>
+
+//                                   <TableCell>{item.DiscountAmt || 0}</TableCell>
+
+//                                   <TableCell>{item.Amount || 0}</TableCell>
+//                                 </TableRow>
+//                               );
+//                             })}
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={1}
+//                         sx={{ width: "100%", mt: 8 }}
+//                       >
+//                         <Table size="small">
+//                           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Payment Mode</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 <strong>Transport Charge</strong>
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableHead>
+//                           <TableBody>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Payment Mode</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 {previewData?.PaymentMode || "-"}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Transport</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 ₹{" "}
+//                                 {Number(previewData?.Transport || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+//                     </Grid>
+
+//                     {/* Summary Table */}
+//                     <Grid item xs={12} md={4}>
+//                       <Typography
+//                         variant="h6"
+//                         fontWeight="bold"
+//                         gutterBottom
+//                         mt={2}
+//                       >
+//                         Amount Summary
+//                       </Typography>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={2}
+//                         sx={{
+//                           mt: 2,
+//                           borderRadius: 2,
+//                         }}
+//                       >
+//                         <Table size="small">
+//                           <TableBody>
+//                             {/* Subtotal */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Subtotal</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.SubTotal || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Transport */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Transport</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.Transport || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Grand Total */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Grand Total</strong>
+//                               </TableCell>
+
+//                               <TableCell
+//                                 align="right"
+//                                 sx={{
+//                                   fontWeight: "bold",
+//                                   color: "#1976d2",
+//                                 }}
+//                               >
+//                                 ₹ {Number(previewData?.Total || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Received Amount */}
+//                             {/* Received Amount */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Received Amount</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.ReceivedAmount || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Cumulative Current Bill Due */}
+//                             {/* ===================================================== */}
+//                             {/* PREVIOUS CUSTOMER DUE */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#e65100" }}>
+//                                   Previous Customer Due
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.PreviousBalanceDue || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* ===================================================== */}
+//                             {/* CURRENT BILL DUE */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#d32f2f" }}>
+//                                   Current Bill Due
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.CurrentInvoiceDue || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* ===================================================== */}
+//                             {/* TOTAL CUSTOMER OUTSTANDING */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#b71c1c" }}>
+//                                   Total Customer Outstanding
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.BalanceDue || 0).toFixed(
+//                                   2,
+//                                 )}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Refund / Current Bill Due */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong
+//                                   style={{
+//                                     color:
+//                                       Number(previewData?.ReceivedAmount || 0) >
+//                                       Number(previewData?.Total || 0)
+//                                         ? "green"
+//                                         : "red",
+//                                   }}
+//                                 >
+//                                   {Number(previewData?.ReceivedAmount || 0) >
+//                                   Number(previewData?.Total || 0)
+//                                     ? "Refund"
+//                                     : "Current Bill Due"}
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell
+//                                 align="right"
+//                                 sx={{
+//                                   fontWeight: "bold",
+//                                   color:
+//                                     Number(previewData?.ReceivedAmount || 0) >
+//                                     Number(previewData?.Total || 0)
+//                                       ? "green"
+//                                       : "red",
+//                                 }}
+//                               >
+//                                 ₹{" "}
+//                                 {Math.abs(
+//                                   Number(previewData?.ReceivedAmount || 0) -
+//                                     Number(previewData?.Total || 0),
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+//                     </Grid>
+//                   </Grid>
+//                 </Box>
+//               ) : (
+//                 <Typography>No data to preview</Typography>
+//               )}
+//             </Box>
+//           </DialogContent>
+//           <DialogActions>
+//             <Button onClick={generatePDF} color="primary">
+//               <PrintIcon sx={{ fontSize: 35 }} />
+//             </Button>
+//             <Button
+//               variant="contained"
+//               onClick={() => setPreviewOpen(false)}
+//               color="primary"
+//             >
+//               Close
+//             </Button>
+//           </DialogActions>
+//         </Dialog>
+//         <Drawer
+//           anchor="right"
+//           open={isDrawerOpen}
+//           onClose={handleDrawerClose}
+//           ModalProps={{
+//             keepMounted: true,
+//           }}
+//           PaperProps={{
+//             sx: {
+//               width: "100vw",
+//               maxWidth: "100vw",
+//               height: "100vh",
+//               borderRadius: 0,
+//               zIndex: 1000,
+
+//               display: "flex",
+//               flexDirection: "column",
+
+//               overflow: "hidden",
+
+//               "@media (max-width: 900px)": {
+//                 width: "100%",
+//                 maxWidth: "100%",
+//               },
+//             },
+//           }}
+//         >
+//           {/* ===================================================== */}
+//           {/* DRAWER HEADER */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               px: 2,
+//               py: 1.5,
+//               minHeight: 70,
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "space-between",
+//               background: "rgb(236, 253, 230)",
+//               borderBottom: "1px solid #ddd",
+//               flexShrink: 0,
+//             }}
+//           >
+//             {/* TITLE */}
+
+//             <Typography
+//               fontWeight="bold"
+//               variant="h6"
+//               sx={{
+//                 fontSize: {
+//                   xs: "17px",
+//                   sm: "20px",
+//                 },
+//               }}
+//             >
+//               {isEditing
+//                 ? "Update Sales Entry -Caterers"
+//                 : "Create Sales Entry -Caterers"}
+//             </Typography>
+
+//             {/* TOTAL / REFUND / CLOSE */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "center",
+//                 gap: {
+//                   xs: 1,
+//                   sm: 3,
+//                 },
+//               }}
+//             >
+//               {/* TOTAL */}
+
+//               <Box
+//                 sx={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 0.5,
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "12px",
+//                       sm: "16px",
+//                     },
+//                     fontWeight: 700,
+//                     color: "#555",
+//                   }}
+//                 >
+//                   TOTAL :
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "20px",
+//                       sm: "30px",
+//                     },
+//                     fontWeight: 900,
+//                     color: "#1976d2",
+//                     lineHeight: 1,
+//                   }}
+//                 >
+//                   ₹ {Number(total || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* REFUND */}
+
+//               <Box
+//                 sx={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 0.5,
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "12px",
+//                       sm: "16px",
+//                     },
+//                     fontWeight: 700,
+//                     color: "#555",
+//                   }}
+//                 >
+//                   REFUND :
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "20px",
+//                       sm: "30px",
+//                     },
+//                     fontWeight: 900,
+//                     color: "#087f23",
+//                     lineHeight: 1,
+//                   }}
+//                 >
+//                   ₹ {Number(refund || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* CLOSE */}
+
+//               <CloseIcon
+//                 sx={{
+//                   cursor: "pointer",
+//                   fontSize: 28,
+//                 }}
+//                 onClick={handleDrawerCloseAndGoSalesEntry}
+//               />
+//             </Box>
+//           </Box>
+
+//           {/* ===================================================== */}
+//           {/* DRAWER CONTENT */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               flex: 1,
+//               minHeight: 0,
+
+//               overflowY: "auto",
+//               overflowX: "hidden",
+
+//               scrollbarWidth: "none",
+
+//               "&::-webkit-scrollbar": {
+//                 display: "none",
+//               },
+
+//               p: {
+//                 xs: 1,
+//                 sm: 1.5,
+//               },
+//             }}
+//           >
+//             {/* ===================================================== */}
+//             {/* INVOICE / DEVICE / DATE */}
+//             {/* ===================================================== */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "flex-start",
+//                 gap: 2,
+//                 mb: 1.5,
+
+//                 "@media (max-width: 900px)": {
+//                   flexDirection: "column",
+//                 },
+//               }}
+//             >
+//               {/* INVOICE NO */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Invoice No</Typography>
+
+//                 <TextField
+//                   variant="standard"
+//                   sx={{
+//                     mt: 0.5,
+//                     "& .MuiInput-underline:after": {
+//                       borderBottomWidth: 1.5,
+//                       borderBottomColor: "#44ad74",
+//                     },
+//                   }}
+//                   focused
+//                   value={invoiceNo}
+//                   size="small"
+//                   margin="none"
+//                   placeholder="Invoice No Auto Generated"
+//                   fullWidth
+//                   InputProps={{
+//                     readOnly: true,
+//                   }}
+//                 />
+//               </Box>
+
+//               {/* DEVICE */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Device</Typography>
+
+//                 <TextField
+//                   variant="standard"
+//                   value={device}
+//                   fullWidth
+//                   size="small"
+//                   InputProps={{
+//                     readOnly: true,
+//                   }}
+//                 />
+//               </Box>
+
+//               {/* INVOICE DATE */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Invoice Date</Typography>
+
+//                 <LocalizationProvider dateAdapter={AdapterDateFns}>
+//                   <DatePicker
+//                     value={invoiceDate ? new Date(invoiceDate) : null}
+//                     format="dd-MM-yyyy"
+//                     onChange={(newValue) => {
+//                       setInvoiceDate(newValue);
+
+//                       setErrors({
+//                         ...errors,
+//                         invoiceDate: undefined,
+//                       });
+//                     }}
+//                     slotProps={{
+//                       textField: {
+//                         size: "small",
+//                         fullWidth: true,
+//                         error: !!errors.invoiceDate,
+//                         helperText: errors.invoiceDate,
+//                       },
+//                     }}
+//                   />
+//                 </LocalizationProvider>
+//               </Box>
+//             </Box>
+
+//             {/* ===================================================== */}
+//             {/* CUSTOMER / CONTACT */}
+//             {/* ===================================================== */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "flex-start",
+//                 gap: 2,
+//                 mb: 1.5,
+
+//                 "@media (max-width: 900px)": {
+//                   flexDirection: "column",
+//                 },
+//               }}
+//             >
+//               {/* CUSTOMER */}
+
+//               <Box
+//                 ref={customerDropdownRef}
+//                 flex={1}
+//                 width="100%"
+//                 position="relative"
+//               >
+//                 <Typography variant="body2">Customer</Typography>
+
+//                 <TextField
+//                   fullWidth
+//                   variant="standard"
+//                   size="small"
+//                   value={selectedCustomerName || ""}
+//                   placeholder="Select Customer"
+//                   onClick={() => {
+//                     setShowDropdown(true);
+//                   }}
+//                   onKeyDown={(e) => {
+//                     if (e.key === "Enter") {
+//                       e.preventDefault();
+//                       e.stopPropagation();
+
+//                       setShowDropdown(true);
+
+//                       setTimeout(() => {
+//                         const searchInput = document.querySelector(
+//                           'input[placeholder="Search Customer Name"]',
+//                         );
+
+//                         if (searchInput) {
+//                           searchInput.focus();
+//                           searchInput.select();
+//                         }
+//                       }, 100);
+//                     }
+
+//                     if (e.key === "Escape") {
+//                       e.preventDefault();
+//                       e.stopPropagation();
+
+//                       setShowDropdown(false);
+//                       setText("");
+//                     }
+//                   }}
+//                   error={!!errors.selectedAccount}
+//                   helperText={errors.selectedAccount}
+//                 />
+
+//                 {/* CUSTOMER POPUP */}
+
+//                 {showDropdown && (
+//                   <Paper
+//                     elevation={3}
+//                     sx={{
+//                       position: "absolute",
+//                       top: "100%",
+//                       left: 0,
+//                       width: "100%",
+//                       maxHeight: 250,
+//                       overflowY: "auto",
+//                       zIndex: 9999,
+//                       mt: 1,
+//                       p: 2,
+//                     }}
+//                   >
+//                     {/* SEARCH */}
+
+//                     <TextField
+//                       value={text}
+//                       onChange={(e) => {
+//                         setText(e.target.value);
+//                       }}
+//                       size="small"
+//                       fullWidth
+//                       placeholder="Search Customer Name"
+//                       InputProps={{
+//                         startAdornment: (
+//                           <InputAdornment position="start">
+//                             <SearchIcon />
+//                           </InputAdornment>
+//                         ),
+//                       }}
+//                     />
+
+//                     {/* CREATE CUSTOMER */}
+
+//                     {/* CREATE NEW CUSTOMER */}
+
+//                     <Box display="flex" flexDirection="column" gap={1} mt={1}>
+//                       {/* CUSTOMER NAME + ADD BUTTON */}
+
+//                       <Box display="flex" gap={1}>
+//                         <TextField
+//                           value={accountName}
+//                           onChange={(e) => {
+//                             setAccountName(e.target.value);
+//                           }}
+//                           size="small"
+//                           placeholder="Create New Customer"
+//                           fullWidth
+//                         />
+
+//                         <Button
+//                           sx={{
+//                             background: "var(--primary-color)",
+
+//                             "&:hover": {
+//                               background: "var(--primary-color)",
+//                             },
+//                           }}
+//                           onClick={CreateCustomerMaster}
+//                           variant="contained"
+//                           startIcon={
+//                             <AddCircleIcon
+//                               sx={{
+//                                 fontSize: "20px",
+//                               }}
+//                             />
+//                           }
+//                         >
+//                           ADD
+//                         </Button>
+//                       </Box>
+
+//                       {/* CUSTOMER ADDRESS */}
+
+//                       <TextField
+//                         value={newCustomerAddress}
+//                         onChange={(e) => {
+//                           setNewCustomerAddress(e.target.value);
+//                         }}
+//                         size="small"
+//                         placeholder="Customer Address"
+//                         fullWidth
+//                       />
+//                     </Box>
+//                     {/* CUSTOMER LIST */}
+
+//                     <Box mt={1}>
+//                       {accountOptions.length > 0 ? (
+//                         accountOptions.map((option) => (
+//                           <MenuItem
+//                             key={option.Id}
+//                             onClick={() => {
+//                               const customerId = option.Id?.toString() || "";
+
+//                               const customerName = option.AccountName || "";
+
+//                               const customerAddress =
+//                                 option.Address1 ||
+//                                 option.address1 ||
+//                                 option.Address ||
+//                                 option.address ||
+//                                 option.AddressLine1 ||
+//                                 option.addressLine1 ||
+//                                 option.DealerAddress ||
+//                                 option.dealerAddress ||
+//                                 "";
+
+//                               // Select customer
+//                               // Select customer
+//                               setSelectedAccount(customerId);
+
+//                               // Set customer name
+//                               setSelectedCustomerName(customerName);
+
+//                               // Set customer address
+//                               setSelectedCustomerAddress(customerAddress);
+
+//                               // Existing API logic
+//                               fetchAccounts(customerId);
+
+//                               // Fetch previous outstanding balance
+//                               fetchPreviousBalance(customerId);
+
+//                               // Close popup
+//                               setShowDropdown(false);
+
+//                               // Clear search
+//                               setText("");
+//                             }}
+//                             sx={{
+//                               display: "flex",
+//                               flexDirection: "column",
+//                               alignItems: "flex-start",
+//                               width: "100%",
+//                               py: 1,
+//                             }}
+//                           >
+//                             {/* CUSTOMER NAME */}
+//                             <Typography
+//                               sx={{
+//                                 fontWeight: 600,
+//                                 width: "100%",
+//                               }}
+//                             >
+//                               {option.AccountName || ""}
+//                             </Typography>
+
+//                             {/* CUSTOMER ADDRESS */}
+//                             {(option.Address1 ||
+//                               option.address1 ||
+//                               option.Address ||
+//                               option.address ||
+//                               option.AddressLine1 ||
+//                               option.addressLine1 ||
+//                               option.DealerAddress ||
+//                               option.dealerAddress) && (
+//                               <Typography
+//                                 variant="body2"
+//                                 sx={{
+//                                   color: "#777",
+//                                   fontSize: "13px",
+//                                   width: "100%",
+//                                   mt: 0.3,
+//                                 }}
+//                               >
+//                                 {option.Address1 ||
+//                                   option.address1 ||
+//                                   option.Address ||
+//                                   option.address ||
+//                                   option.AddressLine1 ||
+//                                   option.addressLine1 ||
+//                                   option.DealerAddress ||
+//                                   option.dealerAddress}
+//                               </Typography>
+//                             )}
+//                           </MenuItem>
+//                         ))
+//                       ) : (
+//                         <Typography
+//                           sx={{
+//                             p: 1,
+//                             color: "gray",
+//                           }}
+//                         >
+//                           No customers found
+//                         </Typography>
+//                       )}
+//                     </Box>
+//                   </Paper>
+//                 )}
+//               </Box>
+
+//               {/* CONTACT NUMBER */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Contact Number</Typography>
+
+//                 <PhoneInput
+//                   country={"in"}
+//                   value={phone}
+//                   onChange={(phone) => setPhone(phone)}
+//                   inputProps={{
+//                     name: "phone",
+//                     required: true,
+//                   }}
+//                   inputStyle={{
+//                     width: "100%",
+//                     height: "40px",
+//                     fontSize: "16px",
+//                     borderRadius: "5px",
+//                   }}
+//                   buttonStyle={{
+//                     borderRadius: "5px",
+//                   }}
+//                 />
+//               </Box>
+//             </Box>
+//             {/* ===================================================== */}
+//             {/* PRODUCT DETAILS */}
+//             {/* ===================================================== */}
+
+//             <Paper
+//               elevation={2}
+//               sx={{
+//                 width: "100%",
+//                 border: "1px solid #dcdcdc",
+//                 borderRadius: 2,
+//                 overflow: "hidden",
+//                 backgroundColor: "#fff",
+//                 mb: 1.5,
+//               }}
+//             >
+//               {/* PRODUCT DETAILS TITLE */}
+//               <Box
+//                 sx={{
+//                   px: 1.5,
+//                   py: 1.2,
+//                   borderBottom: "1px solid #dcdcdc",
+//                   backgroundColor: "#fff",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: { xs: "17px", sm: "20px" },
+//                     fontWeight: 700,
+//                   }}
+//                 >
+//                   Product Details
+//                 </Typography>
+//               </Box>
+
+//               {/* ===================================================== */}
+//               {/* PRODUCT TABLE */}
+//               {/* ===================================================== */}
+
+//               <TableContainer
+//                 sx={{
+//                   width: "100%",
+//                   overflowX: "auto",
+//                 }}
+//               >
+//                 <Table
+//                   size="small"
+//                   sx={{
+//                     width: "100%",
+//                     minWidth: 850,
+//                     tableLayout: "fixed",
+
+//                     "& .MuiTableCell-root": {
+//                       borderBottom: "1px solid #e5e5e5",
+//                       py: 1.2,
+//                       px: 1.5,
+//                       fontSize: "14px",
+//                     },
+//                   }}
+//                 >
+//                   {/* ================================================= */}
+//                   {/* TABLE HEADER */}
+//                   {/* ================================================= */}
+
+//                   <TableHead>
+//                     <TableRow
+//                       sx={{
+//                         backgroundColor: "#f5f5f5",
+//                       }}
+//                     >
+//                       <TableCell
+//                         sx={{
+//                           width: "8%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Sr.No
+//                       </TableCell>
+
+//                       <TableCell
+//                         sx={{
+//                           width: "27%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Product
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="center"
+//                         sx={{
+//                           width: "15%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Quantity
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="right"
+//                         sx={{
+//                           width: "15%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Rate
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="right"
+//                         sx={{
+//                           width: "17%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Amount
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="center"
+//                         sx={{
+//                           width: "18%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Action
+//                       </TableCell>
+//                     </TableRow>
+//                   </TableHead>
+
+//                   {/* ================================================= */}
+//                   {/* TABLE BODY */}
+//                   {/* ================================================= */}
+
+//                   <TableBody>
+//                     {/* ================================================= */}
+//                     {/* SAVED PRODUCT ROWS */}
+//                     {/* ================================================= */}
+
+//                     {rows.map((row, index) => (
+//                       <TableRow key={row.Id || `product-row-${index}`} hover>
+//                         {/* SR NO */}
+//                         <TableCell>{index + 1}</TableCell>
+
+//                         {/* PRODUCT */}
+//                         <TableCell>
+//                           <Typography
+//                             sx={{
+//                               fontSize: "14px",
+//                               fontWeight: 500,
+//                               overflow: "hidden",
+//                               textOverflow: "ellipsis",
+//                               whiteSpace: "nowrap",
+//                             }}
+//                           >
+//                             {row.ProductName || "-"}
+//                           </Typography>
+//                         </TableCell>
+
+//                         {/* QUANTITY */}
+//                         <TableCell align="center">
+//                           <TextField
+//                             variant="standard"
+//                             type="number"
+//                             value={row.Quantity ?? ""}
+//                             onChange={(e) => {
+//                               const updatedRows = [...rows];
+
+//                               const qty =
+//                                 e.target.value === ""
+//                                   ? ""
+//                                   : Number(e.target.value);
+
+//                               const currentRate =
+//                                 Number(updatedRows[index].Rate) || 0;
+
+//                               updatedRows[index] = {
+//                                 ...updatedRows[index],
+//                                 Quantity: qty,
+//                                 Amount: (Number(qty) || 0) * currentRate,
+//                               };
+
+//                               setRows(updatedRows);
+//                             }}
+//                             sx={{
+//                               width: 80,
+//                             }}
+//                             inputProps={{
+//                               min: 0,
+//                             }}
+//                           />
+//                         </TableCell>
+
+//                         {/* RATE */}
+//                         <TableCell align="right">
+//                           <TextField
+//                             variant="standard"
+//                             type="number"
+//                             value={row.Rate ?? ""}
+//                             onChange={(e) => {
+//                               const updatedRows = [...rows];
+
+//                               const newRate =
+//                                 e.target.value === ""
+//                                   ? ""
+//                                   : Number(e.target.value);
+
+//                               const currentQty =
+//                                 Number(updatedRows[index].Quantity) || 0;
+
+//                               updatedRows[index] = {
+//                                 ...updatedRows[index],
+//                                 Rate: newRate,
+//                                 Amount: currentQty * (Number(newRate) || 0),
+//                               };
+
+//                               setRows(updatedRows);
+//                             }}
+//                             sx={{
+//                               width: 100,
+//                             }}
+//                             inputProps={{
+//                               min: 0,
+//                             }}
+//                           />
+//                         </TableCell>
+
+//                         {/* AMOUNT */}
+//                         <TableCell align="right">
+//                           ₹ {Number(row.Amount || 0).toFixed(2)}
+//                         </TableCell>
+
+//                         {/* ACTION */}
+//                         <TableCell align="center">
+//                           <Box
+//                             sx={{
+//                               display: "flex",
+//                               justifyContent: "center",
+//                               alignItems: "center",
+//                               gap: 0.5,
+//                             }}
+//                           >
+//                             <Button
+//                               size="small"
+//                               variant="outlined"
+//                               onClick={() => handleEditRow(index)}
+//                             >
+//                               Edit
+//                             </Button>
+
+//                             <Button
+//                               size="small"
+//                               variant="outlined"
+//                               color="error"
+//                               onClick={() => handleDeleteRow(index)}
+//                             >
+//                               Delete
+//                             </Button>
+//                           </Box>
+//                         </TableCell>
+//                       </TableRow>
+//                     ))}
+
+//                     {/* ================================================= */}
+//                     {/* NEW PRODUCT ROW */}
+//                     {/* ================================================= */}
+
+//                     <TableRow
+//                       sx={{
+//                         backgroundColor: "#fff",
+//                       }}
+//                     >
+//                       {/* SR NO */}
+//                       <TableCell>{rows.length + 1}</TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* PRODUCT */}
+//                       {/* ================================================= */}
+
+//                       <TableCell>
+//                         <Autocomplete
+//                           options={productOptions}
+//                           value={
+//                             productOptions.find(
+//                               (option) =>
+//                                 String(option.value) ===
+//                                 String(selectedProductID),
+//                             ) || null
+//                           }
+//                           getOptionLabel={(option) => option?.label || ""}
+//                           isOptionEqualToValue={(option, value) =>
+//                             String(option.value) === String(value?.value)
+//                           }
+//                           onChange={(event, newValue) => {
+//                             handleItemChange(newValue);
+//                           }}
+//                           onKeyDown={(event) => {
+//                             if (event.key !== "Enter") {
+//                               return;
+//                             }
+
+//                             // Product select केलेला असेल तर
+//                             if (selectedProductID) {
+//                               event.preventDefault();
+//                               event.stopPropagation();
+
+//                               // Product Enter → Quantity Focus
+//                               setTimeout(() => {
+//                                 quantityRef.current?.focus();
+//                                 quantityRef.current?.select();
+//                               }, 100);
+
+//                               return;
+//                             }
+
+//                             // Product select केलेला नसेल तर
+//                             event.preventDefault();
+//                             event.stopPropagation();
+
+//                             toast.error("Please select a product.");
+
+//                             setTimeout(() => {
+//                               productRef.current?.focus();
+//                             }, 100);
+//                           }}
+//                           renderInput={(params) => (
+//                             <TextField
+//                               {...params}
+//                               inputRef={productRef}
+//                               variant="standard"
+//                               placeholder="Select Product"
+//                               size="small"
+//                               fullWidth
+//                               sx={{
+//                                 "& .MuiInputBase-root": {
+//                                   fontSize: "15px",
+//                                 },
+//                               }}
+//                             />
+//                           )}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* QUANTITY */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="center">
+//                         <TextField
+//                           variant="standard"
+//                           type="number"
+//                           value={quantity}
+//                           onChange={handleQuantityChange}
+//                           inputRef={quantityRef}
+//                           onKeyDown={(event) => {
+//                             if (event.key !== "Enter") {
+//                               return;
+//                             }
+
+//                             event.preventDefault();
+//                             event.stopPropagation();
+
+//                             if (!selectedProductID) {
+//                               toast.error("Please select a product.");
+
+//                               setTimeout(() => {
+//                                 productRef.current?.focus();
+//                               }, 100);
+
+//                               return;
+//                             }
+
+//                             if (!quantity || Number(quantity) <= 0) {
+//                               toast.error("Please enter quantity.");
+
+//                               quantityRef.current?.focus();
+//                               quantityRef.current?.select();
+
+//                               return;
+//                             }
+
+//                             if (!rate || Number(rate) <= 0) {
+//                               toast.error("Caterer rate not available.");
+//                               return;
+//                             }
+
+//                             // Quantity Enter → Add Row
+//                             handleSaveOrAddRow();
+
+//                             // After row add → Product
+//                             setTimeout(() => {
+//                               productRef.current?.focus();
+//                             }, 100);
+//                           }}
+//                           sx={{
+//                             width: 80,
+//                           }}
+//                           inputProps={{
+//                             min: 0,
+//                           }}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* RATE */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="right">
+//                         <TextField
+//                           variant="standard"
+//                           type="number"
+//                           value={rate}
+//                           inputRef={rateRef}
+//                           InputProps={{
+//                             readOnly: true,
+//                           }}
+//                           sx={{
+//                             width: 100,
+//                           }}
+//                           inputProps={{
+//                             min: 0,
+//                           }}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* AMOUNT */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="right">
+//                         ₹{" "}
+//                         {(
+//                           (Number(quantity) || 0) * (Number(rate) || 0)
+//                         ).toFixed(2)}
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* ACTION */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="center">
+//                         <Typography
+//                           sx={{
+//                             color: "#999",
+//                             fontSize: "13px",
+//                           }}
+//                         >
+//                           New
+//                         </Typography>
+//                       </TableCell>
+//                     </TableRow>
+//                   </TableBody>
+//                 </Table>
+//               </TableContainer>
+
+//               {/* ERROR */}
+//               {errors.rows && (
+//                 <Typography
+//                   color="error"
+//                   sx={{
+//                     px: 2,
+//                     py: 1,
+//                     fontSize: "14px",
+//                   }}
+//                 >
+//                   {errors.rows}
+//                 </Typography>
+//               )}
+//             </Paper>
+
+//             {/* ===================================================== */}
+//             {/* PAYMENT MODE + TRANSPORT */}
+//             {/* ===================================================== */}
+
+//             <Grid
+//               container
+//               spacing={2}
+//               sx={{
+//                 mb: 1.5,
+//               }}
+//             >
+//               {/* PAYMENT MODE */}
+
+//               <Grid item xs={12} md={6}>
+//                 <Box>
+//                   <Typography
+//                     variant="body2"
+//                     sx={{
+//                       fontWeight: 600,
+//                       mb: 0.5,
+//                     }}
+//                   >
+//                     Payment Mode
+//                   </Typography>
+
+//                   <TextField
+//                     select
+//                     variant="standard"
+//                     name="paymentMode"
+//                     value={paymentMode || ""}
+//                     onChange={(e) => {
+//                       const mode = e.target.value;
+
+//                       setPaymentMode(mode);
+//                       setReceivedAmount("");
+
+//                       if (mode !== "M") {
+//                         setCashAmount("");
+//                         setOnlineAmount("");
+//                       }
+
+//                       setErrors({
+//                         ...errors,
+//                         paymentMode: "",
+//                       });
+//                     }}
+//                     onKeyDown={(e) => {
+//                       if (e.key === "Enter") {
+//                         e.preventDefault();
+//                         e.stopPropagation();
+
+//                         if (!paymentMode) {
+//                           toast.error("Please select payment mode.");
+//                           return;
+//                         }
+
+//                         setTimeout(() => {
+//                           discountRef.current?.focus();
+//                           discountRef.current?.select();
+//                         }, 100);
+//                       }
+
+//                       // ESC = मागे Quantity वर
+//                       if (e.key === "Escape") {
+//                         e.preventDefault();
+//                         e.stopPropagation();
+
+//                         setTimeout(() => {
+//                           quantityRef.current?.focus();
+//                           quantityRef.current?.select();
+//                         }, 100);
+//                       }
+//                     }}
+//                     fullWidth
+//                     error={!!errors.paymentMode}
+//                     helperText={errors.paymentMode}
+//                   >
+//                     <MenuItem value="">Select Payment Mode</MenuItem>
+
+//                     <MenuItem value="C">Cash</MenuItem>
+
+//                     <MenuItem value="O">Online</MenuItem>
+
+//                     <MenuItem value="M">Mix</MenuItem>
+//                   </TextField>
+//                 </Box>
+
+//                 {/* MIX PAYMENT */}
+
+//                 {paymentMode === "M" && (
+//                   <Box
+//                     sx={{
+//                       mt: 1.5,
+//                       p: 1.5,
+//                       border: "1px solid #e0e0e0",
+//                       borderRadius: 2,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontWeight: 700,
+//                         mb: 1.5,
+//                       }}
+//                     >
+//                       Mix Payment
+//                     </Typography>
+
+//                     <Box
+//                       sx={{
+//                         display: "flex",
+//                         gap: 2,
+//                       }}
+//                     >
+//                       <TextField
+//                         label="Cash Amount"
+//                         type="number"
+//                         value={cashAmount}
+//                         onChange={handleCashAmountChange}
+//                         size="small"
+//                         fullWidth
+//                         inputProps={{
+//                           min: 0,
+//                         }}
+//                       />
+
+//                       <TextField
+//                         label="Online Amount"
+//                         type="number"
+//                         value={onlineAmount}
+//                         onChange={handleOnlineAmountChange}
+//                         size="small"
+//                         fullWidth
+//                         inputProps={{
+//                           min: 0,
+//                         }}
+//                       />
+//                     </Box>
+
+//                     <Box
+//                       sx={{
+//                         mt: 1.5,
+//                         display: "flex",
+//                         justifyContent: "space-between",
+//                       }}
+//                     >
+//                       <Typography fontWeight={700}>Received</Typography>
+
+//                       <Typography fontWeight={800} color="primary">
+//                         ₹ {Number(receivedAmount || 0).toFixed(2)}
+//                       </Typography>
+//                     </Box>
+//                   </Box>
+//                 )}
+//               </Grid>
+
+//               {/* TRANSPORT */}
+
+//               <Grid item xs={12} md={6}>
+//                 <Box>
+//                   <Typography
+//                     variant="body2"
+//                     sx={{
+//                       fontWeight: 600,
+//                       mb: 0.5,
+//                     }}
+//                   >
+//                     Transport
+//                   </Typography>
+
+//                   <TextField
+//                     variant="standard"
+//                     value={transport}
+//                     onChange={(e) => setTransport(e.target.value)}
+//                     placeholder="Transport"
+//                     fullWidth
+//                     type="number"
+//                   />
+//                 </Box>
+//               </Grid>
+//             </Grid>
+
+//             {/* ===================================================== */}
+//             {/* AMOUNT SUMMARY - FULL WIDTH */}
+//             {/* ===================================================== */}
+
+//             <Paper
+//               elevation={4}
+//               sx={{
+//                 width: "100%",
+//                 p: {
+//                   xs: 1.5,
+//                   sm: 2,
+//                 },
+//                 borderRadius: 3,
+//                 border: "1px solid #e0e0e0",
+//                 backgroundColor: "#ffffff",
+//                 mb: 2,
+//               }}
+//             >
+//               {/* TITLE */}
+
+//               <Typography
+//                 variant="h5"
+//                 sx={{
+//                   fontWeight: 800,
+//                   color: "#1976d2",
+//                   mb: 2,
+//                 }}
+//               >
+//                 Amount Summary
+//               </Typography>
+
+//               {/* SUMMARY ROW */}
+
+//               <Grid container spacing={2} alignItems="center">
+//                 {/* SUBTOTAL */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Subtotal
+//                     </Typography>
+
+//                     <Typography
+//                       sx={{
+//                         fontSize: "19px",
+//                         fontWeight: 700,
+//                       }}
+//                     >
+//                       ₹ {Number(subTotalcal || 0).toFixed(2)}
+//                     </Typography>
+//                   </Box>
+//                 </Grid>
+
+//                 {/* DISCOUNT */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Discount
+//                     </Typography>
+
+//                     <TextField
+//                       inputRef={discountRef}
+//                       size="small"
+//                       type="number"
+//                       value={discount}
+//                       onChange={(e) => {
+//                         const value = e.target.value;
+
+//                         if (value === "" || Number(value) >= 0) {
+//                           setDiscount(value);
+//                         }
+//                       }}
+//                       onKeyDown={(e) => {
+//                         if (e.key === "Enter") {
+//                           e.preventDefault();
+//                           e.stopPropagation();
+
+//                           setTimeout(() => {
+//                             receivedAmountRef.current?.focus();
+//                             receivedAmountRef.current?.select();
+//                           }, 100);
+//                         }
+//                       }}
+//                       placeholder="0.00"
+//                       sx={{
+//                         width: 120,
+
+//                         "& input": {
+//                           textAlign: "right",
+//                           fontSize: "16px",
+//                           fontWeight: 500,
+//                         },
+//                       }}
+//                       inputProps={{
+//                         min: 0,
+//                       }}
+//                     />
+//                   </Box>
+//                 </Grid>
+
+//                 {/* TOTAL */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "20px",
+//                         fontWeight: 700,
+//                       }}
+//                     >
+//                       Total
+//                     </Typography>
+
+//                     <Typography
+//                       sx={{
+//                         fontSize: "26px",
+//                         fontWeight: 800,
+//                         color: "#1976d2",
+//                       }}
+//                     >
+//                       ₹ {Number(total || 0).toFixed(2)}
+//                     </Typography>
+//                   </Box>
+//                 </Grid>
+
+//                 {/* RECEIVED */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Received Amount
+//                     </Typography>
+
+//                     <TextField
+//                       inputRef={receivedAmountRef}
+//                       size="small"
+//                       type="number"
+//                       value={receivedAmount}
+//                       onChange={handleReceivedAmountChange}
+//                       disabled={paymentMode === "M"}
+//                       placeholder="0.00"
+//                       sx={{
+//                         width: 120,
+
+//                         "& input": {
+//                           textAlign: "right",
+//                           fontSize: "16px",
+//                           fontWeight: 500,
+//                         },
+//                       }}
+//                       inputProps={{
+//                         min: 0,
+//                       }}
+//                     />
+//                   </Box>
+//                 </Grid>
+//               </Grid>
+
+//               <Divider
+//                 sx={{
+//                   my: 1.5,
+//                 }}
+//               />
+
+//               {/* ================================================= */}
+//               {/* PAYMENT STATUS */}
+//               {/* ================================================= */}
+
+//               {isPaid ? (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#e8f5e9",
+//                     border: "1px solid #a5d6a7",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     Paid
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     ₹ {Number(grandTotal || 0).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               ) : received > grandTotal ? (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#e8f5e9",
+//                     border: "1px solid #a5d6a7",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     Refund
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     ₹ {(received - grandTotal).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               ) : (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#ffebee",
+//                     border: "1px solid #ef9a9a",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#d32f2f",
+//                     }}
+//                   >
+//                     Current Bill Due
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#d32f2f",
+//                     }}
+//                   >
+//                     ₹ {Number(currentInvoiceBalanceDue || 0).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               )}
+
+//               {/* ===================================================== */}
+//               {/* PREVIOUS CUSTOMER DUE */}
+//               {/* ===================================================== */}
+//               <Box
+//                 sx={{
+//                   p: 1.5,
+//                   borderRadius: 2,
+//                   backgroundColor: "#fff8e1",
+//                   border: "1px solid #ffcc80",
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                   mb: 1,
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: "20px",
+//                     fontWeight: 800,
+//                     color: "#e65100",
+//                   }}
+//                 >
+//                   Previous Due
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: "22px",
+//                     fontWeight: 800,
+//                     color: "#e65100",
+//                   }}
+//                 >
+//                   ₹ {Number(previousBalanceDue || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* ===================================================== */}
+//               {/* TOTAL CUSTOMER OUTSTANDING */}
+//               {/* ===================================================== */}
+//               <Box
+//                 sx={{
+//                   p: 1.5,
+//                   borderRadius: 2,
+//                   backgroundColor: "#ffebee",
+//                   border: "2px solid #d32f2f",
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                   mt: 1,
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: "20px",
+//                     fontWeight: 800,
+//                     color: "#b71c1c",
+//                   }}
+//                 >
+//                   Total Outstanding
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: "24px",
+//                     fontWeight: 900,
+//                     color: "#b71c1c",
+//                   }}
+//                 >
+//                   ₹{" "}
+//                   {(
+//                     Number(previousBalanceDue || 0) +
+//                     Number(currentInvoiceBalanceDue || 0)
+//                   ).toFixed(2)}
+//                 </Typography>
+//               </Box>
+//             </Paper>
+//           </Box>
+
+//           {/* ===================================================== */}
+//           {/* SAVE / CANCEL / DELETE */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "center",
+//               gap: 2,
+//               py: 1.5,
+//               px: 2,
+//               borderTop: "1px solid #ddd",
+//               backgroundColor: "#fff",
+//               flexShrink: 0,
+//             }}
+//           >
+//             {/* SAVE / UPDATE */}
+
+//             <Button
+//               sx={{
+//                 background: "var(--primary-color)",
+
+//                 "&:hover": {
+//                   background: "var(--primary-color)",
+//                 },
+//               }}
+//               onClick={(e) => handleSubmit(e, false)}
+//               variant="contained"
+//             >
+//               {isEditing ? "Update" : "Save"}
+//             </Button>
+
+//             {/* PRINT */}
+
+//             <Button
+//               sx={{
+//                 background: "var(--complementary-color)",
+//                 "&:hover": {
+//                   background: "var(--complementary-color)",
+//                 },
+//               }}
+//               onClick={(e) => handleSubmit(e, true)}
+//               variant="contained"
+//               startIcon={<PrintIcon />}
+//             >
+//               Print
+//             </Button>
+//             {/* CANCEL */}
+
+//             <Button
+//               sx={{
+//                 borderColor: "var(--complementary-color)",
+//                 color: "var(--complementary-color)",
+//               }}
+//               onClick={handleDrawerClose}
+//               variant="outlined"
+//             >
+//               <b>Cancel</b>
+//             </Button>
+
+//             {/* DELETE */}
+
+//             {isEditing && (
+//               <Button
+//                 variant="contained"
+//                 color="error"
+//                 onClick={handleClickOpen}
+//               >
+//                 Delete
+//               </Button>
+//             )}
+
+//             {/* DELETE DIALOG */}
+
+//             <Dialog open={open} onClose={handleClose}>
+//               <DialogTitle>Confirm Deletion</DialogTitle>
+
+//               <DialogContent>
+//                 <DialogContentText>
+//                   Are you sure you want to delete this item?
+//                 </DialogContentText>
+//               </DialogContent>
+
+//               <DialogActions>
+//                 <Button onClick={handleClose} color="primary">
+//                   Cancel
+//                 </Button>
+
+//                 <Button onClick={handleConfirmDelete} color="error" autoFocus>
+//                   Delete
+//                 </Button>
+//               </DialogActions>
+//             </Dialog>
+
+//             {/* ============================================================
+//     INVOICE EDIT HISTORY DIALOG
+// ============================================================ */}
+
+//             <Dialog
+//               open={historyOpen}
+//               onClose={() => {
+//                 setHistoryOpen(false);
+//                 setSelectedHistoryVersion(null);
+//                 setSelectedHistoryDetails([]);
+//               }}
+//               fullWidth
+//               maxWidth="xl"
+//               PaperProps={{
+//                 sx: {
+//                   borderRadius: 3,
+//                   maxHeight: "92vh",
+//                 },
+//               }}
+//             >
+//               {/* ================= HEADER ================= */}
+
+//               <DialogTitle
+//                 sx={{
+//                   background: "linear-gradient(135deg, #1976d2, #0d47a1)",
+//                   color: "#fff",
+//                   fontWeight: 700,
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                 }}
+//               >
+//                 <Box>
+//                   Invoice Edit History
+//                   <Typography
+//                     sx={{
+//                       fontSize: "13px",
+//                       opacity: 0.9,
+//                       mt: 0.5,
+//                     }}
+//                   >
+//                     Invoice No:{" "}
+//                     {selectedHistoryInvoice?.InvoiceNo ||
+//                       selectedHistoryInvoice?.BillNo ||
+//                       "-"}
+//                   </Typography>
+//                 </Box>
+
+//                 <IconButton
+//                   onClick={() => {
+//                     setHistoryOpen(false);
+//                     setSelectedHistoryVersion(null);
+//                     setSelectedHistoryDetails([]);
+//                   }}
+//                   sx={{ color: "#fff" }}
+//                 >
+//                   <CloseIcon />
+//                 </IconButton>
+//               </DialogTitle>
+
+//               {/* ================= CONTENT ================= */}
+
+//               <DialogContent
+//                 dividers
+//                 sx={{
+//                   backgroundColor: "#f7f9fc",
+//                 }}
+//               >
+//                 {historyLoading ? (
+//                   <Box
+//                     sx={{
+//                       minHeight: 300,
+//                       display: "flex",
+//                       alignItems: "center",
+//                       justifyContent: "center",
+//                     }}
+//                   >
+//                     <Typography fontWeight={600}>
+//                       Loading invoice history...
+//                     </Typography>
+//                   </Box>
+//                 ) : (
+//                   <>
+//                     {/* =====================================================
+//             CURRENT INVOICE
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 3,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#1976d2",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Current Invoice
+//                       </Typography>
+
+//                       {currentHistoryHeader ? (
+//                         <Box
+//                           sx={{
+//                             display: "grid",
+//                             gridTemplateColumns:
+//                               "repeat(auto-fit, minmax(180px, 1fr))",
+//                             gap: 2,
+//                           }}
+//                         >
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Invoice No
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {currentHistoryHeader?.InvoiceNo ||
+//                                 currentHistoryHeader?.BillNo ||
+//                                 "-"}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Invoice Date
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {formatHistoryDate(
+//                                 currentHistoryHeader?.InvoiceDate,
+//                               )}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Customer
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {currentHistoryHeader?.AccountName ||
+//                                 currentHistoryHeader?.CustomerName ||
+//                                 currentHistoryHeader?.PartyName ||
+//                                 selectedHistoryInvoice?.AccountName ||
+//                                 "-"}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Total
+//                             </Typography>
+
+//                             <Typography
+//                               fontWeight={700}
+//                               sx={{ color: "#1976d2" }}
+//                             >
+//                               ₹{" "}
+//                               {Number(currentHistoryHeader?.Total || 0).toFixed(
+//                                 2,
+//                               )}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Received
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               ₹{" "}
+//                               {Number(
+//                                 currentHistoryHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Balance
+//                             </Typography>
+
+//                             <Typography
+//                               fontWeight={700}
+//                               sx={{ color: "#d32f2f" }}
+//                             >
+//                               ₹{" "}
+//                               {Number(
+//                                 currentHistoryHeader?.BalanceDue || 0,
+//                               ).toFixed(2)}
+//                             </Typography>
+//                           </Box>
+//                         </Box>
+//                       ) : (
+//                         <Typography color="text.secondary">
+//                           Current invoice data not available.
+//                         </Typography>
+//                       )}
+//                     </Paper>
+
+//                     {/* =====================================================
+//             PREVIOUS INVOICE HISTORY
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 3,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#d97706",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Previous Invoice History
+//                       </Typography>
+
+//                       {historyHeader.length === 0 ? (
+//                         <Typography color="text.secondary" sx={{ py: 3 }}>
+//                           No previous history found.
+//                         </Typography>
+//                       ) : (
+//                         <TableContainer
+//                           component={Paper}
+//                           elevation={0}
+//                           sx={{
+//                             border: "1px solid #e0e0e0",
+//                           }}
+//                         >
+//                           <Table size="small">
+//                             <TableHead>
+//                               <TableRow
+//                                 sx={{
+//                                   backgroundColor: "#f1f5f9",
+//                                 }}
+//                               >
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Version
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Invoice No
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Invoice Date
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Customer
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Total
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Received
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "center",
+//                                   }}
+//                                 >
+//                                   View
+//                                 </TableCell>
+//                               </TableRow>
+//                             </TableHead>
+
+//                             <TableBody>
+//                               {[...historyHeader]
+//                                 .sort(
+//                                   (a, b) =>
+//                                     Number(a?.VersionNo || 0) -
+//                                     Number(b?.VersionNo || 0),
+//                                 )
+//                                 .map((historyItem, index) => {
+//                                   const version = Number(
+//                                     historyItem?.VersionNo,
+//                                   );
+
+//                                   const isSelected =
+//                                     selectedHistoryVersion === version;
+
+//                                   return (
+//                                     <TableRow
+//                                       key={
+//                                         historyItem?.Id || `${version}-${index}`
+//                                       }
+//                                       sx={{
+//                                         backgroundColor: isSelected
+//                                           ? "#e3f2fd"
+//                                           : "inherit",
+//                                       }}
+//                                     >
+//                                       <TableCell>
+//                                         <Button
+//                                           size="small"
+//                                           variant={
+//                                             isSelected
+//                                               ? "contained"
+//                                               : "outlined"
+//                                           }
+//                                           onClick={() =>
+//                                             handleHistoryVersionClick(
+//                                               historyItem,
+//                                             )
+//                                           }
+//                                         >
+//                                           Version {version}
+//                                         </Button>
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {historyItem?.InvoiceNo ||
+//                                           historyItem?.BillNo ||
+//                                           "-"}
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {formatHistoryDate(
+//                                           historyItem?.InvoiceDate,
+//                                         )}
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {historyItem?.AccountName ||
+//                                           historyItem?.CustomerName ||
+//                                           historyItem?.PartyName ||
+//                                           selectedHistoryInvoice?.AccountName ||
+//                                           "-"}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "right",
+//                                           fontWeight: 600,
+//                                         }}
+//                                       >
+//                                         ₹{" "}
+//                                         {Number(
+//                                           historyItem?.Total || 0,
+//                                         ).toFixed(2)}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "right",
+//                                         }}
+//                                       >
+//                                         ₹{" "}
+//                                         {Number(
+//                                           historyItem?.ReceivedAmount || 0,
+//                                         ).toFixed(2)}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "center",
+//                                         }}
+//                                       >
+//                                         <Button
+//                                           size="small"
+//                                           onClick={() =>
+//                                             handleHistoryVersionClick(
+//                                               historyItem,
+//                                             )
+//                                           }
+//                                         >
+//                                           VIEW
+//                                         </Button>
+//                                       </TableCell>
+//                                     </TableRow>
+//                                   );
+//                                 })}
+//                             </TableBody>
+//                           </Table>
+//                         </TableContainer>
+//                       )}
+//                     </Paper>
+
+//                     {/* =====================================================
+//             OLD VS CURRENT
+//         ===================================================== */}
+
+//                     {selectedHistoryVersion && (
+//                       <Paper
+//                         elevation={0}
+//                         sx={{
+//                           p: 2,
+//                           mb: 3,
+//                           borderRadius: 2,
+//                           border: "1px solid #e0e0e0",
+//                         }}
+//                       >
+//                         <Typography
+//                           sx={{
+//                             fontSize: "18px",
+//                             fontWeight: 700,
+//                             color: "#7b1fa2",
+//                             mb: 2,
+//                           }}
+//                         >
+//                           Old vs Current Invoice
+//                         </Typography>
+
+//                         {(() => {
+//                           const selectedOldHeader = historyHeader.find(
+//                             (item) =>
+//                               Number(item?.VersionNo) ===
+//                               Number(selectedHistoryVersion),
+//                           );
+
+//                           const comparisonRows = [
+//                             {
+//                               label: "Invoice No",
+//                               oldValue:
+//                                 selectedOldHeader?.InvoiceNo ||
+//                                 selectedOldHeader?.BillNo ||
+//                                 "-",
+//                               currentValue:
+//                                 currentHistoryHeader?.InvoiceNo ||
+//                                 currentHistoryHeader?.BillNo ||
+//                                 "-",
+//                             },
+
+//                             {
+//                               label: "Invoice Date",
+//                               oldValue: formatHistoryDate(
+//                                 selectedOldHeader?.InvoiceDate,
+//                               ),
+//                               currentValue: formatHistoryDate(
+//                                 currentHistoryHeader?.InvoiceDate,
+//                               ),
+//                             },
+
+//                             {
+//                               label: "Customer",
+//                               oldValue:
+//                                 selectedOldHeader?.AccountName ||
+//                                 selectedOldHeader?.CustomerName ||
+//                                 selectedOldHeader?.PartyName ||
+//                                 "-",
+//                               currentValue:
+//                                 currentHistoryHeader?.AccountName ||
+//                                 currentHistoryHeader?.CustomerName ||
+//                                 currentHistoryHeader?.PartyName ||
+//                                 selectedHistoryInvoice?.AccountName ||
+//                                 "-",
+//                             },
+
+//                             {
+//                               label: "Total",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.Total || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.Total || 0,
+//                               ).toFixed(2)}`,
+//                             },
+
+//                             {
+//                               label: "Received",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}`,
+//                             },
+
+//                             {
+//                               label: "Discount",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.Discount || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.Discount || 0,
+//                               ).toFixed(2)}`,
+//                             },
+//                           ];
+
+//                           return (
+//                             <TableContainer
+//                               component={Paper}
+//                               elevation={0}
+//                               sx={{
+//                                 border: "1px solid #e0e0e0",
+//                               }}
+//                             >
+//                               <Table size="small">
+//                                 <TableHead>
+//                                   <TableRow
+//                                     sx={{
+//                                       backgroundColor: "#f3e5f5",
+//                                     }}
+//                                   >
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Field
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Previous — Version{" "}
+//                                       {selectedHistoryVersion}
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Current
+//                                     </TableCell>
+//                                   </TableRow>
+//                                 </TableHead>
+
+//                                 <TableBody>
+//                                   {comparisonRows.map((item) => {
+//                                     const changed =
+//                                       String(item.oldValue) !==
+//                                       String(item.currentValue);
+
+//                                     return (
+//                                       <TableRow key={item.label}>
+//                                         <TableCell fontWeight={600}>
+//                                           {item.label}
+//                                         </TableCell>
+
+//                                         <TableCell
+//                                           sx={{
+//                                             backgroundColor: changed
+//                                               ? "#fff3e0"
+//                                               : "inherit",
+//                                             fontWeight: changed ? 700 : 400,
+//                                           }}
+//                                         >
+//                                           {item.oldValue}
+//                                         </TableCell>
+
+//                                         <TableCell
+//                                           sx={{
+//                                             backgroundColor: changed
+//                                               ? "#e8f5e9"
+//                                               : "inherit",
+//                                             fontWeight: changed ? 700 : 400,
+//                                           }}
+//                                         >
+//                                           {item.currentValue}
+//                                         </TableCell>
+//                                       </TableRow>
+//                                     );
+//                                   })}
+//                                 </TableBody>
+//                               </Table>
+//                             </TableContainer>
+//                           );
+//                         })()}
+//                       </Paper>
+//                     )}
+
+//                     {/* =====================================================
+//             PREVIOUS PRODUCT DETAILS
+//         ===================================================== */}
+
+//                     {selectedHistoryVersion && (
+//                       <Paper
+//                         elevation={0}
+//                         sx={{
+//                           p: 2,
+//                           mb: 3,
+//                           borderRadius: 2,
+//                           border: "1px solid #e0e0e0",
+//                         }}
+//                       >
+//                         <Typography
+//                           sx={{
+//                             fontSize: "18px",
+//                             fontWeight: 700,
+//                             color: "#d97706",
+//                             mb: 2,
+//                           }}
+//                         >
+//                           Previous Product Details — Version{" "}
+//                           {selectedHistoryVersion}
+//                         </Typography>
+
+//                         {selectedHistoryDetails.length === 0 ? (
+//                           <Typography color="text.secondary" sx={{ py: 3 }}>
+//                             No product details found for this version.
+//                           </Typography>
+//                         ) : (
+//                           <TableContainer
+//                             component={Paper}
+//                             elevation={0}
+//                             sx={{
+//                               border: "1px solid #e0e0e0",
+//                             }}
+//                           >
+//                             <Table size="small">
+//                               <TableHead>
+//                                 <TableRow
+//                                   sx={{
+//                                     backgroundColor: "#fff3e0",
+//                                   }}
+//                                 >
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Sr.
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Product
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Qty
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Rate
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       fontWeight: 700,
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     Amount
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       fontWeight: 700,
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     Discount
+//                                   </TableCell>
+//                                 </TableRow>
+//                               </TableHead>
+
+//                               <TableBody>
+//                                 {selectedHistoryDetails.map((detail, index) => (
+//                                   <TableRow
+//                                     key={
+//                                       detail?.Id ||
+//                                       `${detail?.ProductId}-${index}`
+//                                     }
+//                                   >
+//                                     <TableCell>
+//                                       {detail?.SerialNo || index + 1}
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 600 }}>
+//                                       {getHistoryProductName(
+//                                         detail?.ProductId,
+//                                         detail,
+//                                       )}
+//                                     </TableCell>
+
+//                                     <TableCell>
+//                                       {Number(detail?.Quantity || 0)}
+//                                     </TableCell>
+
+//                                     <TableCell>
+//                                       ₹ {Number(detail?.Rate || 0).toFixed(2)}
+//                                     </TableCell>
+
+//                                     <TableCell
+//                                       sx={{
+//                                         textAlign: "right",
+//                                         fontWeight: 600,
+//                                       }}
+//                                     >
+//                                       ₹ {Number(detail?.Amount || 0).toFixed(2)}
+//                                     </TableCell>
+
+//                                     <TableCell
+//                                       sx={{
+//                                         textAlign: "right",
+//                                       }}
+//                                     >
+//                                       ₹{" "}
+//                                       {Number(detail?.DiscountAmt || 0).toFixed(
+//                                         2,
+//                                       )}
+//                                     </TableCell>
+//                                   </TableRow>
+//                                 ))}
+//                               </TableBody>
+//                             </Table>
+//                           </TableContainer>
+//                         )}
+//                       </Paper>
+//                     )}
+
+//                     {/* =====================================================
+//             CURRENT PRODUCT DETAILS
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 2,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#2e7d32",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Current Product Details
+//                       </Typography>
+
+//                       {currentHistoryDetails.length === 0 ? (
+//                         <Typography color="text.secondary" sx={{ py: 3 }}>
+//                           No current product details found.
+//                         </Typography>
+//                       ) : (
+//                         <TableContainer
+//                           component={Paper}
+//                           elevation={0}
+//                           sx={{
+//                             border: "1px solid #e0e0e0",
+//                           }}
+//                         >
+//                           <Table size="small">
+//                             <TableHead>
+//                               <TableRow
+//                                 sx={{
+//                                   backgroundColor: "#e8f5e9",
+//                                 }}
+//                               >
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Sr.
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Product
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Qty
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Rate
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Amount
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Discount
+//                                 </TableCell>
+//                               </TableRow>
+//                             </TableHead>
+
+//                             <TableBody>
+//                               {currentHistoryDetails.map((detail, index) => (
+//                                 <TableRow
+//                                   key={
+//                                     detail?.Id ||
+//                                     `${detail?.ProductId}-${index}`
+//                                   }
+//                                 >
+//                                   <TableCell>
+//                                     {detail?.SerialNo || index + 1}
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 600 }}>
+//                                     {getHistoryProductName(
+//                                       detail?.ProductId,
+//                                       detail,
+//                                     )}
+//                                   </TableCell>
+
+//                                   <TableCell>
+//                                     {Number(detail?.Quantity || 0)}
+//                                   </TableCell>
+
+//                                   <TableCell>
+//                                     ₹ {Number(detail?.Rate || 0).toFixed(2)}
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       textAlign: "right",
+//                                       fontWeight: 600,
+//                                     }}
+//                                   >
+//                                     ₹ {Number(detail?.Amount || 0).toFixed(2)}
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     ₹{" "}
+//                                     {Number(detail?.DiscountAmt || 0).toFixed(
+//                                       2,
+//                                     )}
+//                                   </TableCell>
+//                                 </TableRow>
+//                               ))}
+//                             </TableBody>
+//                           </Table>
+//                         </TableContainer>
+//                       )}
+//                     </Paper>
+//                   </>
+//                 )}
+//               </DialogContent>
+
+//               {/* ================= FOOTER ================= */}
+
+//               <DialogActions
+//                 sx={{
+//                   p: 2,
+//                   backgroundColor: "#fff",
+//                 }}
+//               >
+//                 <Button
+//                   variant="contained"
+//                   color="primary"
+//                   onClick={() => {
+//                     setHistoryOpen(false);
+//                     setSelectedHistoryVersion(null);
+//                     setSelectedHistoryDetails([]);
+//                   }}
+//                 >
+//                   CLOSE
+//                 </Button>
+//               </DialogActions>
+//             </Dialog>
+//           </Box>
+//         </Drawer>
+//         <ToastContainer
+//           position="top-right"
+//           autoClose={3000}
+//           hideProgressBar={false}
+//           newestOnTop
+//           closeOnClick
+//           pauseOnHover
+//         />
+//       </Box>
+//     </Box>
+//   );
+// };
+
+// export default SalesCaterers;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { useMemo, useState, useEffect, useRef } from "react";
+// import { useNavigate, useLocation } from "react-router-dom";
+// import {
+//   IconButton,
+//   Menu,
+//   Table,
+//   Autocomplete,
+//   TableBody,
+//   TableCell,
+//   TableContainer,
+//   TableHead,
+//   TableRow,
+//   Paper,
+//   Box,
+//   useMediaQuery,
+//   Button,
+//   Typography,
+//   TextField,
+//   Drawer,
+//   Divider,
+//   MenuItem,
+//   InputAdornment,
+//   Grid,
+//   Dialog,
+//   DialogTitle,
+//   DialogContent,
+//   DialogContentText,
+//   DialogActions,
+// } from "@mui/material";
+
+// import CloseIcon from "@mui/icons-material/Close";
+// import { useTheme } from "@mui/material/styles";
+// import { DatePicker } from "@mui/x-date-pickers";
+// import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+// import "react-phone-input-2/lib/style.css";
+// import MoreVertIcon from "@mui/icons-material/MoreVert";
+// import PhoneInput from "react-phone-input-2";
+// import axios from "axios";
+// import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+// import qs from "qs";
+// import moment from "moment";
+// import { MaterialReactTable } from "material-react-table";
+// import { toast, ToastContainer } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
+// import AddCircleIcon from "@mui/icons-material/AddCircle";
+// import SearchIcon from "@mui/icons-material/Search";
+// import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+// import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+// import LastPageIcon from "@mui/icons-material/LastPage";
+// import FirstPageIcon from "@mui/icons-material/FirstPage";
+// import Cookies from "js-cookie";
+// import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import PrintIcon from "@mui/icons-material/Print";
+
+// import amrutLogo from "../imgs/amrutlogo.png";
+// import fremilaLogo from "../imgs/fremilalogo.png";
+
+// // import logonew from '../imgs/logo_white.png'
+
+// const SalesCaterers = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+
+//   // =====================================================
+//   // THIS SCREEN IS ONLY FOR CATERERS CUSTOMERS
+//   // C = Caterers
+//   // =====================================================
+//   const PAGE_CUSTOMER_TYPE = "C";
+
+ 
+
+//   const theme = useTheme();
+//   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+//   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [invoiceheaders, setInvoiceheaders] = useState([]);
+//   const [invoicedetails, setInvoicedetails] = useState([]);
+//   const [rows, setRows] = useState([]);
+
+//   // =====================================================
+//   // INVOICE EDIT HISTORY
+//   // =====================================================
+
+//   const [invoiceHistoryStatus, setInvoiceHistoryStatus] = useState({});
+
+//   const [historyOpen, setHistoryOpen] = useState(false);
+//   const [historyLoading, setHistoryLoading] = useState(false);
+
+//   const [selectedHistoryInvoice, setSelectedHistoryInvoice] = useState(null);
+
+//   const [historyHeader, setHistoryHeader] = useState([]);
+//   const [historyDetails, setHistoryDetails] = useState([]);
+
+//   const [currentHistoryHeader, setCurrentHistoryHeader] = useState(null);
+//   const [currentHistoryDetails, setCurrentHistoryDetails] = useState([]);
+
+//   const [selectedHistoryVersion, setSelectedHistoryVersion] = useState(null);
+//   const [selectedHistoryDetails, setSelectedHistoryDetails] = useState([]);
+
+//   const [userId, setUserId] = useState(
+//     () => sessionStorage.getItem("UserId") || "",
+//   );
+
+//   // =====================================================
+//   // SELECT HISTORY VERSION
+//   // =====================================================
+
+//   const handleHistoryVersionClick = (historyItem) => {
+//     if (!historyItem) {
+//       return;
+//     }
+
+//     const version = Number(historyItem?.VersionNo);
+
+//     if (!version) {
+//       toast.error("Version not found.");
+//       return;
+//     }
+
+//     console.log("======================================");
+//     console.log("HISTORY VERSION CLICK");
+//     console.log("Invoice No:", historyItem?.InvoiceNo);
+//     console.log("Invoice ID:", historyItem?.InvoiceId);
+//     console.log("Version:", version);
+//     console.log("======================================");
+
+//     setSelectedHistoryVersion(version);
+
+//     const versionDetails = historyDetails.filter(
+//       (detail) => Number(detail?.VersionNo) === version,
+//     );
+
+//     console.log("SELECTED VERSION DETAILS:", versionDetails);
+
+//     setSelectedHistoryDetails(versionDetails);
+//   };
+
+//   // =====================================================
+//   // GET PRODUCT NAME FROM PRODUCT ID
+//   // =====================================================
+//   const getHistoryProductName = (productId, detail = {}) => {
+//     if (productId === null || productId === undefined || productId === "") {
+//       return detail?.ProductName || detail?.productName || "-";
+//     }
+
+//     const matchedProduct = productOptions.find(
+//       (product) =>
+//         String(product?.value) === String(productId) ||
+//         String(product?.Id) === String(productId) ||
+//         String(product?.ProductId) === String(productId),
+//     );
+
+//     return (
+//       matchedProduct?.label ||
+//       matchedProduct?.ProductName ||
+//       detail?.ProductName ||
+//       detail?.productName ||
+//       "-"
+//     );
+//   };
+
+//   // =====================================================
+//   // FETCH CURRENT INVOICE FOR HISTORY
+//   // =====================================================
+
+//   const fetchCurrentInvoiceForHistory = async (invoiceId) => {
+//     try {
+//       // ==========================================
+//       // CURRENT HEADER
+//       // ==========================================
+
+//       const headerResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=Id&Colvalue=${invoiceId}`,
+//       );
+
+//       const headerData = headerResponse.data;
+
+//       const currentHeader = Array.isArray(headerData)
+//         ? headerData[0] || null
+//         : Array.isArray(headerData?.data)
+//           ? headerData.data[0] || null
+//           : headerData?.data || headerData || null;
+
+//       // ==========================================
+//       // CURRENT DETAILS
+//       // ==========================================
+
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       const detailData = detailResponse.data;
+
+//       const currentDetails = Array.isArray(detailData)
+//         ? detailData
+//         : Array.isArray(detailData?.data)
+//           ? detailData.data
+//           : detailData?.data
+//             ? [detailData.data]
+//             : detailData
+//               ? [detailData]
+//               : [];
+
+//       setCurrentHistoryHeader(currentHeader);
+//       setCurrentHistoryDetails(currentDetails);
+
+//       return {
+//         header: currentHeader,
+//         details: currentDetails,
+//       };
+//     } catch (error) {
+//       console.error("CURRENT INVOICE HISTORY FETCH ERROR:", error);
+
+//       throw error;
+//     }
+//   };
+
+//   // =====================================================
+//   // OPEN INVOICE EDIT HISTORY
+//   // =====================================================
+
+//   const handleInvoiceHistoryClick = async (invoice) => {
+//     try {
+//       const invoiceId = invoice?.Id || invoice?.InvoiceId;
+
+//       if (!invoiceId) {
+//         toast.error("Invoice ID not found.");
+//         return;
+//       }
+
+//       console.log("======================================");
+//       console.log("INVOICE HISTORY CLICK");
+//       console.log("Invoice ID:", invoiceId);
+//       console.log("======================================");
+
+//       setSelectedHistoryInvoice(invoice);
+//       setHistoryOpen(true);
+//       setHistoryLoading(true);
+
+//       setSelectedHistoryVersion(null);
+//       setSelectedHistoryDetails([]);
+
+//       // =================================================
+//       // 1. OLD HEADER HISTORY
+//       // =================================================
+
+//       const headerResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       console.log("OLD HEADER HISTORY:", headerResponse.data);
+
+//       const headerData = headerResponse.data;
+
+//       const oldHeaders = Array.isArray(headerData)
+//         ? headerData
+//         : Array.isArray(headerData?.data)
+//           ? headerData.data
+//           : headerData?.data
+//             ? [headerData.data]
+//             : headerData
+//               ? [headerData]
+//               : [];
+
+//       setHistoryHeader(oldHeaders);
+
+//       // =================================================
+//       // 2. OLD DETAIL HISTORY
+//       // =================================================
+
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//       );
+
+//       console.log("OLD DETAIL HISTORY:", detailResponse.data);
+
+//       const detailData = detailResponse.data;
+
+//       const oldDetails = Array.isArray(detailData)
+//         ? detailData
+//         : Array.isArray(detailData?.data)
+//           ? detailData.data
+//           : detailData?.data
+//             ? [detailData.data]
+//             : detailData
+//               ? [detailData]
+//               : [];
+
+//       setHistoryDetails(oldDetails);
+
+//       // =================================================
+//       // 3. CURRENT INVOICE
+//       // =================================================
+
+//       await fetchCurrentInvoiceForHistory(invoiceId);
+
+//       // =================================================
+//       // 4. DEFAULT LATEST OLD VERSION
+//       // =================================================
+
+//       if (oldHeaders.length > 0) {
+//         const latestVersionItem = [...oldHeaders].sort(
+//           (a, b) => Number(b?.VersionNo || 0) - Number(a?.VersionNo || 0),
+//         )[0];
+
+//         const latestVersion = Number(latestVersionItem?.VersionNo);
+
+//         if (latestVersion) {
+//           setSelectedHistoryVersion(latestVersion);
+
+//           const latestVersionDetails = oldDetails.filter(
+//             (detail) => Number(detail?.VersionNo) === latestVersion,
+//           );
+
+//           setSelectedHistoryDetails(latestVersionDetails);
+//         }
+//       }
+//     } catch (error) {
+//       console.error("INVOICE HISTORY ERROR:", error);
+
+//       toast.error("Unable to load invoice history.");
+//     } finally {
+//       setHistoryLoading(false);
+//     }
+//   };
+
+//   const [productOptions, setProductOptions] = useState([]);
+//   // =========================
+//   // INVOICE FILTERS
+//   // =========================
+//   const [searchText, setSearchText] = useState("");
+//   const [categoryFilter, setCategoryFilter] = useState("");
+//   const [fromDate, setFromDate] = useState("");
+//   const [toDate, setToDate] = useState("");
+
+//   const [balanceDue, setBalanceDue] = useState(0);
+
+//   const isSubmittingRef = useRef(false);
+
+//   // Customer's previous outstanding balance
+//   const [previousBalanceDue, setPreviousBalanceDue] = useState(0);
+
+//   // ======================================================
+//   // FILTER INVOICE DATA
+//   // ======================================================
+//   const filteredInvoiceData = useMemo(() => {
+//     const search = searchText.trim().toLowerCase();
+
+//     return invoiceheaders.filter((invoice) => {
+//       // ==============================
+//       // BILL NO
+//       // ==============================
+//       const billNo = String(invoice?.InvoiceNo || "").toLowerCase();
+
+//       // ==============================
+//       // CUSTOMER NAME
+//       // ==============================
+//       const customerName = String(
+//         invoice?.accountDetails?.AccountName || "",
+//       ).toLowerCase();
+
+//       // ==============================
+//       // CATEGORY
+//       // ==============================
+//       const customerType = String(invoice?.accountDetails?.CustomerType || "")
+//         .trim()
+//         .toUpperCase();
+
+
+//         // =====================================================
+// // SALES CATERERS = ONLY CATERERS CUSTOMERS
+// // C = Caterers
+// // =====================================================
+
+// if (customerType !== PAGE_CUSTOMER_TYPE) {
+//   return false;
+// }
+
+//       let categoryName = "";
+
+//       if (customerType === "R") {
+//         categoryName = "retailer";
+//       } else if (customerType === "D") {
+//         categoryName = "dealer";
+//       } else if (customerType === "C") {
+//         categoryName = "caterers";
+//       }
+
+//       // ==============================
+//       // INVOICE DATE
+//       // ==============================
+//       const invoiceDate = invoice?.InvoiceDate?.date
+//         ? invoice.InvoiceDate.date.substring(0, 10)
+//         : "";
+
+//       // ==============================
+//       // CATEGORY FILTER
+//       // ==============================
+//       const categoryMatch =
+//         categoryFilter === "" || customerType === categoryFilter;
+
+//       // ==============================
+//       // SEARCH FILTER
+//       // ==============================
+//       const searchMatch =
+//         search === "" ||
+//         billNo.includes(search) ||
+//         customerName.includes(search) ||
+//         categoryName.includes(search);
+
+//       // ==============================
+//       // FROM DATE FILTER
+//       // ==============================
+//       const fromDateMatch =
+//         fromDate === "" || (invoiceDate !== "" && invoiceDate >= fromDate);
+
+//       // ==============================
+//       // TO DATE FILTER
+//       // ==============================
+//       const toDateMatch =
+//         toDate === "" || (invoiceDate !== "" && invoiceDate <= toDate);
+
+//       // ==============================
+//       // ALL FILTERS MUST MATCH
+//       // ==============================
+//       return categoryMatch && searchMatch && fromDateMatch && toDateMatch;
+//     });
+//   }, [invoiceheaders, searchText, categoryFilter, fromDate, toDate]);
+
+//   const discountRef = useRef(null);
+//   const receivedAmountRef = useRef(null);
+
+//   // =====================================================
+//   // FORMAT HISTORY DATE SAFELY
+//   // =====================================================
+//   const formatHistoryDate = (value) => {
+//     if (!value) {
+//       return "-";
+//     }
+
+//     // API may return:
+//     // { date, timezone_type, timezone }
+//     const dateValue = typeof value === "object" ? value?.date : value;
+
+//     if (!dateValue) {
+//       return "-";
+//     }
+
+//     const date = new Date(dateValue);
+
+//     if (Number.isNaN(date.getTime())) {
+//       return String(dateValue);
+//     }
+
+//     return date.toLocaleDateString("en-IN", {
+//       day: "2-digit",
+//       month: "2-digit",
+//       year: "numeric",
+//     });
+//   };
+
+//   // ======================================================
+//   // ESC = GO ONE STEP BACK
+//   // ======================================================
+//   useEffect(() => {
+//     if (!isDrawerOpen) return;
+
+//     const handleEscBack = (event) => {
+//       if (event.key !== "Escape") return;
+
+//       // Customer search popup open असेल तर आधी popup बंद होऊ द्या
+//       if (showDropdown) {
+//         return;
+//       }
+
+//       const activeElement = document.activeElement;
+
+//       event.preventDefault();
+//       event.stopPropagation();
+
+//       // Received Amount -> Discount
+//       if (receivedAmountRef.current === activeElement) {
+//         setTimeout(() => {
+//           discountRef.current?.focus();
+//           discountRef.current?.select();
+//         }, 50);
+//         return;
+//       }
+
+//       // Discount -> Payment Mode
+//       if (discountRef.current === activeElement) {
+//         setTimeout(() => {
+//           document.querySelector('[name="paymentMode"]')?.focus();
+//         }, 50);
+//         return;
+//       }
+
+//       // Payment Mode -> Quantity
+//       if (activeElement?.name === "paymentMode") {
+//         setTimeout(() => {
+//           quantityRef.current?.focus();
+//           quantityRef.current?.select();
+//         }, 50);
+//         return;
+//       }
+
+//       // Quantity -> Product
+//       if (quantityRef.current === activeElement) {
+//         setTimeout(() => {
+//           productRef.current?.focus();
+//         }, 50);
+//         return;
+//       }
+
+//       // Product -> Customer
+//       if (productRef.current === activeElement) {
+//         setTimeout(() => {
+//           const customerInput = document.querySelector(
+//             'input[placeholder="Select Customer"]',
+//           );
+
+//           customerInput?.focus();
+//         }, 50);
+
+//         return;
+//       }
+//     };
+
+//     window.addEventListener("keydown", handleEscBack, true);
+
+//     return () => {
+//       window.removeEventListener("keydown", handleEscBack, true);
+//     };
+//   }, [isDrawerOpen]);
+
+//   useEffect(() => {
+//     // fetchInvdetails();
+//   }, []);
+
+//   useEffect(() => {
+//     const storedUserId = sessionStorage.getItem("UserId");
+
+//     if (storedUserId) {
+//       setUserId(storedUserId);
+//     } else {
+//       toast.error("User is not logged in.");
+//     }
+//   }, []);
+
+//   // ======================================================
+//   // FETCH ALL INVOICE HEADERS
+//   // LATEST BILL FIRST
+//   // ======================================================
+//   const fetchInvoiceHeader = async () => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     try {
+//       // --------------------------------------------------
+//       // 1. GET FIRST PAGE
+//       // --------------------------------------------------
+//       const firstResponse = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=1`,
+//         requestOptions,
+//       );
+
+//       const firstResult = await firstResponse.json();
+
+//       console.log("========== INVOICE HEADER GET DATA ==========");
+//       console.log("First Invoice:", firstResult?.data?.[0]);
+//       console.log("BalanceDue:", firstResult?.data?.[0]?.BalanceDue);
+//       console.log("ReceivedAmount:", firstResult?.data?.[0]?.ReceivedAmount);
+//       console.log(
+//         "PreviousBalanceDue:",
+//         firstResult?.data?.[0]?.PreviousBalanceDue,
+//       );
+//       console.log("==============================================");
+
+//       const totalPages = Number(firstResult.total_pages || 1);
+
+//       let allInvoiceData = [...(firstResult.data || [])];
+
+//       // --------------------------------------------------
+//       // 2. GET REMAINING PAGES
+//       // --------------------------------------------------
+//       if (totalPages > 1) {
+//         for (let page = 2; page <= totalPages; page++) {
+//           const response = await fetch(
+//             `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=${page}`,
+//             requestOptions,
+//           );
+
+//           const result = await response.json();
+
+//           allInvoiceData = [...allInvoiceData, ...(result.data || [])];
+//         }
+//       }
+
+//       // --------------------------------------------------
+//       // 3. SORT BY BILL ID
+//       // LATEST / NEWEST BILL FIRST
+//       // --------------------------------------------------
+//       allInvoiceData.sort((a, b) => Number(b.Id || 0) - Number(a.Id || 0));
+
+//       // --------------------------------------------------
+//       // 4. FETCH CUSTOMER + ADDRESS DETAILS
+//       // --------------------------------------------------
+//       const invoicesList = await Promise.all(
+//         allInvoiceData.map(async (invoice) => {
+//           try {
+//             // ==========================================
+//             // ACCOUNT DETAILS
+//             // ==========================================
+//             let accountDetails = null;
+
+//             if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+//               const acctResponse = await fetch(
+//                 `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${invoice.AccountId}`,
+//                 requestOptions,
+//               );
+
+//               if (acctResponse.ok) {
+//                 const acctResult = await acctResponse.json();
+
+//                 accountDetails = Array.isArray(acctResult)
+//                   ? acctResult[0] || null
+//                   : acctResult?.data
+//                     ? Array.isArray(acctResult.data)
+//                       ? acctResult.data[0] || null
+//                       : acctResult.data
+//                     : null;
+//               }
+//             }
+
+//             // ==========================================
+//             // ADDRESS DETAILS
+//             // CustomerType is stored in Address
+//             // ==========================================
+//             let addressDetails = null;
+
+//             if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+//               const addressResponse = await fetch(
+//                 `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${invoice.AccountId}`,
+//                 requestOptions,
+//               );
+
+//               if (addressResponse.ok) {
+//                 const addressResult = await addressResponse.json();
+
+//                 addressDetails = Array.isArray(addressResult)
+//                   ? addressResult[0] || null
+//                   : Array.isArray(addressResult?.data)
+//                     ? addressResult.data[0] || null
+//                     : addressResult?.data || addressResult || null;
+//               }
+//             }
+
+//             // ==========================================
+//             // CUSTOMER TYPE / CATEGORY
+//             // ==========================================
+//             const customerType = String(
+//               addressDetails?.CustomerType ||
+//                 addressDetails?.customerType ||
+//                 accountDetails?.CustomerType ||
+//                 accountDetails?.customerType ||
+//                 invoice?.CustomerType ||
+//                 invoice?.customerType ||
+//                 "",
+//             )
+//               .trim()
+//               .toUpperCase();
+
+//             // ==========================================
+//             // FINAL INVOICE OBJECT
+//             // ==========================================
+//             return {
+//               ...invoice,
+
+//               accountDetails: {
+//                 ...(accountDetails || {}),
+//                 CustomerType: customerType,
+//               },
+
+//               addressDetails: addressDetails,
+//             };
+//           } catch (error) {
+//             console.error(
+//               `Failed to fetch customer details for invoice ${invoice.Id}:`,
+//               error,
+//             );
+
+//             // ==========================================
+//             // RETURN INVOICE EVEN IF CUSTOMER API FAILS
+//             // ==========================================
+//             return {
+//               ...invoice,
+
+//               accountDetails: {
+//                 AccountName: invoice?.AccountName || "",
+//                 CustomerType:
+//                   invoice?.CustomerType || invoice?.customerType || "",
+//               },
+
+//               addressDetails: null,
+//             };
+//           }
+//         }),
+//       );
+
+//       // --------------------------------------------------
+//       // 5. SAVE ALL INVOICES
+//       // --------------------------------------------------
+//      // =====================================================
+// // FILTER ONLY CATERERS INVOICES
+// // C = Caterers
+// // =====================================================
+
+// const catererInvoices = invoicesList.filter((invoice) => {
+//   const customerType = String(
+//     invoice?.addressDetails?.CustomerType ||
+//       invoice?.addressDetails?.customerType ||
+//       invoice?.accountDetails?.CustomerType ||
+//       invoice?.accountDetails?.customerType ||
+//       invoice?.CustomerType ||
+//       invoice?.customerType ||
+//       "",
+//   )
+//     .trim()
+//     .toUpperCase();
+
+//   return customerType === PAGE_CUSTOMER_TYPE;
+// });
+
+// // =====================================================
+// // DEBUG
+// // =====================================================
+
+// console.log("====================================");
+// console.log("ALL INVOICES:", invoicesList.length);
+// console.log("CATERERS INVOICES:", catererInvoices.length);
+// console.log("CATERERS DATA:", catererInvoices);
+// console.log("====================================");
+
+// // =====================================================
+// // SHOW ONLY CATERERS INVOICES
+// // =====================================================
+
+// setInvoiceheaders(catererInvoices);
+
+// // =====================================================
+// // HISTORY ONLY FOR CATERERS
+// // =====================================================
+
+// await checkInvoiceHistory(catererInvoices);
+
+// setTotalPages(totalPages);
+
+//       console.log("ALL CATERERS INVOICES:", invoicesList);
+
+//       console.log("TOTAL INVOICE COUNT:", invoicesList.length);
+//     } catch (error) {
+//       console.error("Error fetching all invoice headers:", error);
+//     }
+//   };
+
+//   // =====================================================
+//   // CHECK INVOICE EDIT HISTORY
+//   // =====================================================
+//   const checkInvoiceHistory = async (invoiceList) => {
+//     try {
+//       const historyStatus = {};
+
+//       await Promise.all(
+//         invoiceList.map(async (invoice) => {
+//           const invoiceId = invoice?.Id;
+
+//           if (!invoiceId) {
+//             return;
+//           }
+
+//           try {
+//             const response = await axios.get(
+//               `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+//             );
+
+//             const data = response.data;
+
+//             const historyList = Array.isArray(data)
+//               ? data
+//               : Array.isArray(data?.data)
+//                 ? data.data
+//                 : data?.data
+//                   ? [data.data]
+//                   : data
+//                     ? [data]
+//                     : [];
+
+//             // ==========================================
+//             // IMPORTANT
+//             // ==========================================
+//             const hasHistory = historyList.length > 0;
+
+//             historyStatus[String(invoiceId)] = hasHistory;
+
+//             console.log("HISTORY CHECK:", {
+//               InvoiceId: invoiceId,
+//               HistoryCount: historyList.length,
+//               HasHistory: hasHistory,
+//               HistoryData: historyList,
+//             });
+//           } catch (error) {
+//             console.error(
+//               `History check failed for InvoiceId ${invoiceId}:`,
+//               error,
+//             );
+
+//             historyStatus[String(invoiceId)] = false;
+//           }
+//         }),
+//       );
+
+//       console.log("========== FINAL INVOICE HISTORY STATUS ==========");
+
+//       console.log(historyStatus);
+
+//       setInvoiceHistoryStatus(historyStatus);
+//     } catch (error) {
+//       console.error("History status error:", error);
+//     }
+//   };
+
+//   const [anchorEl, setAnchorEl] = useState(null);
+
+//   const handleMenuOpen = () => {
+//     setIsDrawerOpen(true);
+//     //  handleEdit()
+//   };
+
+//   const handleMenuClose = () => {
+//     setAnchorEl(null);
+//     // handleMenuOpen(false);
+//   };
+
+//   const handleNewClick = () => {
+//     setIsDrawerOpen(true);
+//     resetForm();
+//     setIsEditing(false);
+//     setOpen(false);
+//   };
+
+//   // ======================================================
+//   // OPEN CATERERS BILL ENTRY DIRECTLY FROM SALES SHORTCUT
+//   // ======================================================
+
+//   useEffect(() => {
+//     if (location.state?.openCreateForm === true) {
+//       // Open Create Sales Entry - Caterers form
+//       handleNewClick();
+
+//       // Clear navigation state
+//       navigate(location.pathname, {
+//         replace: true,
+//         state: {},
+//       });
+//     }
+//   }, [location.state, location.pathname, navigate]);
+
+//   const handleDrawerClose = () => {
+//     setIsDrawerOpen(false);
+//     setShowDropdown(false);
+//     resetForm();
+//   };
+
+//   const handleDrawerCloseAndGoSalesEntry = () => {
+//     setIsDrawerOpen(false);
+//     setShowDropdown(false);
+//     resetForm();
+//     navigate("/salesentry");
+//   };
+
+//   //for delete Header
+//   const [open, setOpen] = useState(false);
+
+//   const handleClickOpen = () => {
+//     setOpen(true);
+//   };
+//   const handleClose = () => {
+//     setOpen(false);
+//   };
+
+//   const handleConfirmDelete = () => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     // const itemId = currentRow.original.Id;
+//     // console.log('itemId',currentRow.original.Id)
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=invoiceheader&Id=${editId}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.text())
+//       .then((result) => {
+//         console.log(result);
+
+//         handleDrawerClose();
+//         fetchInvoiceHeader();
+//         handleMenuClose();
+//         toast.success("Sales Entry - Caterers Deleted successfully!");
+//       })
+//       .catch((error) => console.error(error));
+//   };
+
+//   const [editId, setEditId] = useState("");
+//   // ======================================================
+//   // EDIT SAVED INVOICE
+//   // ======================================================
+//   const handleEdit = async (row) => {
+//     try {
+//       const originalData = row?.original;
+
+//       if (!originalData) {
+//         toast.error("Invoice data not found.");
+//         return;
+//       }
+
+//       const rowId = originalData.Id;
+
+//       if (!rowId) {
+//         toast.error("Invoice ID not found.");
+//         return;
+//       }
+
+//       // --------------------------------------------------
+//       // 1. GET INVOICE HEADER
+//       // --------------------------------------------------
+//       const invheader =
+//         invoiceheaders.find((h) => String(h.Id) === String(rowId)) ||
+//         originalData;
+
+//       if (!invheader) {
+//         toast.error("Invoice header not found.");
+//         return;
+//       }
+
+//       // --------------------------------------------------
+//       // 2. GET SAVED INVOICE DETAILS DIRECTLY
+//       // --------------------------------------------------
+//       const detailResponse = await axios.get(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${rowId}`,
+//       );
+
+//       let invdetail = [];
+
+//       if (Array.isArray(detailResponse.data)) {
+//         invdetail = detailResponse.data;
+//       } else if (Array.isArray(detailResponse.data?.data)) {
+//         invdetail = detailResponse.data.data;
+//       } else if (detailResponse.data) {
+//         invdetail = [detailResponse.data];
+//       }
+
+//       console.log("EDIT INVOICE DETAILS:", invdetail);
+
+//       // --------------------------------------------------
+//       // 3. MAP SAVED PRODUCTS INTO ROWS
+//       // --------------------------------------------------
+//       const mappedRows = invdetail.map((detail) => {
+//         const matchedProduct = productOptions.find(
+//           (item) => String(item.value) === String(detail.ProductId),
+//         );
+
+//         return {
+//           Id: detail.Id,
+//           InvoiceId: detail.InvoiceId,
+//           ProductId: detail.ProductId,
+
+//           ProductName: matchedProduct?.label || detail.ProductName || "",
+
+//           Quantity: parseFloat(detail.Quantity) || 0,
+//           Rate: parseFloat(detail.Rate) || 0,
+//           Amount: parseFloat(detail.Amount) || 0,
+
+//           CGSTPercentage: parseFloat(detail.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(detail.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(detail.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(detail.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(detail.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(detail.IGSTAmount) || 0,
+
+//           DiscountAmt: parseFloat(detail.DiscountAmt) || 0,
+//         };
+//       });
+
+//       console.log("EDIT MAPPED ROWS:", mappedRows);
+
+//       // --------------------------------------------------
+//       // 4. CUSTOMER
+//       // --------------------------------------------------
+//       fetchAccounts(invheader.AccountId);
+//       fetchAccountName(invheader.AccountId);
+
+//       // Fetch previous outstanding balance
+//       // Current edited invoice is excluded
+//       fetchPreviousBalance(invheader.AccountId, rowId);
+
+//       setSelectedAccount(invheader.AccountId);
+
+//       // --------------------------------------------------
+//       // 5. DATE
+//       // --------------------------------------------------
+//       const convertDateForInput = (dateValue) => {
+//         if (!dateValue) return "";
+
+//         const dateStr =
+//           typeof dateValue === "string" ? dateValue : dateValue?.date;
+
+//         if (!dateStr) return "";
+
+//         if (dateStr.includes("-")) {
+//           const [year, month, day] = dateStr.split(" ")[0].split("-");
+
+//           return `${year}-${month}-${day}`;
+//         }
+
+//         return "";
+//       };
+
+//       const invoiceDate = convertDateForInput(invheader.InvoiceDate);
+
+//       // --------------------------------------------------
+//       // 6. HEADER DATA
+//       // --------------------------------------------------
+//       setInvoiceNo(
+//         invheader.InvoiceNo != null ? String(invheader.InvoiceNo) : "",
+//       );
+//       setInvoiceDate(invoiceDate);
+//       setPhone(invheader.ContactNo || "");
+//       setDevice(getDeviceForLoggedInUser());
+
+//       setBillFor(invheader.BillFor || "");
+
+//       setMachineID(invheader.MachineID ? String(invheader.MachineID) : "");
+
+//       setIsGST(Number(invheader.IsGST) === 1);
+
+//       // --------------------------------------------------
+//       // 7. PAYMENT DATA
+//       // --------------------------------------------------
+//       setPaymentMode(invheader.PaymentMode || "");
+
+//       setCashAmount(
+//         invheader.CashAmount != null ? String(invheader.CashAmount) : "",
+//       );
+
+//       setOnlineAmount(
+//         invheader.OnlineAmount != null ? String(invheader.OnlineAmount) : "",
+//       );
+
+//       setDiscount(invheader.Discount != null ? String(invheader.Discount) : "");
+
+//       setReceivedAmount(
+//         invheader.ReceivedAmount != null
+//           ? String(invheader.ReceivedAmount)
+//           : "",
+//       );
+
+//       setTransport(
+//         invheader.Transport != null ? String(invheader.Transport) : "",
+//       );
+
+//       // --------------------------------------------------
+//       // 8. LOAD SAVED ROWS
+//       // --------------------------------------------------
+//       setRows(mappedRows);
+
+//       // --------------------------------------------------
+//       // 9. LOAD FIRST PRODUCT INTO EDIT INPUT
+//       // --------------------------------------------------
+//       if (mappedRows.length > 0) {
+//         const firstRow = mappedRows[0];
+
+//         setSelectedProductId(
+//           firstRow.ProductId ? String(firstRow.ProductId) : "",
+//         );
+
+//         setSelectedProductName(firstRow.ProductName || "");
+
+//         setProductName(firstRow.ProductName || "");
+
+//         setQuantity(firstRow.Quantity != null ? String(firstRow.Quantity) : "");
+
+//         setRate(firstRow.Rate != null ? String(firstRow.Rate) : "");
+
+//         SetAmount(firstRow.Amount != null ? String(firstRow.Amount) : "");
+
+//         setDiscount(
+//           firstRow.DiscountAmt != null ? String(firstRow.DiscountAmt) : "",
+//         );
+
+//         setCGST(firstRow.CGSTPercentage || 0);
+//         setCGSTAmount(firstRow.CGSTAmount || 0);
+
+//         setSGST(firstRow.SGSTPercentage || 0);
+//         setSGSTAmount(firstRow.SGSTAmount || 0);
+
+//         setIGST(firstRow.IGSTPercentage || 0);
+//         setIGSTAmount(firstRow.IGSTAmount || 0);
+//       } else {
+//         setSelectedProductId("");
+//         setSelectedProductName("");
+//         setProductName("");
+//         setQuantity("");
+//         setRate("");
+//         SetAmount("");
+//       }
+
+//       // --------------------------------------------------
+//       // 10. EDIT MODE
+//       // --------------------------------------------------
+//       setEditId(rowId);
+//       setIsEditing(true);
+//       setIsDrawerOpen(true);
+
+//       console.log("EDIT ID:", rowId);
+//       console.log("EDIT HEADER:", invheader);
+//       console.log("EDIT ROWS:", mappedRows);
+//     } catch (error) {
+//       console.error("EDIT INVOICE ERROR:", error);
+//       toast.error("Unable to load saved invoice.");
+//     }
+//   };
+
+//   //table
+//   const [pageNo, setPageNo] = useState(1);
+//   //for preview
+//   const [previewOpen, setPreviewOpen] = useState(false);
+//   const [previewData, setPreviewData] = useState(null);
+
+//   const columns = useMemo(
+//     () => [
+//       // ==================================================
+//       // BILL NO
+//       // ==================================================
+//       {
+//         accessorKey: "InvoiceNo",
+//         header: "Bill No",
+//         size: 80,
+
+//         Cell: ({ cell }) => <span>{cell.getValue() || "-"}</span>,
+//       },
+
+//       // ==================================================
+//       // INVOICE DATE
+//       // ==================================================
+//       {
+//         accessorKey: "InvoiceDate.date",
+//         header: "Invoice Date",
+//         size: 50,
+
+//         Cell: ({ cell }) => (
+//           <span>
+//             {cell.getValue()
+//               ? moment(cell.getValue()).format("DD-MM-YYYY")
+//               : "-"}
+//           </span>
+//         ),
+//       },
+
+//       // ==================================================
+//       // CUSTOMER NAME
+//       // ==================================================
+//       {
+//         header: "Customer Name",
+//         size: 100,
+
+//         accessorFn: (row) => row?.accountDetails?.AccountName || "N/A",
+
+//         Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+//       },
+
+//       // ==================================================
+//       // CATEGORY
+//       // ==================================================
+//       {
+//         header: "Category",
+//         size: 130,
+
+//         accessorFn: (row) => {
+//           const customerType = String(
+//             row?.accountDetails?.CustomerType || row?.CustomerType || "",
+//           )
+//             .trim()
+//             .toUpperCase();
+
+//           if (customerType === "R") {
+//             return "Retailer";
+//           }
+
+//           if (customerType === "D") {
+//             return "Dealer";
+//           }
+
+//           if (customerType === "C") {
+//             return "Caterers";
+//           }
+
+//           return "-";
+//         },
+
+//         Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+//       },
+
+//       // ==================================================
+//       // TOTAL
+//       // ==================================================
+//       {
+//         accessorKey: "Total",
+//         header: "Total",
+//         size: 50,
+//       },
+
+//       // ==================================================
+//       // ACTIONS
+//       // ==================================================
+//       {
+//         header: "Actions",
+//         size: 200,
+
+//         Cell: ({ row }) => (
+//           <Box display="flex" gap={1}>
+//             {/* EDIT */}
+//             <Button
+//               sx={{
+//                 background: "var(--primary-color)",
+//               }}
+//               variant="contained"
+//               size="small"
+//               onClick={() => {
+//                 handleEdit(row);
+//               }}
+//             >
+//               Edit
+//             </Button>
+
+//             {/* PREVIEW */}
+//             <Button
+//               variant="contained"
+//               sx={{
+//                 background: "var(--complementary-color)",
+//               }}
+//               size="small"
+//               onClick={async () => {
+//                 // तुमचा existing Preview code
+//               }}
+//             >
+//               Preview
+//             </Button>
+//           </Box>
+//         ),
+//       },
+
+//       // ==================================================
+//       // REMARK / EDITED
+//       // SAME LOGIC AS SALES ENTRY
+//       // ==================================================
+//       {
+//         header: "Remark",
+//         size: 140,
+
+//         accessorFn: (row) => {
+//           const createdOn = row?.CreatedOn?.date || row?.CreatedOn || "";
+
+//           const updatedOn = row?.UpdatedOn?.date || row?.UpdatedOn || "";
+
+//           const updateCount = Number(row?.UpdateCount ?? 0);
+
+//           const isEdited =
+//             updateCount > 1 ||
+//             (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+//           return isEdited ? "Edited" : "-";
+//         },
+
+//         Cell: ({ row }) => {
+//           const invoice = row.original;
+
+//           const createdOn =
+//             invoice?.CreatedOn?.date || invoice?.CreatedOn || "";
+
+//           const updatedOn =
+//             invoice?.UpdatedOn?.date || invoice?.UpdatedOn || "";
+
+//           const updateCount = Number(invoice?.UpdateCount ?? 0);
+
+//           const isEdited =
+//             updateCount > 1 ||
+//             (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+//           // ==========================================
+//           // NOT EDITED
+//           // ==========================================
+//           if (!isEdited) {
+//             return (
+//               <Typography
+//                 sx={{
+//                   color: "#999",
+//                   fontWeight: 500,
+//                 }}
+//               >
+//                 -
+//               </Typography>
+//             );
+//           }
+
+//           // ==========================================
+//           // EDITED
+//           // ==========================================
+//           return (
+//             <Button
+//               variant="contained"
+//               size="small"
+//               sx={{
+//                 background: "var(--primary-color)",
+//                 minWidth: "90px",
+//                 fontWeight: 600,
+//               }}
+//               onClick={() => {
+//                 handleInvoiceHistoryClick(invoice);
+//               }}
+//             >
+//               EDITED
+//             </Button>
+//           );
+//         },
+//       },
+//     ],
+
+//     // ==================================================
+//     // DEPENDENCIES
+//     // ==================================================
+//     [invoiceheaders, pageNo, productOptions, invoiceHistoryStatus],
+//   );
+
+//   useEffect(() => {
+//     fetchInvoiceHeader();
+//   }, [pageNo]);
+
+//   // =========================
+//   // Integration
+//   // =========================
+
+//   // Invoice Details
+//   const [invoiceNo, setInvoiceNo] = useState("");
+//   const [invoiceDate, setInvoiceDate] = useState("");
+
+//   const [phone, setPhone] = useState("");
+
+//   const [device, setDevice] = useState("");
+
+//   const [billFor, setBillFor] = useState("");
+
+//   const [machineID, setMachineID] = useState("");
+
+//   const [machineOptions, setMachineOptions] = useState([]);
+
+//   const [isGST, setIsGST] = useState(false);
+
+//   // Product Details
+//   const [product, setProduct] = useState("");
+//   const [quantity, setQuantity] = useState("");
+//   const [rate, setRate] = useState("");
+//   const [amount, SetAmount] = useState("");
+
+//   // Product Options
+
+//   // Keyboard navigation refs
+//   const quantityRef = useRef(null);
+//   const rateRef = useRef(null);
+//   const productRef = useRef(null);
+
+//   // Tax Details
+//   const [cgst, setCGST] = useState(0);
+//   const [cgstAmount, setCGSTAmount] = useState(0);
+
+//   const [sgst, setSGST] = useState(0);
+//   const [sgstAmount, setSGSTAmount] = useState(0);
+
+//   const [igst, setIGST] = useState(0);
+//   const [igstAmount, setIGSTAmount] = useState(0);
+
+//   // =========================
+//   // Payment Details
+//   // =========================
+//   const [paymentMode, setPaymentMode] = useState(null);
+
+//   // Received Amount
+//   const [receivedAmount, setReceivedAmount] = useState("");
+
+//   // Mix Payment
+//   const [cashAmount, setCashAmount] = useState("");
+//   const [onlineAmount, setOnlineAmount] = useState("");
+
+//   // Transport
+//   const [transport, setTransport] = useState("");
+
+//   const [productName, setProductName] = useState("");
+
+//   // =========================
+//   // Customer / Account
+//   // =========================
+
+//   const [accountOptions, setAccountOptions] = useState([]);
+//   const [selectedAccount, setSelectedAccount] = useState("");
+//   const [selectedCustomerName, setSelectedCustomerName] = useState("");
+
+//   const [selectedCustomerAddress, setSelectedCustomerAddress] = useState("");
+
+//   const [newCustomerAddress, setNewCustomerAddress] = useState("");
+
+//   const [acctGSTNo, setacctGSTNo] = useState("");
+
+//   const getDeviceForLoggedInUser = () => {
+//     const userRole = String(sessionStorage.getItem("UserRole") || "")
+//       .trim()
+//       .toUpperCase();
+
+//     if (userRole === "SALE") {
+//       return "Device1";
+//     }
+
+//     if (userRole === "SALE2") {
+//       return "Device2";
+//     }
+
+//     return "";
+//   };
+
+//   useEffect(() => {
+//     // fetchAccounts();
+
+//     fetchProduct();
+
+//     fetchMachines();
+
+//     fetchInvoiceHeader();
+
+//     setDevice(getDeviceForLoggedInUser());
+//   }, []);
+
+//   //fetch customer from  account table
+//   const fetchProduct = async () => {
+//     try {
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster&RateType=Caterer",
+//       );
+
+//       const data = await response.json();
+
+//       console.log("CATERER PRODUCT API RESPONSE:", data);
+
+//       productvalidation(data);
+//     } catch (error) {
+//       console.error("Error fetching caterer products:", error);
+//     }
+//   };
+
+//   // ======================================================
+//   // FETCH MACHINES
+//   // ======================================================
+
+//   const fetchMachines = async () => {
+//     try {
+//       const response = await axios.get(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=Machines",
+//       );
+
+//       console.log("Machines API Response:", response.data);
+
+//       const data = Array.isArray(response.data) ? response.data : [];
+
+//       const options = data.map((machine) => ({
+//         value: machine.Id,
+//         label: machine.MachineName || machine.Name || `Machine ${machine.Id}`,
+//       }));
+
+//       setMachineOptions(options);
+//     } catch (error) {
+//       console.error("Error fetching machines:", error);
+//     }
+//   };
+
+//   const [selectedProductID, setSelectedProductId] = useState("");
+//   const [selectedProductName, setSelectedProductName] = useState(null);
+
+//   const productvalidation = (data) => {
+//     const options = data
+//       .filter(
+//         (account) =>
+//           account?.ProductName && String(account.ProductName).trim() !== "",
+//       )
+//       .map((account) => ({
+//         value: account?.Id,
+//         label: account?.ProductName,
+//         cgst: account?.CGSTPercentage,
+//         sgst: account?.SGSTPercentage,
+//         igst: account?.IGSTPercentage,
+
+//         // Caterer API मधून automatic Caterer Rate
+//         purchaseRate: account?.Rate,
+//       }));
+
+//     setProductOptions(options);
+//   };
+
+//   const resetForm = () => {
+//     // =========================
+//     // Invoice Details
+//     // =========================
+//     setInvoiceNo("");
+//     setInvoiceDate(new Date());
+//     setPhone("");
+
+//     // Dynamic Device of logged-in user
+//     setDevice(getDeviceForLoggedInUser());
+
+//     // =========================
+//     // NEW BILL HEADER FIELDS
+//     // =========================
+//     setBillFor("");
+//     setMachineID("");
+//     setIsGST(false);
+
+//     // =========================
+//     // Customer
+//     // =========================
+//     setSelectedAccount("");
+//     setSelectedCustomerName("");
+//     setSelectedCustomerAddress("");
+
+//     // =========================
+//     // Product Details
+//     // =========================
+//     setProduct("");
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+
+//     // =========================
+//     // Discount
+//     // =========================
+//     setDiscount("");
+//     setBaseAmount(0);
+
+//     // =========================
+//     // Tax Details
+//     // =========================
+//     setCGST("");
+//     setCGSTAmount("");
+
+//     setSGST("");
+//     setSGSTAmount("");
+
+//     setIGST("");
+//     setIGSTAmount("");
+
+//     // =========================
+//     // Payment Details
+//     // =========================
+//     setPaymentMode("");
+//     setReceivedAmount("");
+//     setBalanceDue(0);
+//     setPreviousBalanceDue(0);
+//     setCashAmount("");
+//     setOnlineAmount("");
+
+//     // =========================
+//     // Transport
+//     // =========================
+//     setTransport("");
+
+//     // =========================
+//     // Validation Errors
+//     // =========================
+//     const newErrors = {
+//       invoiceDate: "",
+//       selectedAccount: "",
+//       paymentMode: "",
+//       rows: "",
+//       phone: "",
+//     };
+
+//     // जर errors साठी state असेल तर:
+//     // setErrors(newErrors);
+
+//     // =========================
+//     // Customer Search
+//     // =========================
+//     setAccountOptions([]);
+//     setAccountName("");
+//     setText("");
+//     setShowDropdown(false);
+
+//     // =========================
+//     // Product Table
+//     // =========================
+//     setRows([]);
+
+//     // =========================
+//     // Product Selection
+//     // =========================
+//     setSelectedProductId("");
+//     setSelectedProductName("");
+//     setProductName("");
+
+//     // =========================
+//     // Editing Row
+//     // =========================
+//     setEditingRow(null);
+
+//     // =========================
+//     // Tax / Amount Summary
+//     // =========================
+//     setSubTotalCal(0);
+//     setCgstTotal(0);
+//     setSgstTotal(0);
+//     setIgstTotal(0);
+//     setTotal(0);
+//   };
+
+//   const handleSubmit = async (e, shouldPrint = false) => {
+//     // ======================================================
+//     // 0. PREVENT DEFAULT FORM / BROWSER ACTION
+//     // ======================================================
+
+//     if (e) {
+//       e.preventDefault();
+//       e.stopPropagation();
+//     }
+
+//     // ======================================================
+//     // 1. PREVENT DOUBLE SUBMIT
+//     // ======================================================
+
+//     if (isSubmittingRef.current) {
+//       console.log("SUBMIT ALREADY IN PROGRESS - IGNORING");
+//       return;
+//     }
+
+//     // ======================================================
+//     // 2. MAIN FORM VALIDATION
+//     // ======================================================
+
+//     if (!validateForm()) {
+//       console.log("FORM VALIDATION FAILED");
+//       return;
+//     }
+
+//     // ======================================================
+//     // 3. RECEIVED AMOUNT VALIDATION
+//     // ======================================================
+
+//     if (!validateReceivedAmount()) {
+//       console.log("RECEIVED AMOUNT VALIDATION FAILED");
+//       isSubmittingRef.current = false;
+//       return;
+//     }
+
+//     // ======================================================
+//     // 4. MIX PAYMENT VALIDATION
+//     // ======================================================
+
+//     if (!validatePaymentSplit()) {
+//       console.log("PAYMENT VALIDATION FAILED");
+//       isSubmittingRef.current = false;
+//       return;
+//     }
+
+//     // ======================================================
+//     // 5. LOCK SUBMIT
+//     // ======================================================
+
+//     isSubmittingRef.current = true;
+
+//     // ======================================================
+//     // 6. OPEN PRINT WINDOW ONLY WHEN PRINT IS REQUESTED
+//     // ======================================================
+
+//     let printWindow = null;
+
+//     try {
+//       if (shouldPrint) {
+//         printWindow = window.open("", "_blank");
+
+//         if (!printWindow) {
+//           toast.error("Please allow popups for printing.");
+//           isSubmittingRef.current = false;
+//           return;
+//         }
+
+//         // ======================================================
+//         // TEMPORARY PRINT WINDOW CONTENT
+//         // ======================================================
+
+//         printWindow.document.write(`
+//         <!DOCTYPE html>
+//         <html>
+//           <head>
+//             <title>Preparing Invoice...</title>
+//           </head>
+
+//           <body
+//             style="
+//               font-family: Arial;
+//               display: flex;
+//               justify-content: center;
+//               align-items: center;
+//               height: 100vh;
+//               margin: 0;
+//             "
+//           >
+//             <h3>Preparing invoice for printing...</h3>
+//           </body>
+//         </html>
+//       `);
+
+//         printWindow.document.close();
+//       }
+
+//       // ======================================================
+//       // 7. FORMAT INVOICE DATE
+//       // ======================================================
+
+//       const formattedInvoicedate = moment(invoiceDate).format("YYYY-MM-DD");
+
+//       // ======================================================
+//       // 8. INVOICE HEADER DATA
+//       // ======================================================
+
+//       const invoiceheaderdata = {
+//         Id: isEditing ? editId : "",
+
+//         InvoiceNo: invoiceNo,
+
+//         InvoiceDate: formattedInvoicedate,
+
+//         AccountId: selectedAccount ? selectedAccount : customerName,
+
+//         ContactNo: phone,
+
+//         // ⭐ Dynamic logged-in user's device
+//         Device: device,
+
+//         BillFor: billFor || "",
+
+//         MachineID: machineID ? parseInt(machineID, 10) : 0,
+
+//         IsGST: isGST ? 1 : 0,
+
+//         PaymentMode: paymentMode || "",
+
+//         CashAmount: parseFloat(cashAmount) || 0,
+
+//         OnlineAmount: parseFloat(onlineAmount) || 0,
+
+//         Discount: parseFloat(discount) || 0,
+
+//         Transport: parseFloat(transport) || 0,
+
+//         CGSTAmount: parseFloat(cgstTotal) || 0,
+
+//         SGSTAmount: parseFloat(sgstTotal) || 0,
+
+//         IGSTAmount: parseFloat(igstTotal) || 0,
+
+//         Total: parseFloat(total) || 0,
+
+//         ReceivedAmount: parseFloat(receivedAmount) || 0,
+
+//         SubTotal: parseFloat(subTotalcal) || 0,
+
+//         // ⭐ Dynamic logged-in user
+//         CreatedBy: !isEditing ? userId : undefined,
+
+//         // ⭐ Dynamic logged-in user during edit
+//         UpdatedBy: isEditing ? userId : undefined,
+//       };
+
+//       // ======================================================
+//       // 9. CHECK DATA BEFORE API CALL
+//       // ======================================================
+
+//       console.log("========== INVOICE HEADER DATA TO API ==========");
+
+//       console.log("PaymentMode:", invoiceheaderdata.PaymentMode);
+
+//       console.log("CashAmount:", invoiceheaderdata.CashAmount);
+
+//       console.log("OnlineAmount:", invoiceheaderdata.OnlineAmount);
+
+//       console.log("Total:", invoiceheaderdata.Total);
+
+//       console.log("ReceivedAmount:", invoiceheaderdata.ReceivedAmount);
+
+//       console.log("INVOICE HEADER DATA TO API:", invoiceheaderdata);
+
+//       console.log("===============================================");
+
+//       // ======================================================
+//       // 10. SELECT HEADER API
+//       // ======================================================
+
+//       const invoiceurl = isEditing
+//         ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoiceheader.php"
+//         : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoiceheader.php";
+
+//       console.log("Saving invoice using:", invoiceurl);
+
+//       // ======================================================
+//       // 11. SAVE INVOICE HEADER
+//       // ======================================================
+
+//       const response = await axios.post(
+//         invoiceurl,
+//         qs.stringify(invoiceheaderdata),
+//         {
+//           headers: {
+//             "Content-Type": "application/x-www-form-urlencoded",
+//           },
+//         },
+//       );
+
+//       console.log("Invoice Header Response:", response.data);
+
+//       // ======================================================
+//       // 12. CALCULATE CURRENT INVOICE DUE
+//       // ======================================================
+
+//       const currentDueForSave = Math.max(
+//         (parseFloat(total) || 0) - (parseFloat(receivedAmount) || 0),
+//         0,
+//       );
+
+//       // ======================================================
+//       // 13. GET PREVIOUS CUSTOMER DUE
+//       //
+//       // ALL INVOICES
+//       // CURRENT EDITED INVOICE EXCLUDED
+//       // NO DATE FILTER
+//       // ======================================================
+
+//       const previousDueForSave = await fetchPreviousBalance(
+//         selectedAccount,
+//         isEditing ? editId : null,
+//       );
+
+//       // ======================================================
+//       // 14. TOTAL CUSTOMER OUTSTANDING
+//       // ======================================================
+
+//       const totalOutstandingForSave =
+//         Number(previousDueForSave || 0) + Number(currentDueForSave || 0);
+
+//       console.log("========== SAVE BALANCE ==========");
+
+//       console.log("Previous Due:", previousDueForSave);
+
+//       console.log("Current Bill Due:", currentDueForSave);
+
+//       console.log("Total Outstanding:", totalOutstandingForSave);
+
+//       console.log("=================================");
+
+//       // ======================================================
+//       // 15. UPDATE DISPLAY BALANCE
+//       // ======================================================
+
+//       setPreviousBalanceDue(Number(Number(previousDueForSave || 0).toFixed(2)));
+
+//       setBalanceDue(Number(Number(currentDueForSave || 0).toFixed(2)));
+
+//       // ======================================================
+//       // 16. GET INVOICE ID
+//       // ======================================================
+
+//       const invoiceId = isEditing ? editId : parseInt(response.data.Id, 10);
+
+//       const savedInvoiceNo = isEditing ? invoiceNo : response.data.InvoiceNo;
+
+//       console.log("Invoice ID:", invoiceId);
+//       console.log("Saved Invoice No:", savedInvoiceNo);
+
+//       if (!invoiceId) {
+//         throw new Error("Invoice ID was not received from server.");
+//       }
+
+//       // ======================================================
+//       // 17. SAVE INVOICE DETAILS
+//       // ======================================================
+
+//       for (const [index, row] of rows.entries()) {
+//         const rowData = {
+//           Id: row.Id ? parseInt(row.Id, 10) : "",
+
+//           InvoiceId: parseInt(invoiceId, 10),
+
+//           SerialNo: index + 1,
+
+//           ProductId: parseInt(row.ProductId, 10),
+
+//           Quantity: parseFloat(row.Quantity) || 0,
+
+//           Rate: parseFloat(row.Rate) || 0,
+
+//           Amount: parseFloat(row.Amount) || 0,
+
+//           CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(row.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(row.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+//         };
+
+//         console.log(`Invoice Detail ${index + 1}:`, rowData);
+
+//         const invoicdedetailurl = row.Id
+//           ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoicedetail.php"
+//           : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoicedetail.php";
+
+//         try {
+//           await axios.post(invoicdedetailurl, qs.stringify(rowData), {
+//             headers: {
+//               "Content-Type": "application/x-www-form-urlencoded",
+//             },
+//           });
+//         } catch (error) {
+//           console.error("Invoice detail save error:", error);
+
+//           throw error;
+//         }
+//       }
+
+//       // ======================================================
+//       // 18. CUSTOMER NAME FOR PRINT
+//       // ======================================================
+
+//       const customerNameForPrint =
+//         accountOptions.find(({ Id }) => String(Id) === String(selectedAccount))
+//           ?.AccountName ||
+//         accountName ||
+//         "-";
+
+//       console.log("Customer Name For Print:", customerNameForPrint);
+
+//       // ======================================================
+//       // 19. PREPARE PRINT DATA
+//       // ======================================================
+
+//       const printData = {
+//         ...invoiceheaderdata,
+
+//         // Invoice ID
+//         Id: invoiceId,
+
+//         // ACTUAL INVOICE NUMBER
+//         InvoiceNo: savedInvoiceNo,
+
+//         // ====================================================
+//         // BALANCE
+//         // ====================================================
+
+//         PreviousBalanceDue: Number(Number(previousDueForSave || 0).toFixed(2)),
+
+//         CurrentInvoiceDue: Number(Number(currentDueForSave || 0).toFixed(2)),
+
+//         BalanceDue: Number(Number(totalOutstandingForSave || 0).toFixed(2)),
+
+//         // ====================================================
+//         // DEVICE
+//         // ====================================================
+
+//         Device: device || "-",
+
+//         // ====================================================
+//         // PAYMENT MODE
+//         // ====================================================
+
+//         PaymentMode: paymentMode || "-",
+
+//         // ====================================================
+//         // CUSTOMER
+//         // ====================================================
+
+//         accountDetails: {
+//           AccountName: customerNameForPrint,
+//         },
+
+//         customerName: customerNameForPrint,
+
+//         // ====================================================
+//         // INVOICE DETAILS
+//         // ====================================================
+
+//         invdetail: rows.map((row) => ({
+//           ...row,
+
+//           ProductName:
+//             row.ProductName ||
+//             productOptions.find(
+//               (option) => String(option.value) === String(row.ProductId),
+//             )?.label ||
+//             "Unknown",
+
+//           Quantity: parseFloat(row.Quantity) || 0,
+
+//           Rate: parseFloat(row.Rate) || 0,
+
+//           Amount: parseFloat(row.Amount) || 0,
+
+//           DiscountAmt: parseFloat(row.DiscountAmt) || 0,
+
+//           CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
+
+//           CGSTAmount: parseFloat(row.CGSTAmount) || 0,
+
+//           SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
+
+//           SGSTAmount: parseFloat(row.SGSTAmount) || 0,
+
+//           IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
+
+//           IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+//         })),
+//       };
+
+//       // ======================================================
+//       // 20. PRINT DATA CONSOLE
+//       // ======================================================
+
+//       console.log("PRINT DATA:", printData);
+
+//       setPreviewData(printData);
+
+//       // ======================================================
+//       // 21. GENERATE PDF
+//       //
+//       // IMPORTANT:
+//       // generatePDF ONLY ONCE
+//       // ======================================================
+
+//       if (shouldPrint && printWindow) {
+//         console.log("CALLING generatePDF...");
+
+//         generatePDF(printData, printWindow);
+//       } else {
+//         console.log("SAVE ONLY - PRINT NOT REQUESTED");
+//       }
+
+//       // ======================================================
+//       // 22. SUCCESS MESSAGE
+//       // ======================================================
+
+//       toast.success(
+//         isEditing
+//           ? "Sales Entry- Caterers Updated successfully!"
+//           : "Sales Entry- Caterers Created successfully!",
+//       );
+
+//       // ======================================================
+//       // 23. CLOSE DRAWER
+//       // ======================================================
+
+//       setIsDrawerOpen(false);
+
+//       // ======================================================
+//       // 24. RESET FORM
+//       // ======================================================
+
+//       resetForm();
+
+//       // ======================================================
+//       // 25. REFRESH TABLE DATA
+//       // ======================================================
+
+//       await fetchInvoiceHeader();
+//     } catch (error) {
+//       // ======================================================
+//       // ERROR
+//       // ======================================================
+
+//       console.error("Error submitting invoice:", error);
+
+//       // ======================================================
+//       // CLOSE PRINT WINDOW IF SAVE FAILED
+//       // ======================================================
+
+//       if (printWindow && !printWindow.closed) {
+//         printWindow.close();
+//       }
+
+//       // ======================================================
+//       // CLOSE DRAWER
+//       // ======================================================
+
+//       setIsDrawerOpen(false);
+
+//       // ======================================================
+//       // ERROR MESSAGE
+//       // ======================================================
+
+//       toast.error(
+//         isEditing
+//           ? "Sales Entry- Caterers Updated unsuccessfully!"
+//           : "Sales Entry- Caterers unsuccessfully!",
+//       );
+//     } finally {
+//       // ======================================================
+//       // ALWAYS UNLOCK SUBMIT
+//       // ======================================================
+
+//       isSubmittingRef.current = false;
+
+//       console.log("SUBMIT LOCK RELEASED");
+//     }
+//   };
+
+//   // ======================================================
+//   // CTRL + S = SAVE ONLY
+//   // ======================================================
+
+//   useEffect(() => {
+//     const handleCtrlS = (event) => {
+//       // Ctrl + S
+//       if (event.ctrlKey && event.key.toLowerCase() === "s") {
+//         event.preventDefault();
+//         event.stopPropagation();
+
+//         // Drawer बंद असेल तर काही करू नका
+//         if (!isDrawerOpen) {
+//           return;
+//         }
+
+//         // Double submit prevent करण्यासाठी
+//         if (event.repeat) {
+//           return;
+//         }
+
+//         console.log("CTRL + S PRESSED - SAVE ONLY");
+
+//         // Save only - NO PRINT
+//         handleSubmit(event, false);
+//       }
+//     };
+
+//     // Capture phase मध्ये listener
+//     window.addEventListener("keydown", handleCtrlS, true);
+
+//     return () => {
+//       window.removeEventListener("keydown", handleCtrlS, true);
+//     };
+//   }, [isDrawerOpen]);
+
+//   const handleQuantityChange = (e) => {
+//     const qty = e.target.value;
+//     setQuantity(qty);
+//     calculateAmount(qty, rate);
+//   };
+
+//   const handleRateChange = (e) => {
+//     const rt = e.target.value;
+//     setRate(rt);
+//     // console.log("rateee", rate);
+//     calculateAmount(quantity, rt);
+//   };
+
+//   ///  for discount Amount
+//   const [discount, setDiscount] = useState("");
+
+//   // const calculateAmount = (qty, rt) => {
+//   //   const qtyNum = parseFloat(qty) || 0;
+//   //   const rateNum = parseFloat(rt) || 0;
+//   //   const amt = qtyNum * rateNum;
+//   //   SetAmount(amt);
+//   //   calculateCgstAmount(cgst, amt);
+//   //   calculateSgstAmount(sgst, amt);
+//   //   calculateIgstAmount(igst, amt);
+//   // };
+
+//   const [baseAmount, setBaseAmount] = useState(0);
+
+//   const calculateAmount = (qty, rt) => {
+//     const qtyNum = parseFloat(qty) || 0;
+
+//     const rateNum = parseFloat(rt) || 0;
+
+//     const baseAmt = qtyNum * rateNum;
+
+//     setBaseAmount(baseAmt);
+
+//     SetAmount(baseAmt);
+
+//     calculateCgstAmount(cgst, baseAmt);
+
+//     calculateSgstAmount(sgst, baseAmt);
+
+//     calculateIgstAmount(igst, baseAmt);
+//   };
+
+//   const calculateSgstAmount = (sgstValue, amt) => {
+//     let sgstNum = parseFloat(sgstValue) || 0;
+//     let sgstAmt = (sgstNum * amt) / 100;
+//     setSGSTAmount(sgstAmt);
+//   };
+
+//   const calculateCgstAmount = (cgstValue, amt) => {
+//     let cgstNum = parseFloat(cgstValue) || 0;
+//     let cgstAmt = (cgstNum * amt) / 100;
+//     setCGSTAmount(cgstAmt);
+//   };
+
+//   const calculateIgstAmount = (igstValue, amt) => {
+//     let igstNum = parseFloat(igstValue) || 0;
+//     let igstAmt = (igstNum * amt) / 100;
+//     setIGSTAmount(igstAmt);
+//   };
+
+//   const handleAddRow = () => {
+//     //  console.log("Selected Product ID:", selectedProductID);
+//     //  console.log("Selected Product Name:", selectedProductName);
+
+//     let newRow = {
+//       // id: rows.length + 1,
+//       InvoiceId: null,
+//       ProductId: selectedProductID,
+//       ProductName: productName,
+//       Quantity: quantity,
+//       Rate: rate,
+//       Amount: amount,
+//       CGSTPercentage: cgst,
+//       CGSTAmount: cgstAmount,
+//       SGSTPercentage: sgst,
+//       SGSTAmount: sgstAmount,
+//       IGSTPercentage: igst,
+//       IGSTAmount: igstAmount,
+//       DiscountAmt: discount,
+//     };
+//     // console.log("newRow", newRow);
+//     // Update rows state and ensure the new row is added to the table
+//     setRows((prevRows) => [...prevRows, newRow]);
+//   };
+
+//   const [subTotalcal, setSubTotalCal] = useState(0);
+//   const [cgstTotal, setCgstTotal] = useState(0);
+//   const [igstTotal, setIgstTotal] = useState(0);
+//   const [sgstTotal, setSgstTotal] = useState(0);
+//   const [total, setTotal] = useState(0);
+
+//   const received = parseFloat(receivedAmount) || 0;
+//   const grandTotal = parseFloat(total) || 0;
+
+//   const difference = received - grandTotal;
+
+//   const refund = difference > 0 ? difference : 0;
+
+//   // Current invoice balance only
+//   const currentInvoiceBalanceDue = difference < 0 ? Math.abs(difference) : 0;
+
+//   const handleReceivedAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     // Empty value
+//     if (value === "") {
+//       setReceivedAmount("");
+
+//       if (paymentMode === "C") {
+//         setCashAmount("");
+//         setOnlineAmount("");
+//       }
+
+//       if (paymentMode === "O") {
+//         setCashAmount("");
+//         setOnlineAmount("");
+//       }
+
+//       // Mix मध्ये cash + online manually enter होतात
+//       return;
+//     }
+
+//     const receivedValue = parseFloat(value);
+
+//     // Negative amount not allowed
+//     if (receivedValue < 0) {
+//       return;
+//     }
+
+//     // Main received amount
+//     setReceivedAmount(value);
+
+//     // Cash payment
+//     if (paymentMode === "C") {
+//       setCashAmount(value);
+//       setOnlineAmount("");
+//     }
+
+//     // Online payment
+//     if (paymentMode === "O") {
+//       setOnlineAmount(value);
+//       setCashAmount("");
+//     }
+
+//     // Mix payment
+//     // Cash + Online fields स्वतः भरले जातील
+//   };
+
+//   const handleCashAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     if (Number(value) < 0) {
+//       return;
+//     }
+
+//     setCashAmount(value);
+
+//     const cash = Number(value) || 0;
+//     const online = Number(onlineAmount) || 0;
+
+//     setReceivedAmount((cash + online).toString());
+//   };
+
+//   const handleOnlineAmountChange = (e) => {
+//     const value = e.target.value;
+
+//     if (Number(value) < 0) {
+//       return;
+//     }
+
+//     setOnlineAmount(value);
+
+//     const cash = Number(cashAmount) || 0;
+//     const online = Number(value) || 0;
+
+//     setReceivedAmount((cash + online).toString());
+//   };
+
+//   const validatePaymentSplit = () => {
+//     if (paymentMode !== "M") {
+//       return true;
+//     }
+
+//     const received = parseFloat(receivedAmount) || 0;
+//     const cash = parseFloat(cashAmount) || 0;
+//     const online = parseFloat(onlineAmount) || 0;
+
+//     const splitTotal = cash + online;
+
+//     if (splitTotal !== received) {
+//       toast.error(`Cash + Online amount must be ₹${received.toFixed(2)}`);
+
+//       return false;
+//     }
+
+//     return true;
+//   };
+
+//   const isPaid = difference === 0 && received > 0;
+
+//   const calculations = () => {
+//     // =========================
+//     // SUBTOTAL
+//     // =========================
+
+//     const subtotal = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.Amount) || 0),
+//       0,
+//     );
+
+//     setSubTotalCal(subtotal.toFixed(2));
+
+//     // =========================
+//     // GST TOTALS
+//     // Keep internally for backend
+//     // =========================
+
+//     const totalCGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.CGSTAmount) || 0),
+//       0,
+//     );
+
+//     setCgstTotal(totalCGST.toFixed(2));
+
+//     const totalSGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.SGSTAmount) || 0),
+//       0,
+//     );
+
+//     setSgstTotal(totalSGST.toFixed(2));
+
+//     const totalIGST = rows.reduce(
+//       (acc, row) => acc + (parseFloat(row.IGSTAmount) || 0),
+//       0,
+//     );
+
+//     setIgstTotal(totalIGST.toFixed(2));
+
+//     // =========================
+//     // DISCOUNT
+//     // =========================
+
+//     const discountValue = parseFloat(discount) || 0;
+
+//     // =========================
+//     // TRANSPORT
+//     // =========================
+
+//     const transportValue = parseFloat(transport) || 0;
+
+//     // =========================
+//     // FINAL TOTAL
+//     // =========================
+
+//     const totalBeforeDiscount = subtotal;
+
+//     const afterDiscount = Math.max(totalBeforeDiscount - discountValue, 0);
+
+//     const grandTotal = afterDiscount + transportValue;
+
+//     setTotal(grandTotal.toFixed(2));
+//   };
+
+//   useEffect(() => {
+//     calculations();
+//   }, [rows, transport, discount]);
+//   //
+//   const [anchorEl1, setAnchorEl1] = useState(null);
+//   const [selectedRow, setSelectedRow] = useState(null);
+
+//   const handleMenutableOpen = (event, index) => {
+//     setAnchorEl1(event.currentTarget);
+//     setSelectedRow(index);
+//   };
+
+//   const handletableMenuClose = () => {
+//     setAnchorEl1(null);
+//     setSelectedRow(null);
+//   };
+
+//   const [editingRow, setEditingRow] = useState(null);
+
+//   const handleEditRow = (index) => {
+//     const row = rows[index];
+
+//     setEditingRow(index);
+
+//     setSelectedProductId(row.ProductId);
+//     setProductName(row.ProductName);
+
+//     const q = row.Quantity || "";
+//     const r = row.Rate || "";
+
+//     setQuantity(q);
+//     setRate(r);
+
+//     const qtyNum = parseFloat(q) || 0;
+//     const rateNum = parseFloat(r) || 0;
+
+//     const baseAmt = qtyNum * rateNum;
+
+//     setBaseAmount(baseAmt);
+//     SetAmount(baseAmt);
+
+//     setCGST(row.CGSTPercentage || 0);
+//     setSGST(row.SGSTPercentage || 0);
+//     setIGST(row.IGSTPercentage || 0);
+
+//     calculateCgstAmount(row.CGSTPercentage || 0, baseAmt);
+
+//     calculateSgstAmount(row.SGSTPercentage || 0, baseAmt);
+
+//     calculateIgstAmount(row.IGSTPercentage || 0, baseAmt);
+//   };
+
+//   const handleDeleteRow = (index) => {
+//     const updatedRows = [...rows];
+//     updatedRows.splice(index, 1);
+//     setRows(updatedRows);
+//   };
+
+//   const addProductRow = (productData = null) => {
+//     const productId = productData?.value || selectedProductID;
+
+//     if (!productId) {
+//       return;
+//     }
+
+//     const productLabel = productData?.label || productName || "";
+
+//     const qty = parseFloat(productData?.quantity ?? quantity) || 1;
+
+//     const rt = parseFloat(productData?.rate ?? rate) || 0;
+
+//     const cgstValue = parseFloat(productData?.cgst ?? cgst) || 0;
+
+//     const sgstValue = parseFloat(productData?.sgst ?? sgst) || 0;
+
+//     const igstValue = parseFloat(productData?.igst ?? igst) || 0;
+
+//     // Product Amount
+//     const baseAmt = qty * rt;
+
+//     // GST amounts
+//     const cgstValueAmount = (cgstValue * baseAmt) / 100;
+
+//     const sgstValueAmount = (sgstValue * baseAmt) / 100;
+
+//     const igstValueAmount = (igstValue * baseAmt) / 100;
+
+//     const newRow = {
+//       Id: null,
+//       InvoiceId: null,
+
+//       ProductId: productId,
+//       ProductName: productLabel,
+
+//       Quantity: qty,
+//       Rate: rt,
+
+//       // Product level discount नाही
+//       Amount: baseAmt,
+
+//       DiscountAmt: 0,
+
+//       CGSTPercentage: cgstValue,
+//       CGSTAmount: cgstValueAmount,
+
+//       SGSTPercentage: sgstValue,
+//       SGSTAmount: sgstValueAmount,
+
+//       IGSTPercentage: igstValue,
+//       IGSTAmount: igstValueAmount,
+//     };
+
+//     setRows((prevRows) => [...prevRows, newRow]);
+
+//     // Clear only product-entry fields
+//     setSelectedProductId("");
+//     setSelectedProductName("");
+//     setProductName("");
+
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+
+//     setCGST("");
+//     setCGSTAmount("");
+
+//     setSGST("");
+//     setSGSTAmount("");
+
+//     setIGST("");
+//     setIGSTAmount("");
+//   };
+
+//   const handleSaveOrAddRow = () => {
+//     // ============================================
+//     // 1. PRODUCT VALIDATION
+//     // ============================================
+//     if (!selectedProductID) {
+//       toast.error("Please select a product.");
+
+//       setTimeout(() => {
+//         productRef.current?.focus();
+//       }, 0);
+
+//       return;
+//     }
+
+//     // ============================================
+//     // 2. QUANTITY
+//     // ============================================
+//     const finalQuantity = parseFloat(quantity) || 1;
+
+//     // ============================================
+//     // 3. RATE
+//     // ============================================
+//     const finalRate = parseFloat(rate) || 0;
+
+//     // ============================================
+//     // 4. AMOUNT
+//     // ============================================
+//     const finalAmount = finalQuantity * finalRate;
+
+//     // ============================================
+//     // 5. PRODUCT NAME
+//     // ============================================
+//     const selectedOption = productOptions.find(
+//       (option) => String(option.value) === String(selectedProductID),
+//     );
+
+//     const finalProductName = productName || selectedOption?.label || "";
+
+//     // ============================================
+//     // 6. EDIT EXISTING ROW
+//     // ============================================
+//     if (editingRow !== null) {
+//       const updatedRows = [...rows];
+
+//       updatedRows[editingRow] = {
+//         ...updatedRows[editingRow],
+
+//         ProductId: selectedProductID,
+
+//         ProductName: finalProductName,
+
+//         Quantity: finalQuantity,
+
+//         Rate: finalRate,
+
+//         Amount: finalAmount,
+
+//         // Internal GST values
+//         CGSTPercentage: cgst || 0,
+//         CGSTAmount: cgstAmount || 0,
+
+//         SGSTPercentage: sgst || 0,
+//         SGSTAmount: sgstAmount || 0,
+
+//         IGSTPercentage: igst || 0,
+//         IGSTAmount: igstAmount || 0,
+//       };
+
+//       setRows(updatedRows);
+
+//       // Editing completed
+//       setEditingRow(null);
+//     }
+
+//     // ============================================
+//     // 7. ADD NEW ROW
+//     // ============================================
+//     else {
+//       const newRow = {
+//         Id: null,
+//         InvoiceId: null,
+
+//         ProductId: selectedProductID,
+
+//         ProductName: finalProductName,
+
+//         Quantity: finalQuantity,
+
+//         Rate: finalRate,
+
+//         Amount: finalAmount,
+
+//         DiscountAmt: 0,
+
+//         // Internal GST values
+//         CGSTPercentage: cgst || 0,
+//         CGSTAmount: cgstAmount || 0,
+
+//         SGSTPercentage: sgst || 0,
+//         SGSTAmount: sgstAmount || 0,
+
+//         IGSTPercentage: igst || 0,
+//         IGSTAmount: igstAmount || 0,
+//       };
+
+//       setRows((prevRows) => [...prevRows, newRow]);
+//     }
+
+//     // ============================================
+//     // 8. CLEAR PRODUCT ENTRY FIELDS
+//     // ============================================
+//     resetFields();
+//   };
+//   const resetFields = () => {
+//     setSelectedProductId("");
+//     setProductName("");
+//     setSelectedProductName("");
+//     setQuantity("");
+//     setRate("");
+//     SetAmount("");
+//     setCGST("");
+//     setCGSTAmount("");
+//     setSGST("");
+//     setSGSTAmount("");
+//     setIGST("");
+//     setIGSTAmount("");
+//   };
+
+//   //get company master
+//   const [gstNo, setGstNO] = useState("");
+
+//   const fetchCompanyMaster = async () => {
+//     try {
+//       const response = await axios.get(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=companymaster",
+//         { maxBodyLength: Infinity },
+//       );
+//       console.log(response.data);
+//       console.log(" Company GST NO:", response.data[0].GSTNo);
+//       setGstNO(response.data[0].GSTNo);
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchCompanyMaster();
+//   }, []);
+
+//   //for serchApi
+//   const [showDropdown, setShowDropdown] = useState(false);
+//   const [text, setText] = useState("");
+
+//   // Customer dropdown outside-click reference
+//   const customerDropdownRef = useRef(null);
+
+//   const serchCustomers = async () => {
+//     try {
+//       const requestOptions = {
+//         method: "GET",
+//         redirect: "follow",
+//       };
+
+//       // 1. Search Account
+//       const response = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/get/searchaccount.php?TypeCode=C&Text=${encodeURIComponent(text)}`,
+//         requestOptions,
+//       );
+
+//       const result = await response.json();
+
+//       console.log("Caterers Customer API Response:", result);
+
+//       if (!Array.isArray(result)) {
+//         setAccountOptions([]);
+//         return;
+//       }
+
+//       // 2. प्रत्येक Account साठी Address fetch करा
+//       const catererCustomers = [];
+
+//       for (const customer of result) {
+//         try {
+//           const addressResponse = await fetch(
+//             `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${customer.Id}`,
+//             requestOptions,
+//           );
+
+//           const addressResult = await addressResponse.json();
+
+//           console.log(`Address for ${customer.AccountName}:`, addressResult);
+
+//           const address = Array.isArray(addressResult)
+//             ? addressResult[0]
+//             : null;
+
+//           // 3. फक्त Caterers customers घ्या
+//           if (address && String(address.CustomerType).toUpperCase() === "C") {
+//             catererCustomers.push({
+//               ...customer,
+//               CustomerType: address.CustomerType,
+//               GSTNo: address.GSTNo || "",
+//               Address1:
+//                 address.Address1 ||
+//                 address.address1 ||
+//                 address.Address ||
+//                 address.address ||
+//                 address.AddressLine1 ||
+//                 address.addressLine1 ||
+//                 "",
+//               Address2:
+//                 address.Address2 ||
+//                 address.address2 ||
+//                 address.AddressLine2 ||
+//                 address.addressLine2 ||
+//                 "",
+//               Address3:
+//                 address.Address3 ||
+//                 address.address3 ||
+//                 address.AddressLine3 ||
+//                 address.addressLine3 ||
+//                 "",
+//             });
+//           }
+//         } catch (addressError) {
+//           console.error(
+//             `Address fetch failed for AccountId ${customer.Id}:`,
+//             addressError,
+//           );
+//         }
+//       }
+
+//       console.log("FILTERED CATERERS CUSTOMERS:", catererCustomers);
+
+//       // 4. Dropdown ला फक्त Caterers customers द्या
+//       setAccountOptions(catererCustomers);
+//     } catch (error) {
+//       console.error("Caterers customer search error:", error);
+
+//       setAccountOptions([]);
+//     }
+//   };
+
+//   useEffect(() => {
+//     serchCustomers();
+//   }, [text]);
+
+//   // ======================================================
+//   // CLOSE CUSTOMER DROPDOWN WHEN CLICKED OUTSIDE
+//   // ======================================================
+//   useEffect(() => {
+//     const handleClickOutside = (event) => {
+//       if (
+//         showDropdown &&
+//         customerDropdownRef.current &&
+//         !customerDropdownRef.current.contains(event.target)
+//       ) {
+//         setShowDropdown(false);
+//         setText("");
+//       }
+//     };
+
+//     document.addEventListener("mousedown", handleClickOutside);
+
+//     return () => {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//     };
+//   }, [showDropdown]);
+
+//   useEffect(() => {
+//     const storedUserId = sessionStorage.getItem("UserId");
+
+//     if (storedUserId) {
+//       setUserId(storedUserId);
+//     } else {
+//       toast.error("User is not logged in.");
+//     }
+//   }, []);
+
+//   // create new Customer
+//   const [accountName, setAccountName] = useState("");
+//   const [customerName, setCustomerName] = useState("");
+
+//   const [customerGSTNo, setCustomerGSTNo] = useState("");
+
+//   const CreateCustomerMaster = async () => {
+//     // ============================================================
+//     // CUSTOMER NAME CHECK
+//     // ============================================================
+
+//     const newCustomerName = accountName.trim();
+
+//     if (!newCustomerName) {
+//       toast.error("Please enter customer name");
+//       return;
+//     }
+
+//     // ============================================================
+//     // HEADERS
+//     // ============================================================
+
+//     const myHeaders = new Headers();
+
+//     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+//     // ============================================================
+//     // CREATE ACCOUNT
+//     // ============================================================
+
+//     const urlencoded = new URLSearchParams();
+
+//     urlencoded.append("AccountName", newCustomerName);
+
+//     urlencoded.append("GroupId", "3");
+
+//     urlencoded.append("SubGroupId", "1");
+
+//     urlencoded.append("OpeningBalance", "100");
+
+//     urlencoded.append("DrORCr", "D");
+
+//     urlencoded.append("TypeCode", "C");
+
+//     urlencoded.append("IsSystem", "false");
+
+//     try {
+//       // ==========================================================
+//       // 1. CREATE CUSTOMER ACCOUNT
+//       // ==========================================================
+
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/postaccount.php",
+//         {
+//           method: "POST",
+//           headers: myHeaders,
+//           body: urlencoded,
+//           redirect: "follow",
+//         },
+//       );
+
+//       const result = await response.json();
+
+//       console.log("NEW CUSTOMER CREATED:", result);
+
+//       if (!result || !result.Id) {
+//         throw new Error("Customer ID not received from API.");
+//       }
+
+//       const newCustomerId = result.Id;
+
+//       // ==========================================================
+//       // 2. CREATE CUSTOMER ADDRESS
+//       // ==========================================================
+
+//       const addressData = new URLSearchParams();
+
+//       addressData.append("AccountId", newCustomerId);
+
+//       // Customer type must remain C
+//       addressData.append("CustomerType", "C");
+
+//       // GST - keep existing logic
+
+//       // Address
+//       addressData.append("Address1", newCustomerAddress.trim());
+
+//       addressData.append("Address", newCustomerAddress.trim());
+
+//       const addressResponse = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/postaddress.php",
+//         {
+//           method: "POST",
+//           headers: myHeaders,
+//           body: addressData,
+//           redirect: "follow",
+//         },
+//       );
+
+//       let addressResult = null;
+
+//       try {
+//         addressResult = await addressResponse.json();
+//       } catch (error) {
+//         console.warn("Address response was not JSON:", error);
+//       }
+
+//       console.log("NEW CUSTOMER ADDRESS CREATED:", addressResult);
+
+//       // ==========================================================
+//       // 3. CREATE CUSTOMER OBJECT LOCALLY
+//       //
+//       // IMPORTANT:
+//       // Do NOT wait for page refresh.
+//       // Immediately add customer to dropdown.
+//       // ==========================================================
+
+//       const newCustomer = {
+//         Id: newCustomerId,
+//         AccountName: newCustomerName,
+//         CustomerType: "C",
+
+//         Address1: newCustomerAddress.trim(),
+
+//         Address: newCustomerAddress.trim(),
+//       };
+
+//       // ==========================================================
+//       // 4. ADD NEW CUSTOMER TO CURRENT DROPDOWN
+//       // ==========================================================
+
+//       setAccountOptions((previousOptions) => {
+//         const alreadyExists = previousOptions.some(
+//           (customer) => String(customer.Id) === String(newCustomerId),
+//         );
+
+//         if (alreadyExists) {
+//           return previousOptions;
+//         }
+
+//         return [newCustomer, ...previousOptions];
+//       });
+
+//       // ==========================================================
+//       // 5. IMMEDIATELY SELECT NEW CUSTOMER
+//       // ==========================================================
+
+//       setSelectedAccount(String(newCustomerId));
+
+//       setSelectedCustomerName(newCustomerName);
+
+//       setSelectedCustomerAddress(newCustomerAddress.trim());
+
+//       // ==========================================================
+//       // 6. SET GST
+//       // ==========================================================
+
+//       // ==========================================================
+//       // 7. CLOSE CUSTOMER POPUP
+//       // ==========================================================
+
+//       setShowDropdown(false);
+
+//       // ==========================================================
+//       // 8. CLEAR CREATE CUSTOMER INPUT
+//       // ==========================================================
+
+//       setAccountName("");
+
+//       // Keep search text clean
+//       setText("");
+
+//       // ==========================================================
+//       // 9. SUCCESS MESSAGE
+//       // ==========================================================
+
+//       toast.success("Customer added successfully");
+//     } catch (error) {
+//       console.error("Error creating customer:", error);
+
+//       toast.error("Unable to create customer");
+//     }
+//   };
+//   //set GSTno
+//   const fetchAccounts = (customerId) => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${customerId}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.json())
+//       .then((result) => {
+//         console.log("CUSTOMER ADDRESS RESPONSE:", result);
+
+//         const temp = Array.isArray(result) ? result[0] : result;
+
+//         if (!temp) {
+//           setacctGSTNo("");
+//           setSelectedCustomerAddress("");
+//           return;
+//         }
+
+//         // ========================================================
+//         // GST
+//         // ========================================================
+
+//         setacctGSTNo(String(temp?.GSTNo ?? ""));
+
+//         // ========================================================
+//         // ADDRESS
+//         // ========================================================
+
+//         const address =
+//           temp?.Address1 ||
+//           temp?.address1 ||
+//           temp?.Address ||
+//           temp?.address ||
+//           temp?.AddressLine1 ||
+//           temp?.addressLine1 ||
+//           "";
+
+//         setSelectedCustomerAddress(String(address));
+//       })
+//       .catch((error) => {
+//         console.error("Customer address fetch error:", error);
+
+//         setacctGSTNo("");
+//         setSelectedCustomerAddress("");
+//       });
+//   };
+
+//   // ======================================================
+//   // FETCH CUSTOMER PREVIOUS OUTSTANDING BALANCE
+//   // ======================================================
+//   // RULE:
+//   // Previous Due = ALL OTHER INVOICES of same customer
+//   // Current invoice is excluded
+//   //
+//   // Invoice Due = Total - ReceivedAmount
+//   // ======================================================
+
+//   const fetchPreviousBalance = async (customerId, excludeInvoiceId = null) => {
+//     if (!customerId) {
+//       setPreviousBalanceDue(0);
+//       return 0;
+//     }
+
+//     try {
+//       const response = await fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=AccountId&Colvalue=${encodeURIComponent(
+//           customerId,
+//         )}`,
+//       );
+
+//       if (!response.ok) {
+//         throw new Error(
+//           `Invoice header API failed with status ${response.status}`,
+//         );
+//       }
+
+//       const result = await response.json();
+
+//       const invoiceList = Array.isArray(result)
+//         ? result
+//         : Array.isArray(result?.data)
+//           ? result.data
+//           : result?.data
+//             ? [result.data]
+//             : [];
+
+//       // ======================================================
+//       // DEBUG - SHOW EXACT INVOICES RECEIVED FROM API
+//       // ======================================================
+
+//       console.log("==============================================");
+
+//       console.log("PREVIOUS BALANCE API RESPONSE");
+
+//       console.log("Customer ID:", customerId);
+
+//       console.log("Exclude Invoice ID:", excludeInvoiceId);
+
+//       console.log("Total Invoices Returned:", invoiceList.length);
+
+//       console.table(
+//         invoiceList.map((invoice) => ({
+//           Id: invoice?.Id,
+//           AccountId: invoice?.AccountId,
+//           Total: invoice?.Total,
+//           ReceivedAmount: invoice?.ReceivedAmount,
+//           CashAmount: invoice?.CashAmount,
+//           OnlineAmount: invoice?.OnlineAmount,
+//         })),
+//       );
+
+//       console.log("==============================================");
+
+//       // ======================================================
+//       // CALCULATE PREVIOUS BALANCE
+//       // ======================================================
+
+//       let previousBalance = 0;
+
+//       for (const invoice of invoiceList) {
+//         const invoiceId = Number(invoice?.Id || 0);
+
+//         // ====================================================
+//         // IMPORTANT:
+//         // Current invoice must NOT be included
+//         // ====================================================
+
+//         if (
+//           excludeInvoiceId !== null &&
+//           excludeInvoiceId !== undefined &&
+//           invoiceId === Number(excludeInvoiceId)
+//         ) {
+//           console.log("SKIPPING CURRENT INVOICE:", invoiceId);
+
+//           continue;
+//         }
+
+//         // ====================================================
+//         // TOTAL
+//         // ====================================================
+
+//         const invoiceTotal = Number(invoice?.Total || 0);
+
+//         // ====================================================
+//         // RECEIVED
+//         //
+//         // Prefer ReceivedAmount.
+//         // If unavailable use Cash + Online.
+//         // ====================================================
+
+//         let invoiceReceived = 0;
+
+//         if (
+//           invoice?.ReceivedAmount !== null &&
+//           invoice?.ReceivedAmount !== undefined &&
+//           invoice?.ReceivedAmount !== ""
+//         ) {
+//           invoiceReceived = Number(invoice.ReceivedAmount) || 0;
+//         } else {
+//           invoiceReceived =
+//             (Number(invoice?.CashAmount) || 0) +
+//             (Number(invoice?.OnlineAmount) || 0);
+//         }
+
+//         // ====================================================
+//         // INVOICE DUE
+//         // ====================================================
+
+//         const invoiceDue = Math.max(invoiceTotal - invoiceReceived, 0);
+
+//         // ====================================================
+//         // ADD TO PREVIOUS BALANCE
+//         // ====================================================
+
+//         previousBalance += invoiceDue;
+
+//         // ====================================================
+//         // DEBUG EACH INVOICE
+//         // ====================================================
+
+//         console.log("PREVIOUS BALANCE INVOICE:", {
+//           InvoiceId: invoiceId,
+//           Total: invoiceTotal,
+//           ReceivedAmount: invoiceReceived,
+//           Due: invoiceDue,
+//           RunningPreviousBalance: previousBalance,
+//         });
+//       }
+
+//       // ======================================================
+//       // FINAL PREVIOUS BALANCE
+//       // ======================================================
+
+//       const finalPreviousBalance = Number(previousBalance.toFixed(2));
+
+//       console.log("==============================================");
+
+//       console.log("FINAL PREVIOUS BALANCE:", finalPreviousBalance);
+
+//       console.log("==============================================");
+
+//       setPreviousBalanceDue(finalPreviousBalance);
+
+//       return finalPreviousBalance;
+//     } catch (error) {
+//       console.error("Error fetching customer previous balance:", error);
+
+//       setPreviousBalanceDue(0);
+
+//       return 0;
+//     }
+//   };
+
+//   const fetchAccountName = (acctname) => {
+//     const requestOptions = {
+//       method: "GET",
+//       redirect: "follow",
+//     };
+
+//     fetch(
+//       `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${acctname}`,
+//       requestOptions,
+//     )
+//       .then((response) => response.json())
+//       .then((result) => {
+//         const accountList = Array.isArray(result)
+//           ? result
+//           : Array.isArray(result?.data)
+//             ? result.data
+//             : result?.data
+//               ? [result.data]
+//               : [];
+
+//         setAccountOptions(accountList);
+
+//         const savedCustomerName =
+//           accountList[0]?.AccountName || accountList[0]?.accountName || "";
+
+//         setSelectedCustomerName(savedCustomerName);
+//         setCustomerName(savedCustomerName);
+//       })
+//       .catch((error) => {
+//         console.error("Error fetching account name:", error);
+//       });
+//   };
+
+//   //
+
+//   const handleItemChange = (newValue) => {
+//     if (newValue) {
+//       setSelectedProductId(newValue.value);
+
+//       setProductName(newValue.label);
+
+//       setSelectedProductName(newValue.label);
+
+//       const defaultQty = 1;
+
+//       const defaultRate = parseFloat(newValue.purchaseRate) || 0;
+
+//       setQuantity(defaultQty);
+
+//       setRate(defaultRate);
+
+//       setTimeout(() => {
+//         quantityRef.current?.focus();
+//         quantityRef.current?.select();
+//       }, 0);
+
+//       const sameState = gstNo?.substring(0, 2) === acctGSTNo?.substring(0, 2);
+
+//       const cgstValue = sameState ? newValue.cgst : "0";
+
+//       const sgstValue = sameState ? newValue.sgst : "0";
+
+//       const igstValue = !sameState ? newValue.igst : "0";
+
+//       setCGST(cgstValue);
+//       setSGST(sgstValue);
+//       setIGST(igstValue);
+
+//       // Calculate current input amount
+//       calculateAmount(defaultQty, defaultRate);
+//     } else {
+//       setSelectedProductId("");
+//       setProductName("");
+//       setRate("");
+//       setQuantity("");
+//       setSelectedProductName("");
+
+//       setCGST("0");
+//       setSGST("0");
+//       setIGST("0");
+
+//       SetAmount("");
+//     }
+//   };
+
+//   ///Pagination
+//   const [totalPages, setTotalPages] = useState(1);
+//   //validation
+//   const [errors, setErrors] = useState({
+//     invoiceDate: "",
+//     selectedAccount: "",
+//     paymentMode: "",
+//     rows: "",
+//     phone: "",
+//   });
+
+//   const validateForm = () => {
+//     const newErrors = {
+//       invoiceDate: "",
+//       selectedAccount: "",
+//       paymentMode: "",
+//       rows: "",
+//       phone: "",
+//     };
+
+//     let isValid = true;
+
+//     // Invoice Date
+//     if (!invoiceDate) {
+//       newErrors.invoiceDate = "Invoice date is required";
+
+//       isValid = false;
+//     } else {
+//       const invoiceDateObj = new Date(invoiceDate);
+
+//       const fromDateObj = new Date(fromDate);
+
+//       const toDateObj = new Date(toDate);
+
+//       if (invoiceDateObj < fromDateObj) {
+//         newErrors.invoiceDate = `Invoice date cannot be before ${new Date(
+//           fromDate,
+//         ).toLocaleDateString()}`;
+
+//         isValid = false;
+//       } else if (invoiceDateObj > toDateObj) {
+//         newErrors.invoiceDate = `Invoice date cannot be after ${new Date(
+//           toDate,
+//         ).toLocaleDateString()}`;
+
+//         isValid = false;
+//       }
+//     }
+//     // Customer Name
+//     if (!selectedCustomerName?.trim()) {
+//       newErrors.selectedAccount = "Customer name is required";
+//       isValid = false;
+//     }
+
+//     // Mobile Number
+//     if (!phone || phone.trim().length <= 3) {
+//       newErrors.phone = "Mobile number is required";
+//       isValid = false;
+//     }
+
+//     // Payment Mode
+//     if (!paymentMode) {
+//       newErrors.paymentMode = "Payment mode is required";
+
+//       isValid = false;
+//     }
+
+//     // Product rows
+//     if (rows.length === 0) {
+//       newErrors.rows = "Please add at least one product";
+
+//       isValid = false;
+//     }
+
+//     setErrors(newErrors);
+
+//     return isValid;
+//   };
+
+//   const validateReceivedAmount = () => {
+//     const receivedValue = parseFloat(receivedAmount);
+//     const totalValue = parseFloat(total);
+
+//     // Received amount is empty
+//     if (receivedAmount === "" || Number.isNaN(receivedValue)) {
+//       toast.error(`Please enter received amount`);
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Received amount cannot be negative
+//     if (receivedValue < 0) {
+//       toast.error("Received amount cannot be negative.");
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Received amount cannot be greater than Total
+//     if (receivedValue > totalValue) {
+//       const refundAmount = receivedValue - totalValue;
+
+//       toast.error(
+//         `Received amount is ₹${receivedValue.toFixed(
+//           2,
+//         )}. Refund ₹${refundAmount.toFixed(2)} cannot be saved.`,
+//       );
+
+//       receivedAmountRef.current?.focus();
+//       receivedAmountRef.current?.select();
+
+//       return false;
+//     }
+
+//     // Partial payment is allowed
+//     return true;
+//   };
+
+//   //for yearId
+//   const [yearid, setYearId] = useState("");
+
+//   useEffect(() => {
+//     const storedYearId = Cookies.get("YearId");
+//     const storedfromDate = Cookies.get("FromDate");
+//     const storedtoDate = Cookies.get("ToDate");
+
+//     if (storedYearId) {
+//       setYearId(storedYearId);
+//       //console.log('storedYearId', storedYearId);
+//     } else {
+//       toast.error("Year is not set.");
+//     }
+//     if (storedfromDate) {
+//       setFromDate(storedfromDate);
+//       //console.log('storedfromDate', storedfromDate);
+//     } else {
+//       toast.error("FromDate is not set.");
+//     }
+
+//     if (storedtoDate) {
+//       setToDate(storedtoDate);
+//       // console.log('storedTodate', storedtoDate);
+//     } else {
+//       toast.error("ToDate is not set.");
+//     }
+//   }, [yearid, fromDate, toDate]);
+
+//   //for print
+
+//   // ============================================================
+//   // GENERATE PDF / DIRECT PRINT
+//   // ============================================================
+
+//   const generatePDF = async (printData = previewData, printWindow = null) => {
+//     // ============================================================
+//     // 1. CHECK INVOICE DATA
+//     // ============================================================
+
+//     if (!printData) {
+//       toast.error("No invoice data available for printing.");
+
+//       if (printWindow && !printWindow.closed) {
+//         printWindow.close();
+//       }
+
+//       return;
+//     }
+
+//     console.log("========================================");
+//     console.log("INVOICE PRINT START");
+//     console.log("PRINT DATA:", printData);
+//     console.log("SELECTED ACCOUNT:", selectedAccount);
+//     console.log("SELECTED CUSTOMER NAME:", selectedCustomerName);
+//     console.log("========================================");
+
+//     // ============================================================
+//     // 2. GET ACCOUNT ID
+//     // ============================================================
+
+//     let accountId = "";
+
+//     accountId =
+//       printData?.AccountId ||
+//       printData?.AccountID ||
+//       printData?.CustomerId ||
+//       printData?.CustomerID ||
+//       printData?.CustomerAccountId ||
+//       printData?.CustomerAccountID ||
+//       printData?.accountDetails?.Id ||
+//       printData?.accountDetails?.AccountId ||
+//       "";
+
+//     // ============================================================
+//     // 3. IF ACCOUNT ID NOT FOUND, GET FROM selectedAccount
+//     // ============================================================
+
+//     if (!accountId && selectedAccount) {
+//       if (typeof selectedAccount === "object") {
+//         accountId =
+//           selectedAccount?.Id ||
+//           selectedAccount?.ID ||
+//           selectedAccount?.AccountId ||
+//           selectedAccount?.AccountID ||
+//           selectedAccount?.CustomerId ||
+//           selectedAccount?.CustomerID ||
+//           selectedAccount?.value ||
+//           selectedAccount?.id ||
+//           "";
+//       } else {
+//         accountId = selectedAccount;
+//       }
+//     }
+
+//     // ============================================================
+//     // 4. IF STILL NOT FOUND, FIND ID FROM accountOptions
+//     // ============================================================
+
+//     if (!accountId && Array.isArray(accountOptions) && selectedCustomerName) {
+//       const matchedAccount = accountOptions.find(
+//         (account) =>
+//           String(
+//             account?.AccountName ||
+//               account?.accountName ||
+//               account?.label ||
+//               "",
+//           )
+//             .trim()
+//             .toLowerCase() ===
+//           String(selectedCustomerName).trim().toLowerCase(),
+//       );
+
+//       if (matchedAccount) {
+//         accountId =
+//           matchedAccount?.Id ||
+//           matchedAccount?.ID ||
+//           matchedAccount?.AccountId ||
+//           matchedAccount?.AccountID ||
+//           matchedAccount?.value ||
+//           matchedAccount?.id ||
+//           "";
+//       }
+//     }
+
+//     console.log("FINAL ACCOUNT ID:", accountId);
+
+//     // ============================================================
+//     // 5. CUSTOMER VARIABLES
+//     // ============================================================
+
+//     let customerName = "";
+//     let customerAddress1 = "";
+//     let customerAddress2 = "";
+//     let customerAddress3 = "";
+//     let customerGSTNo = "";
+//     let customerMobileNo = "";
+
+//     // ============================================================
+//     // 6. FETCH SELECTED CUSTOMER FROM ACCOUNT API
+//     // ============================================================
+
+//     if (accountId) {
+//       try {
+//         const accountResponse = await fetch(
+//           `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${encodeURIComponent(
+//             accountId,
+//           )}`,
+//         );
+
+//         if (!accountResponse.ok) {
+//           throw new Error(
+//             `Account API failed with status ${accountResponse.status}`,
+//           );
+//         }
+
+//         const accountResult = await accountResponse.json();
+
+//         console.log("FULL ACCOUNT API RESPONSE:", accountResult);
+
+//         const accountData = Array.isArray(accountResult)
+//           ? accountResult[0]
+//           : accountResult;
+
+//         console.log("SELECTED CUSTOMER DATA:", accountData);
+
+//         if (accountData) {
+//           customerName =
+//             accountData?.AccountName || accountData?.accountName || "";
+
+//           customerAddress1 =
+//             accountData?.Address1 || accountData?.address1 || "";
+
+//           customerAddress2 =
+//             accountData?.Address2 || accountData?.address2 || "";
+
+//           customerAddress3 =
+//             accountData?.Address3 || accountData?.address3 || "";
+
+//           customerGSTNo =
+//             accountData?.GSTNo ||
+//             accountData?.GSTNO ||
+//             accountData?.GstNo ||
+//             "";
+
+//           customerMobileNo =
+//             accountData?.MobileNo ||
+//             accountData?.MobileNumber ||
+//             accountData?.ContactNo ||
+//             accountData?.ContactNumber ||
+//             accountData?.PhoneNo ||
+//             accountData?.PhoneNumber ||
+//             "";
+//         }
+//       } catch (error) {
+//         console.error("CUSTOMER ACCOUNT API ERROR:", error);
+//       }
+//     } else {
+//       console.warn("ACCOUNT ID NOT FOUND. Customer API was not called.");
+//     }
+
+//     // ============================================================
+//     // 7. FALLBACK CUSTOMER NAME
+//     // ============================================================
+
+//     if (!customerName) {
+//       customerName =
+//         printData?.accountDetails?.AccountName ||
+//         printData?.accountDetails?.accountName ||
+//         printData?.CustomerName ||
+//         printData?.customerName ||
+//         printData?.AccountName ||
+//         printData?.CustomerAccountName ||
+//         selectedCustomerName ||
+//         "-";
+//     }
+
+//     // ============================================================
+//     // 8. FALLBACK ADDRESS 1
+//     // ============================================================
+
+//     if (!customerAddress1) {
+//       customerAddress1 =
+//         printData?.accountDetails?.Address1 || printData?.Address1 || "";
+//     }
+
+//     // ============================================================
+//     // 9. FALLBACK ADDRESS 2
+//     // ============================================================
+
+//     if (!customerAddress2) {
+//       customerAddress2 =
+//         printData?.accountDetails?.Address2 || printData?.Address2 || "";
+//     }
+
+//     // ============================================================
+//     // 10. FALLBACK ADDRESS 3
+//     // ============================================================
+
+//     if (!customerAddress3) {
+//       customerAddress3 =
+//         printData?.accountDetails?.Address3 || printData?.Address3 || "";
+//     }
+
+//     // ============================================================
+//     // 11. CONTACT NUMBER
+//     // ============================================================
+
+//     const contactNo =
+//       customerMobileNo ||
+//       printData?.ContactNo ||
+//       printData?.ContactNumber ||
+//       printData?.MobileNo ||
+//       printData?.MobileNumber ||
+//       printData?.PhoneNo ||
+//       "-";
+
+//     // ============================================================
+//     // 12. GST NUMBER
+//     // ============================================================
+
+//     const gstNumber =
+//       customerGSTNo ||
+//       printData?.GSTNo ||
+//       printData?.CustomerGSTNo ||
+//       printData?.customerGSTNo ||
+//       "";
+
+//     // ============================================================
+//     // 13. CUSTOMER DEBUG
+//     // ============================================================
+
+//     console.log("========================================");
+//     console.log("FINAL CUSTOMER INFORMATION");
+//     console.log("ACCOUNT ID:", accountId);
+//     console.log("CUSTOMER NAME:", customerName);
+//     console.log("ADDRESS 1:", customerAddress1);
+//     console.log("ADDRESS 2:", customerAddress2);
+//     console.log("ADDRESS 3:", customerAddress3);
+//     console.log("MOBILE:", contactNo);
+//     console.log("GST:", gstNumber);
+//     console.log("========================================");
+
+//     // ============================================================
+//     // 14. CREATE 80MM ROLL PDF
+//     // ============================================================
+
+//     const ROLL_WIDTH = 80;
+//     const ROLL_HEIGHT = 300;
+
+//     const doc = new jsPDF({
+//       orientation: "portrait",
+//       unit: "mm",
+//       format: [ROLL_WIDTH, ROLL_HEIGHT],
+//     });
+
+//     const pageWidth = doc.internal.pageSize.getWidth();
+//     const pageHeight = doc.internal.pageSize.getHeight();
+
+//     // ============================================================
+//     // 15. INVOICE NUMBER
+//     // ============================================================
+
+//     const invoiceNo =
+//       printData?.InvoiceNo ||
+//       printData?.InvoiceNumber ||
+//       printData?.BillNo ||
+//       printData?.BillNumber ||
+//       printData?.invoiceNo ||
+//       "";
+
+//     // ============================================================
+//     // 16. DATE
+//     // ============================================================
+
+//     let invoiceDateText = "-";
+
+//     try {
+//       if (printData?.InvoiceDate?.date) {
+//         invoiceDateText = moment(printData.InvoiceDate.date).format(
+//           "DD-MM-YYYY",
+//         );
+//       } else if (printData?.InvoiceDate) {
+//         invoiceDateText = moment(printData.InvoiceDate).format("DD-MM-YYYY");
+//       }
+//     } catch (error) {
+//       console.error("Invoice date formatting error:", error);
+//       invoiceDateText = "-";
+//     }
+
+//     // ============================================================
+//     // 17. TIME
+//     // ============================================================
+
+//     const invoiceTime = moment().format("hh:mm A");
+
+//     // ============================================================
+//     // 18. COMPANY DETAILS
+//     // ============================================================
+
+//     const companyName = "AMRUT MILK PRODUCTS 2";
+//     const companyAddress1 = "E-18 UDYAM CO-OP. SOCIETY, Y.P. POWAR NAGER";
+//     const companyAddress2 = "KOLHAPUR.";
+//     const companyPhone = "8830261523";
+//     const companyState = "27-Maharashtra";
+
+//     // ============================================================
+//     // 19. LOAD IMAGE AS DATA URL
+//     // ============================================================
+
+//     const imageToDataURL = (imageSource) => {
+//       return new Promise((resolve, reject) => {
+//         if (!imageSource) {
+//           reject(new Error("Image source is empty."));
+//           return;
+//         }
+
+//         if (
+//           typeof imageSource === "string" &&
+//           imageSource.startsWith("data:image")
+//         ) {
+//           resolve(imageSource);
+//           return;
+//         }
+
+//         const img = new Image();
+
+//         img.onload = () => {
+//           try {
+//             const canvas = document.createElement("canvas");
+
+//             canvas.width = img.naturalWidth || img.width;
+
+//             canvas.height = img.naturalHeight || img.height;
+
+//             const ctx = canvas.getContext("2d");
+
+//             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+//             resolve(canvas.toDataURL("image/png"));
+//           } catch (error) {
+//             reject(error);
+//           }
+//         };
+
+//         img.onerror = () => {
+//           reject(new Error(`Unable to load image: ${imageSource}`));
+//         };
+
+//         img.src = imageSource;
+//       });
+//     };
+
+//     // ============================================================
+//     // 20. LOAD BOTH LOGOS
+//     // ============================================================
+
+//     let amrutLogoData = null;
+//     let fremilaLogoData = null;
+
+//     try {
+//       amrutLogoData = await imageToDataURL(amrutLogo);
+//       console.log("Amrut Siddhi logo loaded.");
+//     } catch (error) {
+//       console.error("Amrut Siddhi logo error:", error);
+//     }
+
+//     try {
+//       fremilaLogoData = await imageToDataURL(fremilaLogo);
+//       console.log("Fremila logo loaded.");
+//     } catch (error) {
+//       console.error("Fremila logo error:", error);
+//     }
+
+//     // ============================================================
+//     // 21. ROLL PRINT MARGINS
+//     // ============================================================
+
+//     const leftMargin = 4;
+//     const rightMargin = 4;
+
+//     const contentWidth = pageWidth - leftMargin - rightMargin;
+
+//     // ============================================================
+//     // 22. OUTER BORDER
+//     // ============================================================
+
+//     doc.setLineWidth(0.4);
+
+//     doc.rect(leftMargin, 4, contentWidth, pageHeight - 8);
+
+//     // ============================================================
+//     // 23. HEADER
+//     // ============================================================
+
+//     let y = 11;
+
+//     // ============================================================
+//     // 23.1 AMRUT SIDDHI LOGO
+//     // ============================================================
+
+//     if (amrutLogoData) {
+//       try {
+//         doc.addImage(amrutLogoData, "PNG", pageWidth - 25, 7, 18, 12);
+//       } catch (error) {
+//         console.error("Amrut Siddhi PDF logo error:", error);
+//       }
+//     }
+
+//     // ============================================================
+//     // 23.2 FREMILA LOGO
+//     // ============================================================
+
+//     if (fremilaLogoData) {
+//       try {
+//         doc.addImage(fremilaLogoData, "PNG", pageWidth - 25, 20, 18, 12);
+//       } catch (error) {
+//         console.error("Fremila PDF logo error:", error);
+//       }
+//     }
+
+//     // ============================================================
+//     // 23.3 COMPANY NAME
+//     // ============================================================
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(9);
+
+//     doc.text(companyName, leftMargin + 2, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 23.4 COMPANY ADDRESS 1
+//     // ============================================================
+
+//     doc.setFont("helvetica", "normal");
+//     doc.setFontSize(5.5);
+
+//     const companyAddressLines = doc.splitTextToSize(companyAddress1, 52);
+
+//     doc.text(companyAddressLines, leftMargin + 2, y);
+
+//     y += companyAddressLines.length * 3.2;
+
+//     // ============================================================
+//     // 23.5 COMPANY ADDRESS 2
+//     // ============================================================
+
+//     doc.text(companyAddress2, leftMargin + 2, y);
+
+//     y += 3.2;
+
+//     // ============================================================
+//     // 23.6 COMPANY PHONE
+//     // ============================================================
+
+//     doc.text(`Phone no.: ${companyPhone}`, leftMargin + 2, y);
+
+//     y += 3.2;
+
+//     // ============================================================
+//     // 23.7 COMPANY STATE
+//     // ============================================================
+
+//     doc.text(`State: ${companyState}`, leftMargin + 2, y);
+
+//     // ============================================================
+//     // 24. TAX INVOICE
+//     // ============================================================
+
+//     y += 6;
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(9);
+
+//     doc.text("Tax Invoice", pageWidth / 2, y, {
+//       align: "center",
+//     });
+
+//     y += 5;
+
+//     // ============================================================
+//     // 25. HEADER LINE
+//     // ============================================================
+
+//     doc.setLineWidth(0.3);
+
+//     doc.line(leftMargin + 2, y, pageWidth - rightMargin - 2, y);
+
+//     y += 5;
+
+//     // ============================================================
+//     // 26. BILL TO / INVOICE DETAILS
+//     // ============================================================
+
+//     const leftX = 6;
+//     const rightX = 43;
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(7);
+
+//     doc.text("Bill To", leftX, y);
+
+//     doc.text("Invoice Details", rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 27. CUSTOMER NAME
+//     // ============================================================
+
+//     doc.setFont("helvetica", "bold");
+//     doc.setFontSize(6.5);
+
+//     const customerNameLines = doc.splitTextToSize(
+//       String(customerName || "-"),
+//       34,
+//     );
+
+//     doc.text(customerNameLines, leftX, y);
+
+//     // ============================================================
+//     // 28. INVOICE NUMBER
+//     // ============================================================
+
+//     doc.setFont("helvetica", "normal");
+//     doc.setFontSize(6);
+
+//     doc.text(`Invoice No.: ${invoiceNo || "-"}`, rightX, y);
+
+//     y += Math.max(customerNameLines.length * 3.2, 4);
+
+//     // ============================================================
+//     // 29. CUSTOMER ADDRESS 1
+//     // ============================================================
+
+//     if (customerAddress1) {
+//       const address1Lines = doc.splitTextToSize(String(customerAddress1), 34);
+
+//       doc.text(address1Lines, leftX, y);
+
+//       y += address1Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 30. DATE
+//     // ============================================================
+
+//     doc.text(`Date: ${invoiceDateText}`, rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 31. CUSTOMER ADDRESS 2
+//     // ============================================================
+
+//     if (customerAddress2) {
+//       const address2Lines = doc.splitTextToSize(String(customerAddress2), 34);
+
+//       doc.text(address2Lines, leftX, y);
+
+//       y += address2Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 32. TIME
+//     // ============================================================
+
+//     doc.text(`Time: ${invoiceTime}`, rightX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 33. CUSTOMER ADDRESS 3
+//     // ============================================================
+
+//     if (customerAddress3) {
+//       const address3Lines = doc.splitTextToSize(String(customerAddress3), 34);
+
+//       doc.text(address3Lines, leftX, y);
+
+//       y += address3Lines.length * 3.2;
+//     }
+
+//     // ============================================================
+//     // 34. CONTACT NUMBER
+//     // ============================================================
+
+//     doc.text(`Contact No.: ${contactNo}`, leftX, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 36. LINE BEFORE TABLE
+//     // ============================================================
+
+//     y += 2;
+
+//     doc.line(leftMargin + 2, y, pageWidth - rightMargin - 2, y);
+
+//     y += 4;
+
+//     // ============================================================
+//     // 37. INVOICE DETAILS
+//     // ============================================================
+
+//     const invoiceDetails = Array.isArray(printData?.invdetail)
+//       ? printData.invdetail
+//       : [];
+
+//     // ============================================================
+//     // 38. PRODUCT TABLE DATA
+//     // ============================================================
+
+//     const tableData = invoiceDetails.map((item, index) => {
+//       const matchedProduct = Array.isArray(productOptions)
+//         ? productOptions.find(
+//             (option) => String(option?.value) === String(item?.ProductId),
+//           )
+//         : null;
+
+//       const productName =
+//         item?.ProductName ||
+//         item?.productName ||
+//         matchedProduct?.label ||
+//         "Unknown";
+
+//       const hsnSac =
+//         item?.HSNSAC ||
+//         item?.HsnSac ||
+//         item?.HSNCode ||
+//         item?.HsnCode ||
+//         item?.HSN ||
+//         item?.SAC ||
+//         item?.SACCode ||
+//         "";
+
+//       const quantity = Number(item?.Quantity || 0);
+
+//       const rate = Number(item?.Rate || 0);
+
+//       const amount = Number(item?.Amount || 0);
+
+//       return [
+//         index + 1,
+//         productName,
+//         hsnSac,
+//         quantity.toFixed(2),
+//         rate.toFixed(2),
+//         amount.toFixed(2),
+//       ];
+//     });
+
+//     // ============================================================
+//     // 39. PRODUCT TABLE
+//     // ============================================================
+
+//     autoTable(doc, {
+//       head: [["#", "Item", "HSN", "Qty", "Rate", "Amount"]],
+
+//       body:
+//         tableData.length > 0 ? tableData : [["", "No items", "", "", "", ""]],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.2,
+//         cellPadding: 1,
+//         lineWidth: 0.2,
+//         textColor: 0,
+//         valign: "middle",
+//         overflow: "linebreak",
+//       },
+
+//       headStyles: {
+//         font: "helvetica",
+//         fontSize: 5.2,
+//         fontStyle: "bold",
+//         fillColor: [240, 240, 240],
+//         textColor: 0,
+//         halign: "center",
+//         valign: "middle",
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 5,
+//           halign: "center",
+//         },
+
+//         1: {
+//           cellWidth: 25,
+//           halign: "left",
+//         },
+
+//         2: {
+//           cellWidth: 10,
+//           halign: "center",
+//         },
+
+//         3: {
+//           cellWidth: 8,
+//           halign: "right",
+//         },
+
+//         4: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+
+//         5: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+//       },
+//     });
+
+//     // ============================================================
+//     // 40. TOTAL QUANTITY
+//     // ============================================================
+
+//     const totalQuantity = invoiceDetails.reduce(
+//       (sum, item) => sum + Number(item?.Quantity || 0),
+//       0,
+//     );
+
+//     // ============================================================
+//     // 41. SUB TOTAL
+//     // ============================================================
+
+//     const subTotal = Number(printData?.SubTotal || 0);
+
+//     // ============================================================
+//     // 42. GRAND TOTAL
+//     // ============================================================
+
+//     const grandTotal = Number(printData?.Total || 0);
+
+//     const receivedAmount = Number(printData?.ReceivedAmount || 0);
+
+//     // Previous customer outstanding
+//     const previousDue = Number(printData?.PreviousBalanceDue || 0);
+
+//     // Current bill due
+//     const currentBillDue = Math.max(grandTotal - receivedAmount, 0);
+
+//     // Total customer outstanding
+//     const totalOutstanding = previousDue + currentBillDue;
+
+//     // ============================================================
+//     // 44. BALANCE
+//     // ============================================================
+
+//     const balance = Math.max(grandTotal - receivedAmount, 0);
+
+//     // ============================================================
+//     // 45. TOTAL ROW
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 4;
+
+//     autoTable(doc, {
+//       body: [
+//         [
+//           "",
+//           "Total",
+//           "",
+//           totalQuantity.toFixed(2),
+//           "",
+//           `Rs. ${grandTotal.toFixed(2)}`,
+//         ],
+//       ],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.3,
+//         cellPadding: 1,
+//         fontStyle: "bold",
+//         lineWidth: 0.2,
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 5,
+//         },
+
+//         1: {
+//           cellWidth: 25,
+//         },
+
+//         2: {
+//           cellWidth: 10,
+//         },
+
+//         3: {
+//           cellWidth: 8,
+//           halign: "right",
+//         },
+
+//         4: {
+//           cellWidth: 10,
+//         },
+
+//         5: {
+//           cellWidth: 10,
+//           halign: "right",
+//         },
+//       },
+//     });
+
+//     // ============================================================
+//     // 46. NUMBER TO WORDS
+//     // ============================================================
+
+//     const numberToWords = (num) => {
+//       const ones = [
+//         "",
+//         "One",
+//         "Two",
+//         "Three",
+//         "Four",
+//         "Five",
+//         "Six",
+//         "Seven",
+//         "Eight",
+//         "Nine",
+//         "Ten",
+//         "Eleven",
+//         "Twelve",
+//         "Thirteen",
+//         "Fourteen",
+//         "Fifteen",
+//         "Sixteen",
+//         "Seventeen",
+//         "Eighteen",
+//         "Nineteen",
+//       ];
+
+//       const tens = [
+//         "",
+//         "",
+//         "Twenty",
+//         "Thirty",
+//         "Forty",
+//         "Fifty",
+//         "Sixty",
+//         "Seventy",
+//         "Eighty",
+//         "Ninety",
+//       ];
+
+//       const convertBelowThousand = (number) => {
+//         let result = "";
+
+//         if (number >= 100) {
+//           result += ones[Math.floor(number / 100)] + " Hundred ";
+
+//           number %= 100;
+//         }
+
+//         if (number >= 20) {
+//           result += tens[Math.floor(number / 10)] + " ";
+
+//           number %= 10;
+//         }
+
+//         if (number > 0) {
+//           result += ones[number] + " ";
+//         }
+
+//         return result.trim();
+//       };
+
+//       if (num === 0) {
+//         return "Zero";
+//       }
+
+//       num = Math.floor(num);
+
+//       let result = "";
+
+//       if (num >= 10000000) {
+//         result += convertBelowThousand(Math.floor(num / 10000000)) + " Crore ";
+
+//         num %= 10000000;
+//       }
+
+//       if (num >= 100000) {
+//         result += convertBelowThousand(Math.floor(num / 100000)) + " Lakh ";
+
+//         num %= 100000;
+//       }
+
+//       if (num >= 1000) {
+//         result += convertBelowThousand(Math.floor(num / 1000)) + " Thousand ";
+
+//         num %= 1000;
+//       }
+
+//       if (num > 0) {
+//         result += convertBelowThousand(num);
+//       }
+
+//       return result.trim();
+//     };
+
+//     // ============================================================
+//     // 47. AMOUNT IN WORDS
+//     // ============================================================
+
+//     const amountInWords = `${numberToWords(grandTotal)} Rupees only`;
+
+//     // ============================================================
+//     // 48. SUMMARY TABLE
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 4;
+
+//     autoTable(doc, {
+//       body: [
+//         [
+//           {
+//             content: "Invoice Amount In Words",
+//             styles: {
+//               fontStyle: "bold",
+//             },
+//           },
+
+//           {
+//             content: "Sub Total",
+//             styles: {
+//               fontStyle: "bold",
+//             },
+//           },
+
+//           `Rs. ${subTotal.toFixed(2)}`,
+//         ],
+
+//         [amountInWords, "Total", `Rs. ${grandTotal.toFixed(2)}`],
+
+//         ["", "Received", `Rs. ${receivedAmount.toFixed(2)}`],
+
+//         ["", "Previous Due", `Rs. ${previousDue.toFixed(2)}`],
+
+//         ["", "Current Bill Due", `Rs. ${currentBillDue.toFixed(2)}`],
+
+//         ["", "Total Outstanding", `Rs. ${totalOutstanding.toFixed(2)}`],
+//       ],
+
+//       startY: y,
+
+//       margin: {
+//         left: 6,
+//         right: 6,
+//       },
+
+//       tableWidth: 68,
+
+//       theme: "grid",
+
+//       styles: {
+//         font: "helvetica",
+//         fontSize: 5.3,
+//         cellPadding: 1.5,
+//         lineWidth: 0.2,
+//         valign: "middle",
+//         overflow: "linebreak",
+//       },
+
+//       columnStyles: {
+//         0: {
+//           cellWidth: 39,
+//         },
+
+//         1: {
+//           cellWidth: 14,
+//           fontStyle: "bold",
+//         },
+
+//         2: {
+//           cellWidth: 15,
+//           halign: "right",
+//         },
+//       },
+//     });
+//     // ============================================================
+//     // 49. TERMS
+//     // ============================================================
+
+//     y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 5 : y + 5;
+
+//     doc.setFont("helvetica", "bold");
+
+//     doc.setFontSize(6.5);
+
+//     doc.text("Terms And Conditions", 6, y);
+
+//     y += 3.5;
+
+//     doc.setFont("helvetica", "normal");
+
+//     doc.setFontSize(5.5);
+
+//     doc.text("Thanks for doing business with us!", 6, y);
+
+//     y += 7;
+
+//     // ============================================================
+//     // 50. AUTHORIZED SIGNATORY
+//     // ============================================================
+
+//     doc.setFontSize(6);
+
+//     doc.text("For: AMRUT MILK PRODUCTS 2", pageWidth / 2, y, {
+//       align: "center",
+//     });
+
+//     y += 9;
+
+//     doc.line(pageWidth / 2 - 15, y, pageWidth / 2 + 15, y);
+
+//     y += 3.5;
+
+//     doc.setFont("helvetica", "bold");
+
+//     doc.text("Authorized Signatory", pageWidth / 2, y, {
+//       align: "center",
+//     });
+//     // ============================================================
+//     // 51. PRINT + DOWNLOAD PDF - 80MM ROLL
+//     // ============================================================
+
+//     try {
+//       // ----------------------------------------------------------
+//       // CREATE PDF BLOB
+//       // ----------------------------------------------------------
+
+//       const pdfBlob = doc.output("blob");
+
+//       if (!pdfBlob) {
+//         throw new Error("PDF could not be created.");
+//       }
+
+//       // ----------------------------------------------------------
+//       // CREATE TEMPORARY PDF URL
+//       // ----------------------------------------------------------
+
+//       const pdfBlobUrl = URL.createObjectURL(pdfBlob);
+
+//       console.log("========================================");
+//       console.log("80MM ROLL PDF CREATED");
+//       console.log("PDF URL:", pdfBlobUrl);
+//       console.log("========================================");
+
+//       // ----------------------------------------------------------
+//       // PDF FILE NAME
+//       // ----------------------------------------------------------
+
+//       const safeInvoiceNo = String(invoiceNo || "Invoice").replace(
+//         /[^a-zA-Z0-9-_]/g,
+//         "_",
+//       );
+
+//       const fileName = `Sales-Caterers-${safeInvoiceNo}.pdf`;
+
+//       // ----------------------------------------------------------
+//       // USE ALREADY OPENED PRINT WINDOW
+//       // ----------------------------------------------------------
+
+//       let targetWindow = printWindow;
+
+//       // ----------------------------------------------------------
+//       // IF WINDOW IS NOT AVAILABLE
+//       // ----------------------------------------------------------
+
+//       if (!targetWindow || targetWindow.closed) {
+//         targetWindow = window.open("", "_blank");
+//       }
+
+//       // ----------------------------------------------------------
+//       // POPUP BLOCKED
+//       // ----------------------------------------------------------
+
+//       if (!targetWindow) {
+//         URL.revokeObjectURL(pdfBlobUrl);
+
+//         toast.error("Please allow popups for printing.");
+
+//         return;
+//       }
+
+//       // ----------------------------------------------------------
+//       // CREATE PDF VIEWER PAGE
+//       // ----------------------------------------------------------
+
+//       targetWindow.document.open();
+
+//       targetWindow.document.write(`
+//     <!DOCTYPE html>
+
+//     <html>
+
+//       <head>
+
+//         <title>${fileName}</title>
+
+//         <style>
+
+//           * {
+//             box-sizing: border-box;
+//           }
+
+//           html,
+//           body {
+//             width: 100%;
+//             height: 100%;
+//             margin: 0;
+//             padding: 0;
+//           }
+
+//           body {
+//             background: #525659;
+//             font-family: Arial, sans-serif;
+//           }
+
+//           .toolbar {
+//             position: fixed;
+//             top: 0;
+//             left: 0;
+//             right: 0;
+
+//             height: 55px;
+
+//             background: #ffffff;
+
+//             display: flex;
+//             align-items: center;
+//             justify-content: flex-end;
+
+//             gap: 10px;
+
+//             padding: 8px 15px;
+
+//             z-index: 9999;
+
+//             box-shadow:
+//               0 2px 5px
+//               rgba(0, 0, 0, 0.3);
+//           }
+
+//           .download-btn {
+//             background: #087f23;
+//             color: white;
+
+//             text-decoration: none;
+
+//             padding: 10px 18px;
+
+//             border-radius: 5px;
+
+//             font-size: 14px;
+//             font-weight: bold;
+//           }
+
+//           .download-btn:hover {
+//             background: #05651b;
+//           }
+
+//           .print-btn {
+//             background: #1976d2;
+//             color: white;
+
+//             border: none;
+
+//             padding: 10px 18px;
+
+//             border-radius: 5px;
+
+//             font-size: 14px;
+//             font-weight: bold;
+
+//             cursor: pointer;
+//           }
+
+//           .print-btn:hover {
+//             opacity: 0.9;
+//           }
+
+//           .pdf-container {
+//             position: absolute;
+
+//             top: 55px;
+//             left: 0;
+//             right: 0;
+//             bottom: 0;
+//           }
+
+//           iframe {
+//             width: 100%;
+//             height: 100%;
+
+//             border: none;
+
+//             background: white;
+//           }
+
+//         </style>
+
+//       </head>
+
+//       <body>
+
+//         <div class="toolbar">
+
+//           <a
+//             id="downloadPdf"
+//             class="download-btn"
+//             href="${pdfBlobUrl}"
+//             download="${fileName}"
+//           >
+//             DOWNLOAD PDF
+//           </a>
+
+//           <button
+//             class="print-btn"
+//             onclick="printPDF()"
+//           >
+//             PRINT
+//           </button>
+
+//         </div>
+
+//         <div class="pdf-container">
+
+//           <iframe
+//             id="pdfFrame"
+//             src="${pdfBlobUrl}"
+//           ></iframe>
+
+//         </div>
+
+//         <script>
+
+//           function printPDF() {
+
+//             try {
+
+//               const iframe =
+//                 document.getElementById(
+//                   "pdfFrame"
+//                 );
+
+//               if (!iframe) {
+//                 alert("PDF is not ready.");
+//                 return;
+//               }
+
+//               iframe.contentWindow.focus();
+
+//               iframe.contentWindow.print();
+
+//             } catch (error) {
+
+//               console.error(
+//                 "PDF print error:",
+//                 error
+//               );
+
+//               alert(
+//                 "Unable to print PDF."
+//               );
+
+//             }
+
+//           }
+
+//         </script>
+
+//       </body>
+
+//     </html>
+//   `);
+
+//       targetWindow.document.close();
+
+//       targetWindow.focus();
+
+//       console.log("PDF opened successfully.");
+
+//       // ----------------------------------------------------------
+//       // KEEP BLOB URL ALIVE FOR PDF VIEWER
+//       // ----------------------------------------------------------
+
+//       setTimeout(
+//         () => {
+//           try {
+//             URL.revokeObjectURL(pdfBlobUrl);
+
+//             console.log("PDF Blob URL released successfully.");
+//           } catch (error) {
+//             console.warn("Unable to release PDF Blob URL:", error);
+//           }
+//         },
+//         5 * 60 * 1000,
+//       );
+//     } catch (error) {
+//       // ==========================================================
+//       // PDF GENERATION ERROR
+//       // ==========================================================
+
+//       console.error("Error generating invoice PDF:", error);
+
+//       // ----------------------------------------------------------
+//       // CLOSE PRINT WINDOW
+//       // ----------------------------------------------------------
+
+//       if (printWindow && !printWindow.closed) {
+//         try {
+//           printWindow.close();
+//         } catch (closeError) {
+//           console.warn("Unable to close print window:", closeError);
+//         }
+//       }
+
+//       // ----------------------------------------------------------
+//       // SHOW ERROR
+//       // ----------------------------------------------------------
+
+//       toast.error("Unable to generate invoice PDF.");
+//     }
+//   };
+
+//   return (
+//     <Box>
+//       <Box textAlign={"center"}>
+//         <Typography color="var(--complementary-color)" variant="h4">
+//           <b>Sales Entry - Caterers</b>
+//         </Typography>
+//       </Box>
+//       <Box
+//         sx={{
+//           //  background: 'rgb(236, 253, 230)',
+//           p: 5,
+//           height: "auto",
+//         }}
+//       >
+//         <Box sx={{ display: "flex", gap: 3 }}>
+//           <Button
+//             sx={{ background: "var(--complementary-color)" }}
+//             variant="contained"
+//             onClick={handleNewClick}
+//           >
+//             Create Sales Entry - Caterers
+//           </Button>
+//         </Box>
+//         {/* =========================
+//     INVOICE FILTERS
+// ========================= */}
+//         <Box
+//           sx={{
+//             display: "flex",
+//             gap: 2,
+//             alignItems: "center",
+//             flexWrap: "wrap",
+//             mt: 2,
+//             mb: 2,
+//           }}
+//         >
+//           {/* SEARCH */}
+//           <TextField
+//             size="small"
+//             label="Search"
+//             placeholder="Bill No / Customer / Category"
+//             value={searchText}
+//             onChange={(e) => setSearchText(e.target.value)}
+//             sx={{ minWidth: 250 }}
+//           />
+
+//           {/* FROM DATE */}
+//           <TextField
+//             size="small"
+//             type="date"
+//             label="From Date"
+//             value={fromDate}
+//             onChange={(e) => setFromDate(e.target.value)}
+//             InputLabelProps={{
+//               shrink: true,
+//             }}
+//             sx={{ minWidth: 160 }}
+//           />
+
+//           {/* TO DATE */}
+//           <TextField
+//             size="small"
+//             type="date"
+//             label="To Date"
+//             value={toDate}
+//             onChange={(e) => setToDate(e.target.value)}
+//             InputLabelProps={{
+//               shrink: true,
+//             }}
+//             sx={{ minWidth: 160 }}
+//           />
+
+//           {/* CATEGORY */}
+//           <TextField
+//             select
+//             size="small"
+//             label="Category"
+//             value={categoryFilter}
+//             onChange={(e) => setCategoryFilter(e.target.value)}
+//             sx={{ minWidth: 160 }}
+//           >
+//            <MenuItem value="">All</MenuItem>
+// <MenuItem value="C">Caterers</MenuItem>
+//           </TextField>
+
+//           {/* CLEAR */}
+//           <Button
+//             variant="outlined"
+//             size="small"
+//             onClick={() => {
+//               setSearchText("");
+//               setFromDate("");
+//               setToDate("");
+//               setCategoryFilter("");
+//             }}
+//           >
+//             Clear
+//           </Button>
+//         </Box>
+//         <MaterialReactTable
+//           columns={columns}
+//           data={filteredInvoiceData}
+//           enablePagination={false}
+//           initialState={{
+//             sorting: [{ id: "Id", desc: true }],
+//           }}
+//           muiTableHeadCellProps={{
+//             sx: {
+//               backgroundColor: "#E9ECEF",
+//               color: "black",
+//               fontSize: "16px",
+//             },
+//           }}
+//           renderBottomToolbarCustomActions={() => (
+//             <Box
+//               mt={2}
+//               alignItems="center"
+//               display="flex"
+//               justifyContent="flex-end"
+//               width="100%"
+//             >
+//               <FirstPageIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo(1)}
+//               />
+//               <KeyboardArrowLeftIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() =>
+//                   setPageNo((prev) => Math.max(Number(prev) - 1, 1))
+//                 }
+//               />
+//               <Box ml={1}> Page No </Box>
+//               <TextField
+//                 sx={{
+//                   width: "4.5%",
+//                   ml: 1,
+//                   "@media (max-width: 768px)": {
+//                     width: "10%",
+//                   },
+//                 }}
+//                 value={pageNo}
+//                 onChange={(e) => setPageNo(e.target.value)}
+//                 size="small"
+//               />
+//               <KeyboardArrowRightIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo((prev) => Number(prev) + 1)}
+//               />
+//               <LastPageIcon
+//                 sx={{ cursor: "pointer" }}
+//                 onClick={() => setPageNo(totalPages)}
+//               />
+//               <Box ml={1}>Total Pages: {totalPages}</Box>
+//             </Box>
+//           )}
+//         />
+//         {/* ///for preview///////// */}.
+//         <Dialog
+//           open={previewOpen}
+//           onClose={() => setPreviewOpen(false)}
+//           maxWidth="xlg"
+//           fullWidth
+//         >
+//           <DialogTitle sx={{ textAlign: "center" }}>
+//             <Box
+//               display="flex"
+//               alignItems="center"
+//               justifyContent="center"
+//               gap={1}
+//             >
+//               {/* <img src={logonew} alt="Logo" style={{ borderRadius: 50, width: "70px", height: 70 }} /> */}
+//               <Typography
+//                 variant="h5"
+//                 sx={{
+//                   fontWeight: "bold",
+//                   color: "#0B5E20",
+//                 }}
+//               >
+//                 Welcome To Amrut Dairy
+//               </Typography>
+//             </Box>
+//             <Typography sx={{ mt: 1 }}>
+//               Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park
+//               Pitali, Ganpati Road, Kolhapur, Maharashtra 416003
+//             </Typography>
+
+//             <Typography
+//               variant="h6"
+//               component="div"
+//               sx={{ fontWeight: "bold", mt: 1 }}
+//             >
+//               Sales Preview
+//             </Typography>
+//           </DialogTitle>
+//           <DialogContent dividers>
+//             <Box>
+//               {previewData ? (
+//                 <Box>
+//                   <Box
+//                     display={"flex"}
+//                     justifyContent={"space-between"}
+//                     gap={2}
+//                   >
+//                     <Typography>
+//                       <strong>Invoice No:</strong> {previewData.InvoiceNo}
+//                     </Typography>
+//                     <Typography>
+//                       <strong>Invoice Date:</strong>{" "}
+//                       {previewData?.InvoiceDate
+//                         ? new Date(
+//                             previewData.InvoiceDate?.date ||
+//                               previewData.InvoiceDate,
+//                           ).toLocaleDateString()
+//                         : "-"}
+//                     </Typography>
+//                   </Box>
+
+//                   <Box
+//                     display={"flex"}
+//                     justifyContent={"space-between"}
+//                     gap={2}
+//                     mt={2}
+//                   >
+//                     <Box>
+//                       <Typography>
+//                         <strong>Order No:</strong> {previewData.OrderNo}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Order Date:</strong>{" "}
+//                         {previewData?.OrderDate?.date
+//                           ? new Date(
+//                               previewData.OrderDate.date,
+//                             ).toLocaleDateString()
+//                           : "-"}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Customer Name:</strong>{" "}
+//                         {previewData.accountDetails.AccountName}
+//                       </Typography>
+//                     </Box>
+//                     <Box>
+//                       <Typography>
+//                         <strong>Contact No:</strong> {previewData.ContactNo}
+//                       </Typography>
+//                     </Box>
+//                   </Box>
+//                   <Divider sx={{ mt: 2 }} />
+
+//                   {/* ////////// */}
+
+//                   <Grid container spacing={4}>
+//                     <Grid item xs={12} md={8}>
+//                       <Typography
+//                         variant="h6"
+//                         fontWeight="bold"
+//                         gutterBottom
+//                         mt={2}
+//                       >
+//                         Sales Details
+//                       </Typography>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={2}
+//                         sx={{ width: "100%", mt: 2 }}
+//                       >
+//                         <Table size="small">
+//                           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Material</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Quantity (Lit)</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Rate</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Discount</strong>
+//                               </TableCell>
+
+//                               <TableCell>
+//                                 <strong>Amount (Rs)</strong>
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableHead>
+
+//                           <TableBody>
+//                             {previewData?.invdetail?.map((item, index) => {
+//                               const materialName =
+//                                 productOptions.find(
+//                                   (opt) =>
+//                                     String(opt.value) ===
+//                                     String(item.ProductId),
+//                                 )?.label ||
+//                                 item.ProductName ||
+//                                 "Unknown";
+
+//                               return (
+//                                 <TableRow key={item.Id || index}>
+//                                   <TableCell>{materialName}</TableCell>
+
+//                                   <TableCell>{item.Quantity || 0}</TableCell>
+
+//                                   <TableCell>{item.Rate || 0}</TableCell>
+
+//                                   <TableCell>{item.DiscountAmt || 0}</TableCell>
+
+//                                   <TableCell>{item.Amount || 0}</TableCell>
+//                                 </TableRow>
+//                               );
+//                             })}
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={1}
+//                         sx={{ width: "100%", mt: 8 }}
+//                       >
+//                         <Table size="small">
+//                           <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Payment Mode</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 <strong>Transport Charge</strong>
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableHead>
+//                           <TableBody>
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Payment Mode</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 {previewData?.PaymentMode || "-"}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Transport</strong>
+//                               </TableCell>
+//                               <TableCell>
+//                                 ₹{" "}
+//                                 {Number(previewData?.Transport || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+//                     </Grid>
+
+//                     {/* Summary Table */}
+//                     <Grid item xs={12} md={4}>
+//                       <Typography
+//                         variant="h6"
+//                         fontWeight="bold"
+//                         gutterBottom
+//                         mt={2}
+//                       >
+//                         Amount Summary
+//                       </Typography>
+
+//                       <TableContainer
+//                         component={Paper}
+//                         elevation={2}
+//                         sx={{
+//                           mt: 2,
+//                           borderRadius: 2,
+//                         }}
+//                       >
+//                         <Table size="small">
+//                           <TableBody>
+//                             {/* Subtotal */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Subtotal</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.SubTotal || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Transport */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Transport</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.Transport || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Grand Total */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Grand Total</strong>
+//                               </TableCell>
+
+//                               <TableCell
+//                                 align="right"
+//                                 sx={{
+//                                   fontWeight: "bold",
+//                                   color: "#1976d2",
+//                                 }}
+//                               >
+//                                 ₹ {Number(previewData?.Total || 0).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Received Amount */}
+//                             {/* Received Amount */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong>Received Amount</strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.ReceivedAmount || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Cumulative Current Bill Due */}
+//                             {/* ===================================================== */}
+//                             {/* PREVIOUS CUSTOMER DUE */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#e65100" }}>
+//                                   Previous Customer Due
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.PreviousBalanceDue || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* ===================================================== */}
+//                             {/* CURRENT BILL DUE */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#d32f2f" }}>
+//                                   Current Bill Due
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(
+//                                   previewData?.CurrentInvoiceDue || 0,
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* ===================================================== */}
+//                             {/* TOTAL CUSTOMER OUTSTANDING */}
+//                             {/* ===================================================== */}
+
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong style={{ color: "#b71c1c" }}>
+//                                   Total Customer Outstanding
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell align="right">
+//                                 ₹{" "}
+//                                 {Number(previewData?.BalanceDue || 0).toFixed(
+//                                   2,
+//                                 )}
+//                               </TableCell>
+//                             </TableRow>
+
+//                             {/* Refund / Current Bill Due */}
+//                             <TableRow>
+//                               <TableCell>
+//                                 <strong
+//                                   style={{
+//                                     color:
+//                                       Number(previewData?.ReceivedAmount || 0) >
+//                                       Number(previewData?.Total || 0)
+//                                         ? "green"
+//                                         : "red",
+//                                   }}
+//                                 >
+//                                   {Number(previewData?.ReceivedAmount || 0) >
+//                                   Number(previewData?.Total || 0)
+//                                     ? "Refund"
+//                                     : "Current Bill Due"}
+//                                 </strong>
+//                               </TableCell>
+
+//                               <TableCell
+//                                 align="right"
+//                                 sx={{
+//                                   fontWeight: "bold",
+//                                   color:
+//                                     Number(previewData?.ReceivedAmount || 0) >
+//                                     Number(previewData?.Total || 0)
+//                                       ? "green"
+//                                       : "red",
+//                                 }}
+//                               >
+//                                 ₹{" "}
+//                                 {Math.abs(
+//                                   Number(previewData?.ReceivedAmount || 0) -
+//                                     Number(previewData?.Total || 0),
+//                                 ).toFixed(2)}
+//                               </TableCell>
+//                             </TableRow>
+//                           </TableBody>
+//                         </Table>
+//                       </TableContainer>
+//                     </Grid>
+//                   </Grid>
+//                 </Box>
+//               ) : (
+//                 <Typography>No data to preview</Typography>
+//               )}
+//             </Box>
+//           </DialogContent>
+//           <DialogActions>
+//             <Button onClick={generatePDF} color="primary">
+//               <PrintIcon sx={{ fontSize: 35 }} />
+//             </Button>
+//             <Button
+//               variant="contained"
+//               onClick={() => setPreviewOpen(false)}
+//               color="primary"
+//             >
+//               Close
+//             </Button>
+//           </DialogActions>
+//         </Dialog>
+//         <Drawer
+//           anchor="right"
+//           open={isDrawerOpen}
+//           onClose={handleDrawerClose}
+//           ModalProps={{
+//             keepMounted: true,
+//           }}
+//           PaperProps={{
+//             sx: {
+//               width: "100vw",
+//               maxWidth: "100vw",
+//               height: "100vh",
+//               borderRadius: 0,
+//               zIndex: 1000,
+
+//               display: "flex",
+//               flexDirection: "column",
+
+//               overflow: "hidden",
+
+//               "@media (max-width: 900px)": {
+//                 width: "100%",
+//                 maxWidth: "100%",
+//               },
+//             },
+//           }}
+//         >
+//           {/* ===================================================== */}
+//           {/* DRAWER HEADER */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               px: 2,
+//               py: 1.5,
+//               minHeight: 70,
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "space-between",
+//               background: "rgb(236, 253, 230)",
+//               borderBottom: "1px solid #ddd",
+//               flexShrink: 0,
+//             }}
+//           >
+//             {/* TITLE */}
+
+//             <Typography
+//               fontWeight="bold"
+//               variant="h6"
+//               sx={{
+//                 fontSize: {
+//                   xs: "17px",
+//                   sm: "20px",
+//                 },
+//               }}
+//             >
+//               {isEditing
+//                 ? "Update Sales Entry -Caterers"
+//                 : "Create Sales Entry -Caterers"}
+//             </Typography>
+
+//             {/* TOTAL / REFUND / CLOSE */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "center",
+//                 gap: {
+//                   xs: 1,
+//                   sm: 3,
+//                 },
+//               }}
+//             >
+//               {/* TOTAL */}
+
+//               <Box
+//                 sx={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 0.5,
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "12px",
+//                       sm: "16px",
+//                     },
+//                     fontWeight: 700,
+//                     color: "#555",
+//                   }}
+//                 >
+//                   TOTAL :
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "20px",
+//                       sm: "30px",
+//                     },
+//                     fontWeight: 900,
+//                     color: "#1976d2",
+//                     lineHeight: 1,
+//                   }}
+//                 >
+//                   ₹ {Number(total || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* REFUND */}
+
+//               <Box
+//                 sx={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 0.5,
+//                   whiteSpace: "nowrap",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "12px",
+//                       sm: "16px",
+//                     },
+//                     fontWeight: 700,
+//                     color: "#555",
+//                   }}
+//                 >
+//                   REFUND :
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: {
+//                       xs: "20px",
+//                       sm: "30px",
+//                     },
+//                     fontWeight: 900,
+//                     color: "#087f23",
+//                     lineHeight: 1,
+//                   }}
+//                 >
+//                   ₹ {Number(refund || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* CLOSE */}
+
+//               <CloseIcon
+//                 sx={{
+//                   cursor: "pointer",
+//                   fontSize: 28,
+//                 }}
+//                 onClick={handleDrawerCloseAndGoSalesEntry}
+//               />
+//             </Box>
+//           </Box>
+
+//           {/* ===================================================== */}
+//           {/* DRAWER CONTENT */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               flex: 1,
+//               minHeight: 0,
+
+//               overflowY: "auto",
+//               overflowX: "hidden",
+
+//               scrollbarWidth: "none",
+
+//               "&::-webkit-scrollbar": {
+//                 display: "none",
+//               },
+
+//               p: {
+//                 xs: 1,
+//                 sm: 1.5,
+//               },
+//             }}
+//           >
+//             {/* ===================================================== */}
+//             {/* INVOICE / DEVICE / DATE */}
+//             {/* ===================================================== */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "flex-start",
+//                 gap: 2,
+//                 mb: 1.5,
+
+//                 "@media (max-width: 900px)": {
+//                   flexDirection: "column",
+//                 },
+//               }}
+//             >
+//               {/* INVOICE NO */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Invoice No</Typography>
+
+//                 <TextField
+//                   variant="standard"
+//                   sx={{
+//                     mt: 0.5,
+//                     "& .MuiInput-underline:after": {
+//                       borderBottomWidth: 1.5,
+//                       borderBottomColor: "#44ad74",
+//                     },
+//                   }}
+//                   focused
+//                   value={invoiceNo}
+//                   size="small"
+//                   margin="none"
+//                   placeholder="Invoice No Auto Generated"
+//                   fullWidth
+//                   InputProps={{
+//                     readOnly: true,
+//                   }}
+//                 />
+//               </Box>
+
+//               {/* DEVICE */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Device</Typography>
+
+//                 <TextField
+//                   variant="standard"
+//                   value={device}
+//                   fullWidth
+//                   size="small"
+//                   InputProps={{
+//                     readOnly: true,
+//                   }}
+//                 />
+//               </Box>
+
+//               {/* INVOICE DATE */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Invoice Date</Typography>
+
+//                 <LocalizationProvider dateAdapter={AdapterDateFns}>
+//                   <DatePicker
+//                     value={invoiceDate ? new Date(invoiceDate) : null}
+//                     format="dd-MM-yyyy"
+//                     onChange={(newValue) => {
+//                       setInvoiceDate(newValue);
+
+//                       setErrors({
+//                         ...errors,
+//                         invoiceDate: undefined,
+//                       });
+//                     }}
+//                     slotProps={{
+//                       textField: {
+//                         size: "small",
+//                         fullWidth: true,
+//                         error: !!errors.invoiceDate,
+//                         helperText: errors.invoiceDate,
+//                       },
+//                     }}
+//                   />
+//                 </LocalizationProvider>
+//               </Box>
+//             </Box>
+
+//             {/* ===================================================== */}
+//             {/* CUSTOMER / CONTACT */}
+//             {/* ===================================================== */}
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "flex-start",
+//                 gap: 2,
+//                 mb: 1.5,
+
+//                 "@media (max-width: 900px)": {
+//                   flexDirection: "column",
+//                 },
+//               }}
+//             >
+//               {/* CUSTOMER */}
+
+//               <Box
+//                 ref={customerDropdownRef}
+//                 flex={1}
+//                 width="100%"
+//                 position="relative"
+//               >
+//                 <Typography variant="body2">Customer</Typography>
+
+//                 <TextField
+//                   fullWidth
+//                   variant="standard"
+//                   size="small"
+//                   value={selectedCustomerName || ""}
+//                   placeholder="Select Customer"
+//                   onClick={() => {
+//                     setShowDropdown(true);
+//                   }}
+//                   onKeyDown={(e) => {
+//                     if (e.key === "Enter") {
+//                       e.preventDefault();
+//                       e.stopPropagation();
+
+//                       setShowDropdown(true);
+
+//                       setTimeout(() => {
+//                         const searchInput = document.querySelector(
+//                           'input[placeholder="Search Customer Name"]',
+//                         );
+
+//                         if (searchInput) {
+//                           searchInput.focus();
+//                           searchInput.select();
+//                         }
+//                       }, 100);
+//                     }
+
+//                     if (e.key === "Escape") {
+//                       e.preventDefault();
+//                       e.stopPropagation();
+
+//                       setShowDropdown(false);
+//                       setText("");
+//                     }
+//                   }}
+//                   error={!!errors.selectedAccount}
+//                   helperText={errors.selectedAccount}
+//                 />
+
+//                 {/* CUSTOMER POPUP */}
+
+//                 {showDropdown && (
+//                   <Paper
+//                     elevation={3}
+//                     sx={{
+//                       position: "absolute",
+//                       top: "100%",
+//                       left: 0,
+//                       width: "100%",
+//                       maxHeight: 250,
+//                       overflowY: "auto",
+//                       zIndex: 9999,
+//                       mt: 1,
+//                       p: 2,
+//                     }}
+//                   >
+//                     {/* SEARCH */}
+
+//                     <TextField
+//                       value={text}
+//                       onChange={(e) => {
+//                         setText(e.target.value);
+//                       }}
+//                       size="small"
+//                       fullWidth
+//                       placeholder="Search Customer Name"
+//                       InputProps={{
+//                         startAdornment: (
+//                           <InputAdornment position="start">
+//                             <SearchIcon />
+//                           </InputAdornment>
+//                         ),
+//                       }}
+//                     />
+
+//                     {/* CREATE CUSTOMER */}
+
+//                     {/* CREATE NEW CUSTOMER */}
+
+//                     <Box display="flex" flexDirection="column" gap={1} mt={1}>
+//                       {/* CUSTOMER NAME + ADD BUTTON */}
+
+//                       <Box display="flex" gap={1}>
+//                         <TextField
+//                           value={accountName}
+//                           onChange={(e) => {
+//                             setAccountName(e.target.value);
+//                           }}
+//                           size="small"
+//                           placeholder="Create New Customer"
+//                           fullWidth
+//                         />
+
+//                         <Button
+//                           sx={{
+//                             background: "var(--primary-color)",
+
+//                             "&:hover": {
+//                               background: "var(--primary-color)",
+//                             },
+//                           }}
+//                           onClick={CreateCustomerMaster}
+//                           variant="contained"
+//                           startIcon={
+//                             <AddCircleIcon
+//                               sx={{
+//                                 fontSize: "20px",
+//                               }}
+//                             />
+//                           }
+//                         >
+//                           ADD
+//                         </Button>
+//                       </Box>
+
+//                       {/* CUSTOMER ADDRESS */}
+
+//                       <TextField
+//                         value={newCustomerAddress}
+//                         onChange={(e) => {
+//                           setNewCustomerAddress(e.target.value);
+//                         }}
+//                         size="small"
+//                         placeholder="Customer Address"
+//                         fullWidth
+//                       />
+//                     </Box>
+//                     {/* CUSTOMER LIST */}
+
+//                     <Box mt={1}>
+//                       {accountOptions.length > 0 ? (
+//                         accountOptions.map((option) => (
+//                           <MenuItem
+//                             key={option.Id}
+//                             onClick={() => {
+//                               const customerId = option.Id?.toString() || "";
+
+//                               const customerName = option.AccountName || "";
+
+//                               const customerAddress =
+//                                 option.Address1 ||
+//                                 option.address1 ||
+//                                 option.Address ||
+//                                 option.address ||
+//                                 option.AddressLine1 ||
+//                                 option.addressLine1 ||
+//                                 option.DealerAddress ||
+//                                 option.dealerAddress ||
+//                                 "";
+
+//                               // Select customer
+//                               // Select customer
+//                               setSelectedAccount(customerId);
+
+//                               // Set customer name
+//                               setSelectedCustomerName(customerName);
+
+//                               // Set customer address
+//                               setSelectedCustomerAddress(customerAddress);
+
+//                               // Existing API logic
+//                               fetchAccounts(customerId);
+
+//                               // Fetch previous outstanding balance
+//                               fetchPreviousBalance(customerId);
+
+//                               // Close popup
+//                               setShowDropdown(false);
+
+//                               // Clear search
+//                               setText("");
+//                             }}
+//                             sx={{
+//                               display: "flex",
+//                               flexDirection: "column",
+//                               alignItems: "flex-start",
+//                               width: "100%",
+//                               py: 1,
+//                             }}
+//                           >
+//                             {/* CUSTOMER NAME */}
+//                             <Typography
+//                               sx={{
+//                                 fontWeight: 600,
+//                                 width: "100%",
+//                               }}
+//                             >
+//                               {option.AccountName || ""}
+//                             </Typography>
+
+//                             {/* CUSTOMER ADDRESS */}
+//                             {(option.Address1 ||
+//                               option.address1 ||
+//                               option.Address ||
+//                               option.address ||
+//                               option.AddressLine1 ||
+//                               option.addressLine1 ||
+//                               option.DealerAddress ||
+//                               option.dealerAddress) && (
+//                               <Typography
+//                                 variant="body2"
+//                                 sx={{
+//                                   color: "#777",
+//                                   fontSize: "13px",
+//                                   width: "100%",
+//                                   mt: 0.3,
+//                                 }}
+//                               >
+//                                 {option.Address1 ||
+//                                   option.address1 ||
+//                                   option.Address ||
+//                                   option.address ||
+//                                   option.AddressLine1 ||
+//                                   option.addressLine1 ||
+//                                   option.DealerAddress ||
+//                                   option.dealerAddress}
+//                               </Typography>
+//                             )}
+//                           </MenuItem>
+//                         ))
+//                       ) : (
+//                         <Typography
+//                           sx={{
+//                             p: 1,
+//                             color: "gray",
+//                           }}
+//                         >
+//                           No customers found
+//                         </Typography>
+//                       )}
+//                     </Box>
+//                   </Paper>
+//                 )}
+//               </Box>
+
+//               {/* CONTACT NUMBER */}
+
+//               <Box flex={1} width="100%">
+//                 <Typography variant="body2">Contact Number</Typography>
+
+//                 <PhoneInput
+//                   country={"in"}
+//                   value={phone}
+//                   onChange={(phone) => setPhone(phone)}
+//                   inputProps={{
+//                     name: "phone",
+//                     required: true,
+//                   }}
+//                   inputStyle={{
+//                     width: "100%",
+//                     height: "40px",
+//                     fontSize: "16px",
+//                     borderRadius: "5px",
+//                   }}
+//                   buttonStyle={{
+//                     borderRadius: "5px",
+//                   }}
+//                 />
+//               </Box>
+//             </Box>
+//             {/* ===================================================== */}
+//             {/* PRODUCT DETAILS */}
+//             {/* ===================================================== */}
+
+//             <Paper
+//               elevation={2}
+//               sx={{
+//                 width: "100%",
+//                 border: "1px solid #dcdcdc",
+//                 borderRadius: 2,
+//                 overflow: "hidden",
+//                 backgroundColor: "#fff",
+//                 mb: 1.5,
+//               }}
+//             >
+//               {/* PRODUCT DETAILS TITLE */}
+//               <Box
+//                 sx={{
+//                   px: 1.5,
+//                   py: 1.2,
+//                   borderBottom: "1px solid #dcdcdc",
+//                   backgroundColor: "#fff",
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: { xs: "17px", sm: "20px" },
+//                     fontWeight: 700,
+//                   }}
+//                 >
+//                   Product Details
+//                 </Typography>
+//               </Box>
+
+//               {/* ===================================================== */}
+//               {/* PRODUCT TABLE */}
+//               {/* ===================================================== */}
+
+//               <TableContainer
+//                 sx={{
+//                   width: "100%",
+//                   overflowX: "auto",
+//                 }}
+//               >
+//                 <Table
+//                   size="small"
+//                   sx={{
+//                     width: "100%",
+//                     minWidth: 850,
+//                     tableLayout: "fixed",
+
+//                     "& .MuiTableCell-root": {
+//                       borderBottom: "1px solid #e5e5e5",
+//                       py: 1.2,
+//                       px: 1.5,
+//                       fontSize: "14px",
+//                     },
+//                   }}
+//                 >
+//                   {/* ================================================= */}
+//                   {/* TABLE HEADER */}
+//                   {/* ================================================= */}
+
+//                   <TableHead>
+//                     <TableRow
+//                       sx={{
+//                         backgroundColor: "#f5f5f5",
+//                       }}
+//                     >
+//                       <TableCell
+//                         sx={{
+//                           width: "8%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Sr.No
+//                       </TableCell>
+
+//                       <TableCell
+//                         sx={{
+//                           width: "27%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Product
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="center"
+//                         sx={{
+//                           width: "15%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Quantity
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="right"
+//                         sx={{
+//                           width: "15%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Rate
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="right"
+//                         sx={{
+//                           width: "17%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Amount
+//                       </TableCell>
+
+//                       <TableCell
+//                         align="center"
+//                         sx={{
+//                           width: "18%",
+//                           fontWeight: 700,
+//                         }}
+//                       >
+//                         Action
+//                       </TableCell>
+//                     </TableRow>
+//                   </TableHead>
+
+//                   {/* ================================================= */}
+//                   {/* TABLE BODY */}
+//                   {/* ================================================= */}
+
+//                   <TableBody>
+//                     {/* ================================================= */}
+//                     {/* SAVED PRODUCT ROWS */}
+//                     {/* ================================================= */}
+
+//                     {rows.map((row, index) => (
+//                       <TableRow key={row.Id || `product-row-${index}`} hover>
+//                         {/* SR NO */}
+//                         <TableCell>{index + 1}</TableCell>
+
+//                         {/* PRODUCT */}
+//                         <TableCell>
+//                           <Typography
+//                             sx={{
+//                               fontSize: "14px",
+//                               fontWeight: 500,
+//                               overflow: "hidden",
+//                               textOverflow: "ellipsis",
+//                               whiteSpace: "nowrap",
+//                             }}
+//                           >
+//                             {row.ProductName || "-"}
+//                           </Typography>
+//                         </TableCell>
+
+//                         {/* QUANTITY */}
+//                         <TableCell align="center">
+//                           <TextField
+//                             variant="standard"
+//                             type="number"
+//                             value={row.Quantity ?? ""}
+//                             onChange={(e) => {
+//                               const updatedRows = [...rows];
+
+//                               const qty =
+//                                 e.target.value === ""
+//                                   ? ""
+//                                   : Number(e.target.value);
+
+//                               const currentRate =
+//                                 Number(updatedRows[index].Rate) || 0;
+
+//                               updatedRows[index] = {
+//                                 ...updatedRows[index],
+//                                 Quantity: qty,
+//                                 Amount: (Number(qty) || 0) * currentRate,
+//                               };
+
+//                               setRows(updatedRows);
+//                             }}
+//                             sx={{
+//                               width: 80,
+//                             }}
+//                             inputProps={{
+//                               min: 0,
+//                             }}
+//                           />
+//                         </TableCell>
+
+//                         {/* RATE */}
+//                         <TableCell align="right">
+//                           <TextField
+//                             variant="standard"
+//                             type="number"
+//                             value={row.Rate ?? ""}
+//                             onChange={(e) => {
+//                               const updatedRows = [...rows];
+
+//                               const newRate =
+//                                 e.target.value === ""
+//                                   ? ""
+//                                   : Number(e.target.value);
+
+//                               const currentQty =
+//                                 Number(updatedRows[index].Quantity) || 0;
+
+//                               updatedRows[index] = {
+//                                 ...updatedRows[index],
+//                                 Rate: newRate,
+//                                 Amount: currentQty * (Number(newRate) || 0),
+//                               };
+
+//                               setRows(updatedRows);
+//                             }}
+//                             sx={{
+//                               width: 100,
+//                             }}
+//                             inputProps={{
+//                               min: 0,
+//                             }}
+//                           />
+//                         </TableCell>
+
+//                         {/* AMOUNT */}
+//                         <TableCell align="right">
+//                           ₹ {Number(row.Amount || 0).toFixed(2)}
+//                         </TableCell>
+
+//                         {/* ACTION */}
+//                         <TableCell align="center">
+//                           <Box
+//                             sx={{
+//                               display: "flex",
+//                               justifyContent: "center",
+//                               alignItems: "center",
+//                               gap: 0.5,
+//                             }}
+//                           >
+//                             <Button
+//                               size="small"
+//                               variant="outlined"
+//                               onClick={() => handleEditRow(index)}
+//                             >
+//                               Edit
+//                             </Button>
+
+//                             <Button
+//                               size="small"
+//                               variant="outlined"
+//                               color="error"
+//                               onClick={() => handleDeleteRow(index)}
+//                             >
+//                               Delete
+//                             </Button>
+//                           </Box>
+//                         </TableCell>
+//                       </TableRow>
+//                     ))}
+
+//                     {/* ================================================= */}
+//                     {/* NEW PRODUCT ROW */}
+//                     {/* ================================================= */}
+
+//                     <TableRow
+//                       sx={{
+//                         backgroundColor: "#fff",
+//                       }}
+//                     >
+//                       {/* SR NO */}
+//                       <TableCell>{rows.length + 1}</TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* PRODUCT */}
+//                       {/* ================================================= */}
+
+//                       <TableCell>
+//                         <Autocomplete
+//                           options={productOptions}
+//                           value={
+//                             productOptions.find(
+//                               (option) =>
+//                                 String(option.value) ===
+//                                 String(selectedProductID),
+//                             ) || null
+//                           }
+//                           getOptionLabel={(option) => option?.label || ""}
+//                           isOptionEqualToValue={(option, value) =>
+//                             String(option.value) === String(value?.value)
+//                           }
+//                           onChange={(event, newValue) => {
+//                             handleItemChange(newValue);
+//                           }}
+//                           onKeyDown={(event) => {
+//                             if (event.key !== "Enter") {
+//                               return;
+//                             }
+
+//                             // Product select केलेला असेल तर
+//                             if (selectedProductID) {
+//                               event.preventDefault();
+//                               event.stopPropagation();
+
+//                               // Product Enter → Quantity Focus
+//                               setTimeout(() => {
+//                                 quantityRef.current?.focus();
+//                                 quantityRef.current?.select();
+//                               }, 100);
+
+//                               return;
+//                             }
+
+//                             // Product select केलेला नसेल तर
+//                             event.preventDefault();
+//                             event.stopPropagation();
+
+//                             toast.error("Please select a product.");
+
+//                             setTimeout(() => {
+//                               productRef.current?.focus();
+//                             }, 100);
+//                           }}
+//                           renderInput={(params) => (
+//                             <TextField
+//                               {...params}
+//                               inputRef={productRef}
+//                               variant="standard"
+//                               placeholder="Select Product"
+//                               size="small"
+//                               fullWidth
+//                               sx={{
+//                                 "& .MuiInputBase-root": {
+//                                   fontSize: "15px",
+//                                 },
+//                               }}
+//                             />
+//                           )}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* QUANTITY */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="center">
+//                         <TextField
+//                           variant="standard"
+//                           type="number"
+//                           value={quantity}
+//                           onChange={handleQuantityChange}
+//                           inputRef={quantityRef}
+//                           onKeyDown={(event) => {
+//                             if (event.key !== "Enter") {
+//                               return;
+//                             }
+
+//                             event.preventDefault();
+//                             event.stopPropagation();
+
+//                             if (!selectedProductID) {
+//                               toast.error("Please select a product.");
+
+//                               setTimeout(() => {
+//                                 productRef.current?.focus();
+//                               }, 100);
+
+//                               return;
+//                             }
+
+//                             if (!quantity || Number(quantity) <= 0) {
+//                               toast.error("Please enter quantity.");
+
+//                               quantityRef.current?.focus();
+//                               quantityRef.current?.select();
+
+//                               return;
+//                             }
+
+//                             if (!rate || Number(rate) <= 0) {
+//                               toast.error("Caterer rate not available.");
+//                               return;
+//                             }
+
+//                             // Quantity Enter → Add Row
+//                             handleSaveOrAddRow();
+
+//                             // After row add → Product
+//                             setTimeout(() => {
+//                               productRef.current?.focus();
+//                             }, 100);
+//                           }}
+//                           sx={{
+//                             width: 80,
+//                           }}
+//                           inputProps={{
+//                             min: 0,
+//                           }}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* RATE */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="right">
+//                         <TextField
+//                           variant="standard"
+//                           type="number"
+//                           value={rate}
+//                           inputRef={rateRef}
+//                           InputProps={{
+//                             readOnly: true,
+//                           }}
+//                           sx={{
+//                             width: 100,
+//                           }}
+//                           inputProps={{
+//                             min: 0,
+//                           }}
+//                         />
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* AMOUNT */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="right">
+//                         ₹{" "}
+//                         {(
+//                           (Number(quantity) || 0) * (Number(rate) || 0)
+//                         ).toFixed(2)}
+//                       </TableCell>
+
+//                       {/* ================================================= */}
+//                       {/* ACTION */}
+//                       {/* ================================================= */}
+
+//                       <TableCell align="center">
+//                         <Typography
+//                           sx={{
+//                             color: "#999",
+//                             fontSize: "13px",
+//                           }}
+//                         >
+//                           New
+//                         </Typography>
+//                       </TableCell>
+//                     </TableRow>
+//                   </TableBody>
+//                 </Table>
+//               </TableContainer>
+
+//               {/* ERROR */}
+//               {errors.rows && (
+//                 <Typography
+//                   color="error"
+//                   sx={{
+//                     px: 2,
+//                     py: 1,
+//                     fontSize: "14px",
+//                   }}
+//                 >
+//                   {errors.rows}
+//                 </Typography>
+//               )}
+//             </Paper>
+
+//             {/* ===================================================== */}
+//             {/* PAYMENT MODE + TRANSPORT */}
+//             {/* ===================================================== */}
+
+//             <Grid
+//               container
+//               spacing={2}
+//               sx={{
+//                 mb: 1.5,
+//               }}
+//             >
+//               {/* PAYMENT MODE */}
+
+//               <Grid item xs={12} md={6}>
+//                 <Box>
+//                   <Typography
+//                     variant="body2"
+//                     sx={{
+//                       fontWeight: 600,
+//                       mb: 0.5,
+//                     }}
+//                   >
+//                     Payment Mode
+//                   </Typography>
+
+//                   <TextField
+//                     select
+//                     variant="standard"
+//                     name="paymentMode"
+//                     value={paymentMode || ""}
+//                     onChange={(e) => {
+//                       const mode = e.target.value;
+
+//                       setPaymentMode(mode);
+//                       setReceivedAmount("");
+
+//                       if (mode !== "M") {
+//                         setCashAmount("");
+//                         setOnlineAmount("");
+//                       }
+
+//                       setErrors({
+//                         ...errors,
+//                         paymentMode: "",
+//                       });
+//                     }}
+//                     onKeyDown={(e) => {
+//                       if (e.key === "Enter") {
+//                         e.preventDefault();
+//                         e.stopPropagation();
+
+//                         if (!paymentMode) {
+//                           toast.error("Please select payment mode.");
+//                           return;
+//                         }
+
+//                         setTimeout(() => {
+//                           discountRef.current?.focus();
+//                           discountRef.current?.select();
+//                         }, 100);
+//                       }
+
+//                       // ESC = मागे Quantity वर
+//                       if (e.key === "Escape") {
+//                         e.preventDefault();
+//                         e.stopPropagation();
+
+//                         setTimeout(() => {
+//                           quantityRef.current?.focus();
+//                           quantityRef.current?.select();
+//                         }, 100);
+//                       }
+//                     }}
+//                     fullWidth
+//                     error={!!errors.paymentMode}
+//                     helperText={errors.paymentMode}
+//                   >
+//                     <MenuItem value="">Select Payment Mode</MenuItem>
+
+//                     <MenuItem value="C">Cash</MenuItem>
+
+//                     <MenuItem value="O">Online</MenuItem>
+
+//                     <MenuItem value="M">Mix</MenuItem>
+//                   </TextField>
+//                 </Box>
+
+//                 {/* MIX PAYMENT */}
+
+//                 {paymentMode === "M" && (
+//                   <Box
+//                     sx={{
+//                       mt: 1.5,
+//                       p: 1.5,
+//                       border: "1px solid #e0e0e0",
+//                       borderRadius: 2,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontWeight: 700,
+//                         mb: 1.5,
+//                       }}
+//                     >
+//                       Mix Payment
+//                     </Typography>
+
+//                     <Box
+//                       sx={{
+//                         display: "flex",
+//                         gap: 2,
+//                       }}
+//                     >
+//                       <TextField
+//                         label="Cash Amount"
+//                         type="number"
+//                         value={cashAmount}
+//                         onChange={handleCashAmountChange}
+//                         size="small"
+//                         fullWidth
+//                         inputProps={{
+//                           min: 0,
+//                         }}
+//                       />
+
+//                       <TextField
+//                         label="Online Amount"
+//                         type="number"
+//                         value={onlineAmount}
+//                         onChange={handleOnlineAmountChange}
+//                         size="small"
+//                         fullWidth
+//                         inputProps={{
+//                           min: 0,
+//                         }}
+//                       />
+//                     </Box>
+
+//                     <Box
+//                       sx={{
+//                         mt: 1.5,
+//                         display: "flex",
+//                         justifyContent: "space-between",
+//                       }}
+//                     >
+//                       <Typography fontWeight={700}>Received</Typography>
+
+//                       <Typography fontWeight={800} color="primary">
+//                         ₹ {Number(receivedAmount || 0).toFixed(2)}
+//                       </Typography>
+//                     </Box>
+//                   </Box>
+//                 )}
+//               </Grid>
+
+//               {/* TRANSPORT */}
+
+//               <Grid item xs={12} md={6}>
+//                 <Box>
+//                   <Typography
+//                     variant="body2"
+//                     sx={{
+//                       fontWeight: 600,
+//                       mb: 0.5,
+//                     }}
+//                   >
+//                     Transport
+//                   </Typography>
+
+//                   <TextField
+//                     variant="standard"
+//                     value={transport}
+//                     onChange={(e) => setTransport(e.target.value)}
+//                     placeholder="Transport"
+//                     fullWidth
+//                     type="number"
+//                   />
+//                 </Box>
+//               </Grid>
+//             </Grid>
+
+//             {/* ===================================================== */}
+//             {/* AMOUNT SUMMARY - FULL WIDTH */}
+//             {/* ===================================================== */}
+
+//             <Paper
+//               elevation={4}
+//               sx={{
+//                 width: "100%",
+//                 p: {
+//                   xs: 1.5,
+//                   sm: 2,
+//                 },
+//                 borderRadius: 3,
+//                 border: "1px solid #e0e0e0",
+//                 backgroundColor: "#ffffff",
+//                 mb: 2,
+//               }}
+//             >
+//               {/* TITLE */}
+
+//               <Typography
+//                 variant="h5"
+//                 sx={{
+//                   fontWeight: 800,
+//                   color: "#1976d2",
+//                   mb: 2,
+//                 }}
+//               >
+//                 Amount Summary
+//               </Typography>
+
+//               {/* SUMMARY ROW */}
+
+//               <Grid container spacing={2} alignItems="center">
+//                 {/* SUBTOTAL */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Subtotal
+//                     </Typography>
+
+//                     <Typography
+//                       sx={{
+//                         fontSize: "19px",
+//                         fontWeight: 700,
+//                       }}
+//                     >
+//                       ₹ {Number(subTotalcal || 0).toFixed(2)}
+//                     </Typography>
+//                   </Box>
+//                 </Grid>
+
+//                 {/* DISCOUNT */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Discount
+//                     </Typography>
+
+//                     <TextField
+//                       inputRef={discountRef}
+//                       size="small"
+//                       type="number"
+//                       value={discount}
+//                       onChange={(e) => {
+//                         const value = e.target.value;
+
+//                         if (value === "" || Number(value) >= 0) {
+//                           setDiscount(value);
+//                         }
+//                       }}
+//                       onKeyDown={(e) => {
+//                         if (e.key === "Enter") {
+//                           e.preventDefault();
+//                           e.stopPropagation();
+
+//                           setTimeout(() => {
+//                             receivedAmountRef.current?.focus();
+//                             receivedAmountRef.current?.select();
+//                           }, 100);
+//                         }
+//                       }}
+//                       placeholder="0.00"
+//                       sx={{
+//                         width: 120,
+
+//                         "& input": {
+//                           textAlign: "right",
+//                           fontSize: "16px",
+//                           fontWeight: 500,
+//                         },
+//                       }}
+//                       inputProps={{
+//                         min: 0,
+//                       }}
+//                     />
+//                   </Box>
+//                 </Grid>
+
+//                 {/* TOTAL */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "20px",
+//                         fontWeight: 700,
+//                       }}
+//                     >
+//                       Total
+//                     </Typography>
+
+//                     <Typography
+//                       sx={{
+//                         fontSize: "26px",
+//                         fontWeight: 800,
+//                         color: "#1976d2",
+//                       }}
+//                     >
+//                       ₹ {Number(total || 0).toFixed(2)}
+//                     </Typography>
+//                   </Box>
+//                 </Grid>
+
+//                 {/* RECEIVED */}
+
+//                 <Grid item xs={12} sm={6} md={3}>
+//                   <Box
+//                     sx={{
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       gap: 1,
+//                     }}
+//                   >
+//                     <Typography
+//                       sx={{
+//                         fontSize: "17px",
+//                         fontWeight: 600,
+//                       }}
+//                     >
+//                       Received Amount
+//                     </Typography>
+
+//                     <TextField
+//                       inputRef={receivedAmountRef}
+//                       size="small"
+//                       type="number"
+//                       value={receivedAmount}
+//                       onChange={handleReceivedAmountChange}
+//                       disabled={paymentMode === "M"}
+//                       placeholder="0.00"
+//                       sx={{
+//                         width: 120,
+
+//                         "& input": {
+//                           textAlign: "right",
+//                           fontSize: "16px",
+//                           fontWeight: 500,
+//                         },
+//                       }}
+//                       inputProps={{
+//                         min: 0,
+//                       }}
+//                     />
+//                   </Box>
+//                 </Grid>
+//               </Grid>
+
+//               <Divider
+//                 sx={{
+//                   my: 1.5,
+//                 }}
+//               />
+
+//               {/* ================================================= */}
+//               {/* PAYMENT STATUS */}
+//               {/* ================================================= */}
+
+//               {isPaid ? (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#e8f5e9",
+//                     border: "1px solid #a5d6a7",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     Paid
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     ₹ {Number(grandTotal || 0).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               ) : received > grandTotal ? (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#e8f5e9",
+//                     border: "1px solid #a5d6a7",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     Refund
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#087f23",
+//                     }}
+//                   >
+//                     ₹ {(received - grandTotal).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               ) : (
+//                 <Box
+//                   sx={{
+//                     p: 1.5,
+//                     borderRadius: 2,
+//                     backgroundColor: "#ffebee",
+//                     border: "1px solid #ef9a9a",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     alignItems: "center",
+//                   }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       fontSize: "20px",
+//                       fontWeight: 800,
+//                       color: "#d32f2f",
+//                     }}
+//                   >
+//                     Current Bill Due
+//                   </Typography>
+
+//                   <Typography
+//                     sx={{
+//                       fontSize: "22px",
+//                       fontWeight: 800,
+//                       color: "#d32f2f",
+//                     }}
+//                   >
+//                     ₹ {Number(currentInvoiceBalanceDue || 0).toFixed(2)}
+//                   </Typography>
+//                 </Box>
+//               )}
+
+//               {/* ===================================================== */}
+//               {/* PREVIOUS CUSTOMER DUE */}
+//               {/* ===================================================== */}
+//               <Box
+//                 sx={{
+//                   p: 1.5,
+//                   borderRadius: 2,
+//                   backgroundColor: "#fff8e1",
+//                   border: "1px solid #ffcc80",
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                   mb: 1,
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: "20px",
+//                     fontWeight: 800,
+//                     color: "#e65100",
+//                   }}
+//                 >
+//                   Previous Due
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: "22px",
+//                     fontWeight: 800,
+//                     color: "#e65100",
+//                   }}
+//                 >
+//                   ₹ {Number(previousBalanceDue || 0).toFixed(2)}
+//                 </Typography>
+//               </Box>
+
+//               {/* ===================================================== */}
+//               {/* TOTAL CUSTOMER OUTSTANDING */}
+//               {/* ===================================================== */}
+//               <Box
+//                 sx={{
+//                   p: 1.5,
+//                   borderRadius: 2,
+//                   backgroundColor: "#ffebee",
+//                   border: "2px solid #d32f2f",
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                   mt: 1,
+//                 }}
+//               >
+//                 <Typography
+//                   sx={{
+//                     fontSize: "20px",
+//                     fontWeight: 800,
+//                     color: "#b71c1c",
+//                   }}
+//                 >
+//                   Total Outstanding
+//                 </Typography>
+
+//                 <Typography
+//                   sx={{
+//                     fontSize: "24px",
+//                     fontWeight: 900,
+//                     color: "#b71c1c",
+//                   }}
+//                 >
+//                   ₹{" "}
+//                   {(
+//                     Number(previousBalanceDue || 0) +
+//                     Number(currentInvoiceBalanceDue || 0)
+//                   ).toFixed(2)}
+//                 </Typography>
+//               </Box>
+//             </Paper>
+//           </Box>
+
+//           {/* ===================================================== */}
+//           {/* SAVE / CANCEL / DELETE */}
+//           {/* ===================================================== */}
+
+//           <Box
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "center",
+//               gap: 2,
+//               py: 1.5,
+//               px: 2,
+//               borderTop: "1px solid #ddd",
+//               backgroundColor: "#fff",
+//               flexShrink: 0,
+//             }}
+//           >
+//             {/* SAVE / UPDATE */}
+
+//             <Button
+//               sx={{
+//                 background: "var(--primary-color)",
+
+//                 "&:hover": {
+//                   background: "var(--primary-color)",
+//                 },
+//               }}
+//               onClick={(e) => handleSubmit(e, false)}
+//               variant="contained"
+//             >
+//               {isEditing ? "Update" : "Save"}
+//             </Button>
+
+//             {/* PRINT */}
+
+//             <Button
+//               sx={{
+//                 background: "var(--complementary-color)",
+//                 "&:hover": {
+//                   background: "var(--complementary-color)",
+//                 },
+//               }}
+//               onClick={(e) => handleSubmit(e, true)}
+//               variant="contained"
+//               startIcon={<PrintIcon />}
+//             >
+//               Print
+//             </Button>
+//             {/* CANCEL */}
+
+//             <Button
+//               sx={{
+//                 borderColor: "var(--complementary-color)",
+//                 color: "var(--complementary-color)",
+//               }}
+//               onClick={handleDrawerClose}
+//               variant="outlined"
+//             >
+//               <b>Cancel</b>
+//             </Button>
+
+//             {/* DELETE */}
+
+//             {isEditing && (
+//               <Button
+//                 variant="contained"
+//                 color="error"
+//                 onClick={handleClickOpen}
+//               >
+//                 Delete
+//               </Button>
+//             )}
+
+//             {/* DELETE DIALOG */}
+
+//             <Dialog open={open} onClose={handleClose}>
+//               <DialogTitle>Confirm Deletion</DialogTitle>
+
+//               <DialogContent>
+//                 <DialogContentText>
+//                   Are you sure you want to delete this item?
+//                 </DialogContentText>
+//               </DialogContent>
+
+//               <DialogActions>
+//                 <Button onClick={handleClose} color="primary">
+//                   Cancel
+//                 </Button>
+
+//                 <Button onClick={handleConfirmDelete} color="error" autoFocus>
+//                   Delete
+//                 </Button>
+//               </DialogActions>
+//             </Dialog>
+
+//             {/* ============================================================
+//     INVOICE EDIT HISTORY DIALOG
+// ============================================================ */}
+
+//             <Dialog
+//               open={historyOpen}
+//               onClose={() => {
+//                 setHistoryOpen(false);
+//                 setSelectedHistoryVersion(null);
+//                 setSelectedHistoryDetails([]);
+//               }}
+//               fullWidth
+//               maxWidth="xl"
+//               PaperProps={{
+//                 sx: {
+//                   borderRadius: 3,
+//                   maxHeight: "92vh",
+//                 },
+//               }}
+//             >
+//               {/* ================= HEADER ================= */}
+
+//               <DialogTitle
+//                 sx={{
+//                   background: "linear-gradient(135deg, #1976d2, #0d47a1)",
+//                   color: "#fff",
+//                   fontWeight: 700,
+//                   display: "flex",
+//                   justifyContent: "space-between",
+//                   alignItems: "center",
+//                 }}
+//               >
+//                 <Box>
+//                   Invoice Edit History
+//                   <Typography
+//                     sx={{
+//                       fontSize: "13px",
+//                       opacity: 0.9,
+//                       mt: 0.5,
+//                     }}
+//                   >
+//                     Invoice No:{" "}
+//                     {selectedHistoryInvoice?.InvoiceNo ||
+//                       selectedHistoryInvoice?.BillNo ||
+//                       "-"}
+//                   </Typography>
+//                 </Box>
+
+//                 <IconButton
+//                   onClick={() => {
+//                     setHistoryOpen(false);
+//                     setSelectedHistoryVersion(null);
+//                     setSelectedHistoryDetails([]);
+//                   }}
+//                   sx={{ color: "#fff" }}
+//                 >
+//                   <CloseIcon />
+//                 </IconButton>
+//               </DialogTitle>
+
+//               {/* ================= CONTENT ================= */}
+
+//               <DialogContent
+//                 dividers
+//                 sx={{
+//                   backgroundColor: "#f7f9fc",
+//                 }}
+//               >
+//                 {historyLoading ? (
+//                   <Box
+//                     sx={{
+//                       minHeight: 300,
+//                       display: "flex",
+//                       alignItems: "center",
+//                       justifyContent: "center",
+//                     }}
+//                   >
+//                     <Typography fontWeight={600}>
+//                       Loading invoice history...
+//                     </Typography>
+//                   </Box>
+//                 ) : (
+//                   <>
+//                     {/* =====================================================
+//             CURRENT INVOICE
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 3,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#1976d2",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Current Invoice
+//                       </Typography>
+
+//                       {currentHistoryHeader ? (
+//                         <Box
+//                           sx={{
+//                             display: "grid",
+//                             gridTemplateColumns:
+//                               "repeat(auto-fit, minmax(180px, 1fr))",
+//                             gap: 2,
+//                           }}
+//                         >
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Invoice No
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {currentHistoryHeader?.InvoiceNo ||
+//                                 currentHistoryHeader?.BillNo ||
+//                                 "-"}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Invoice Date
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {formatHistoryDate(
+//                                 currentHistoryHeader?.InvoiceDate,
+//                               )}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Customer
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               {currentHistoryHeader?.AccountName ||
+//                                 currentHistoryHeader?.CustomerName ||
+//                                 currentHistoryHeader?.PartyName ||
+//                                 selectedHistoryInvoice?.AccountName ||
+//                                 "-"}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Total
+//                             </Typography>
+
+//                             <Typography
+//                               fontWeight={700}
+//                               sx={{ color: "#1976d2" }}
+//                             >
+//                               ₹{" "}
+//                               {Number(currentHistoryHeader?.Total || 0).toFixed(
+//                                 2,
+//                               )}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Received
+//                             </Typography>
+
+//                             <Typography fontWeight={600}>
+//                               ₹{" "}
+//                               {Number(
+//                                 currentHistoryHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}
+//                             </Typography>
+//                           </Box>
+
+//                           <Box>
+//                             <Typography
+//                               variant="caption"
+//                               color="text.secondary"
+//                             >
+//                               Balance
+//                             </Typography>
+
+//                             <Typography
+//                               fontWeight={700}
+//                               sx={{ color: "#d32f2f" }}
+//                             >
+//                               ₹{" "}
+//                               {Number(
+//                                 currentHistoryHeader?.BalanceDue || 0,
+//                               ).toFixed(2)}
+//                             </Typography>
+//                           </Box>
+//                         </Box>
+//                       ) : (
+//                         <Typography color="text.secondary">
+//                           Current invoice data not available.
+//                         </Typography>
+//                       )}
+//                     </Paper>
+
+//                     {/* =====================================================
+//             PREVIOUS INVOICE HISTORY
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 3,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#d97706",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Previous Invoice History
+//                       </Typography>
+
+//                       {historyHeader.length === 0 ? (
+//                         <Typography color="text.secondary" sx={{ py: 3 }}>
+//                           No previous history found.
+//                         </Typography>
+//                       ) : (
+//                         <TableContainer
+//                           component={Paper}
+//                           elevation={0}
+//                           sx={{
+//                             border: "1px solid #e0e0e0",
+//                           }}
+//                         >
+//                           <Table size="small">
+//                             <TableHead>
+//                               <TableRow
+//                                 sx={{
+//                                   backgroundColor: "#f1f5f9",
+//                                 }}
+//                               >
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Version
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Invoice No
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Invoice Date
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Customer
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Total
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Received
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "center",
+//                                   }}
+//                                 >
+//                                   View
+//                                 </TableCell>
+//                               </TableRow>
+//                             </TableHead>
+
+//                             <TableBody>
+//                               {[...historyHeader]
+//                                 .sort(
+//                                   (a, b) =>
+//                                     Number(a?.VersionNo || 0) -
+//                                     Number(b?.VersionNo || 0),
+//                                 )
+//                                 .map((historyItem, index) => {
+//                                   const version = Number(
+//                                     historyItem?.VersionNo,
+//                                   );
+
+//                                   const isSelected =
+//                                     selectedHistoryVersion === version;
+
+//                                   return (
+//                                     <TableRow
+//                                       key={
+//                                         historyItem?.Id || `${version}-${index}`
+//                                       }
+//                                       sx={{
+//                                         backgroundColor: isSelected
+//                                           ? "#e3f2fd"
+//                                           : "inherit",
+//                                       }}
+//                                     >
+//                                       <TableCell>
+//                                         <Button
+//                                           size="small"
+//                                           variant={
+//                                             isSelected
+//                                               ? "contained"
+//                                               : "outlined"
+//                                           }
+//                                           onClick={() =>
+//                                             handleHistoryVersionClick(
+//                                               historyItem,
+//                                             )
+//                                           }
+//                                         >
+//                                           Version {version}
+//                                         </Button>
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {historyItem?.InvoiceNo ||
+//                                           historyItem?.BillNo ||
+//                                           "-"}
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {formatHistoryDate(
+//                                           historyItem?.InvoiceDate,
+//                                         )}
+//                                       </TableCell>
+
+//                                       <TableCell>
+//                                         {historyItem?.AccountName ||
+//                                           historyItem?.CustomerName ||
+//                                           historyItem?.PartyName ||
+//                                           selectedHistoryInvoice?.AccountName ||
+//                                           "-"}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "right",
+//                                           fontWeight: 600,
+//                                         }}
+//                                       >
+//                                         ₹{" "}
+//                                         {Number(
+//                                           historyItem?.Total || 0,
+//                                         ).toFixed(2)}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "right",
+//                                         }}
+//                                       >
+//                                         ₹{" "}
+//                                         {Number(
+//                                           historyItem?.ReceivedAmount || 0,
+//                                         ).toFixed(2)}
+//                                       </TableCell>
+
+//                                       <TableCell
+//                                         sx={{
+//                                           textAlign: "center",
+//                                         }}
+//                                       >
+//                                         <Button
+//                                           size="small"
+//                                           onClick={() =>
+//                                             handleHistoryVersionClick(
+//                                               historyItem,
+//                                             )
+//                                           }
+//                                         >
+//                                           VIEW
+//                                         </Button>
+//                                       </TableCell>
+//                                     </TableRow>
+//                                   );
+//                                 })}
+//                             </TableBody>
+//                           </Table>
+//                         </TableContainer>
+//                       )}
+//                     </Paper>
+
+//                     {/* =====================================================
+//             OLD VS CURRENT
+//         ===================================================== */}
+
+//                     {selectedHistoryVersion && (
+//                       <Paper
+//                         elevation={0}
+//                         sx={{
+//                           p: 2,
+//                           mb: 3,
+//                           borderRadius: 2,
+//                           border: "1px solid #e0e0e0",
+//                         }}
+//                       >
+//                         <Typography
+//                           sx={{
+//                             fontSize: "18px",
+//                             fontWeight: 700,
+//                             color: "#7b1fa2",
+//                             mb: 2,
+//                           }}
+//                         >
+//                           Old vs Current Invoice
+//                         </Typography>
+
+//                         {(() => {
+//                           const selectedOldHeader = historyHeader.find(
+//                             (item) =>
+//                               Number(item?.VersionNo) ===
+//                               Number(selectedHistoryVersion),
+//                           );
+
+//                           const comparisonRows = [
+//                             {
+//                               label: "Invoice No",
+//                               oldValue:
+//                                 selectedOldHeader?.InvoiceNo ||
+//                                 selectedOldHeader?.BillNo ||
+//                                 "-",
+//                               currentValue:
+//                                 currentHistoryHeader?.InvoiceNo ||
+//                                 currentHistoryHeader?.BillNo ||
+//                                 "-",
+//                             },
+
+//                             {
+//                               label: "Invoice Date",
+//                               oldValue: formatHistoryDate(
+//                                 selectedOldHeader?.InvoiceDate,
+//                               ),
+//                               currentValue: formatHistoryDate(
+//                                 currentHistoryHeader?.InvoiceDate,
+//                               ),
+//                             },
+
+//                             {
+//                               label: "Customer",
+//                               oldValue:
+//                                 selectedOldHeader?.AccountName ||
+//                                 selectedOldHeader?.CustomerName ||
+//                                 selectedOldHeader?.PartyName ||
+//                                 "-",
+//                               currentValue:
+//                                 currentHistoryHeader?.AccountName ||
+//                                 currentHistoryHeader?.CustomerName ||
+//                                 currentHistoryHeader?.PartyName ||
+//                                 selectedHistoryInvoice?.AccountName ||
+//                                 "-",
+//                             },
+
+//                             {
+//                               label: "Total",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.Total || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.Total || 0,
+//                               ).toFixed(2)}`,
+//                             },
+
+//                             {
+//                               label: "Received",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.ReceivedAmount || 0,
+//                               ).toFixed(2)}`,
+//                             },
+
+//                             {
+//                               label: "Discount",
+//                               oldValue: `₹ ${Number(
+//                                 selectedOldHeader?.Discount || 0,
+//                               ).toFixed(2)}`,
+//                               currentValue: `₹ ${Number(
+//                                 currentHistoryHeader?.Discount || 0,
+//                               ).toFixed(2)}`,
+//                             },
+//                           ];
+
+//                           return (
+//                             <TableContainer
+//                               component={Paper}
+//                               elevation={0}
+//                               sx={{
+//                                 border: "1px solid #e0e0e0",
+//                               }}
+//                             >
+//                               <Table size="small">
+//                                 <TableHead>
+//                                   <TableRow
+//                                     sx={{
+//                                       backgroundColor: "#f3e5f5",
+//                                     }}
+//                                   >
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Field
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Previous — Version{" "}
+//                                       {selectedHistoryVersion}
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 700 }}>
+//                                       Current
+//                                     </TableCell>
+//                                   </TableRow>
+//                                 </TableHead>
+
+//                                 <TableBody>
+//                                   {comparisonRows.map((item) => {
+//                                     const changed =
+//                                       String(item.oldValue) !==
+//                                       String(item.currentValue);
+
+//                                     return (
+//                                       <TableRow key={item.label}>
+//                                         <TableCell fontWeight={600}>
+//                                           {item.label}
+//                                         </TableCell>
+
+//                                         <TableCell
+//                                           sx={{
+//                                             backgroundColor: changed
+//                                               ? "#fff3e0"
+//                                               : "inherit",
+//                                             fontWeight: changed ? 700 : 400,
+//                                           }}
+//                                         >
+//                                           {item.oldValue}
+//                                         </TableCell>
+
+//                                         <TableCell
+//                                           sx={{
+//                                             backgroundColor: changed
+//                                               ? "#e8f5e9"
+//                                               : "inherit",
+//                                             fontWeight: changed ? 700 : 400,
+//                                           }}
+//                                         >
+//                                           {item.currentValue}
+//                                         </TableCell>
+//                                       </TableRow>
+//                                     );
+//                                   })}
+//                                 </TableBody>
+//                               </Table>
+//                             </TableContainer>
+//                           );
+//                         })()}
+//                       </Paper>
+//                     )}
+
+//                     {/* =====================================================
+//             PREVIOUS PRODUCT DETAILS
+//         ===================================================== */}
+
+//                     {selectedHistoryVersion && (
+//                       <Paper
+//                         elevation={0}
+//                         sx={{
+//                           p: 2,
+//                           mb: 3,
+//                           borderRadius: 2,
+//                           border: "1px solid #e0e0e0",
+//                         }}
+//                       >
+//                         <Typography
+//                           sx={{
+//                             fontSize: "18px",
+//                             fontWeight: 700,
+//                             color: "#d97706",
+//                             mb: 2,
+//                           }}
+//                         >
+//                           Previous Product Details — Version{" "}
+//                           {selectedHistoryVersion}
+//                         </Typography>
+
+//                         {selectedHistoryDetails.length === 0 ? (
+//                           <Typography color="text.secondary" sx={{ py: 3 }}>
+//                             No product details found for this version.
+//                           </Typography>
+//                         ) : (
+//                           <TableContainer
+//                             component={Paper}
+//                             elevation={0}
+//                             sx={{
+//                               border: "1px solid #e0e0e0",
+//                             }}
+//                           >
+//                             <Table size="small">
+//                               <TableHead>
+//                                 <TableRow
+//                                   sx={{
+//                                     backgroundColor: "#fff3e0",
+//                                   }}
+//                                 >
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Sr.
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Product
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Qty
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 700 }}>
+//                                     Rate
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       fontWeight: 700,
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     Amount
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       fontWeight: 700,
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     Discount
+//                                   </TableCell>
+//                                 </TableRow>
+//                               </TableHead>
+
+//                               <TableBody>
+//                                 {selectedHistoryDetails.map((detail, index) => (
+//                                   <TableRow
+//                                     key={
+//                                       detail?.Id ||
+//                                       `${detail?.ProductId}-${index}`
+//                                     }
+//                                   >
+//                                     <TableCell>
+//                                       {detail?.SerialNo || index + 1}
+//                                     </TableCell>
+
+//                                     <TableCell sx={{ fontWeight: 600 }}>
+//                                       {getHistoryProductName(
+//                                         detail?.ProductId,
+//                                         detail,
+//                                       )}
+//                                     </TableCell>
+
+//                                     <TableCell>
+//                                       {Number(detail?.Quantity || 0)}
+//                                     </TableCell>
+
+//                                     <TableCell>
+//                                       ₹ {Number(detail?.Rate || 0).toFixed(2)}
+//                                     </TableCell>
+
+//                                     <TableCell
+//                                       sx={{
+//                                         textAlign: "right",
+//                                         fontWeight: 600,
+//                                       }}
+//                                     >
+//                                       ₹ {Number(detail?.Amount || 0).toFixed(2)}
+//                                     </TableCell>
+
+//                                     <TableCell
+//                                       sx={{
+//                                         textAlign: "right",
+//                                       }}
+//                                     >
+//                                       ₹{" "}
+//                                       {Number(detail?.DiscountAmt || 0).toFixed(
+//                                         2,
+//                                       )}
+//                                     </TableCell>
+//                                   </TableRow>
+//                                 ))}
+//                               </TableBody>
+//                             </Table>
+//                           </TableContainer>
+//                         )}
+//                       </Paper>
+//                     )}
+
+//                     {/* =====================================================
+//             CURRENT PRODUCT DETAILS
+//         ===================================================== */}
+
+//                     <Paper
+//                       elevation={0}
+//                       sx={{
+//                         p: 2,
+//                         mb: 2,
+//                         borderRadius: 2,
+//                         border: "1px solid #e0e0e0",
+//                       }}
+//                     >
+//                       <Typography
+//                         sx={{
+//                           fontSize: "18px",
+//                           fontWeight: 700,
+//                           color: "#2e7d32",
+//                           mb: 2,
+//                         }}
+//                       >
+//                         Current Product Details
+//                       </Typography>
+
+//                       {currentHistoryDetails.length === 0 ? (
+//                         <Typography color="text.secondary" sx={{ py: 3 }}>
+//                           No current product details found.
+//                         </Typography>
+//                       ) : (
+//                         <TableContainer
+//                           component={Paper}
+//                           elevation={0}
+//                           sx={{
+//                             border: "1px solid #e0e0e0",
+//                           }}
+//                         >
+//                           <Table size="small">
+//                             <TableHead>
+//                               <TableRow
+//                                 sx={{
+//                                   backgroundColor: "#e8f5e9",
+//                                 }}
+//                               >
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Sr.
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Product
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Qty
+//                                 </TableCell>
+
+//                                 <TableCell sx={{ fontWeight: 700 }}>
+//                                   Rate
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Amount
+//                                 </TableCell>
+
+//                                 <TableCell
+//                                   sx={{
+//                                     fontWeight: 700,
+//                                     textAlign: "right",
+//                                   }}
+//                                 >
+//                                   Discount
+//                                 </TableCell>
+//                               </TableRow>
+//                             </TableHead>
+
+//                             <TableBody>
+//                               {currentHistoryDetails.map((detail, index) => (
+//                                 <TableRow
+//                                   key={
+//                                     detail?.Id ||
+//                                     `${detail?.ProductId}-${index}`
+//                                   }
+//                                 >
+//                                   <TableCell>
+//                                     {detail?.SerialNo || index + 1}
+//                                   </TableCell>
+
+//                                   <TableCell sx={{ fontWeight: 600 }}>
+//                                     {getHistoryProductName(
+//                                       detail?.ProductId,
+//                                       detail,
+//                                     )}
+//                                   </TableCell>
+
+//                                   <TableCell>
+//                                     {Number(detail?.Quantity || 0)}
+//                                   </TableCell>
+
+//                                   <TableCell>
+//                                     ₹ {Number(detail?.Rate || 0).toFixed(2)}
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       textAlign: "right",
+//                                       fontWeight: 600,
+//                                     }}
+//                                   >
+//                                     ₹ {Number(detail?.Amount || 0).toFixed(2)}
+//                                   </TableCell>
+
+//                                   <TableCell
+//                                     sx={{
+//                                       textAlign: "right",
+//                                     }}
+//                                   >
+//                                     ₹{" "}
+//                                     {Number(detail?.DiscountAmt || 0).toFixed(
+//                                       2,
+//                                     )}
+//                                   </TableCell>
+//                                 </TableRow>
+//                               ))}
+//                             </TableBody>
+//                           </Table>
+//                         </TableContainer>
+//                       )}
+//                     </Paper>
+//                   </>
+//                 )}
+//               </DialogContent>
+
+//               {/* ================= FOOTER ================= */}
+
+//               <DialogActions
+//                 sx={{
+//                   p: 2,
+//                   backgroundColor: "#fff",
+//                 }}
+//               >
+//                 <Button
+//                   variant="contained"
+//                   color="primary"
+//                   onClick={() => {
+//                     setHistoryOpen(false);
+//                     setSelectedHistoryVersion(null);
+//                     setSelectedHistoryDetails([]);
+//                   }}
+//                 >
+//                   CLOSE
+//                 </Button>
+//               </DialogActions>
+//             </Dialog>
+//           </Box>
+//         </Drawer>
+//         <ToastContainer
+//           position="top-right"
+//           autoClose={3000}
+//           hideProgressBar={false}
+//           newestOnTop
+//           closeOnClick
+//           pauseOnHover
+//         />
+//       </Box>
+//     </Box>
+//   );
+// };
+
+// export default SalesCaterers;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -63,8 +16213,25 @@ import fremilaLogo from "../imgs/fremilalogo.png";
 // import logonew from '../imgs/logo_white.png'
 
 const SalesCaterers = () => {
+
   const location = useLocation();
   const navigate = useNavigate();
+
+  // =====================================================
+  // THIS SCREEN IS ONLY FOR CATERERS CUSTOMERS
+  // C = Caterers
+  // =====================================================
+  const PAGE_CUSTOMER_TYPE = "C";
+
+
+  // =====================================================
+// PREVENT MOUSE WHEEL FROM CHANGING NUMBER INPUT VALUE
+// =====================================================
+const preventNumberInputScroll = (event) => {
+  event.currentTarget.blur();
+};
+
+ 
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -74,17 +16241,261 @@ const SalesCaterers = () => {
   const [invoicedetails, setInvoicedetails] = useState([]);
   const [rows, setRows] = useState([]);
 
+  // =====================================================
+  // INVOICE EDIT HISTORY
+  // =====================================================
 
+  const [invoiceHistoryStatus, setInvoiceHistoryStatus] = useState({});
 
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-const [productOptions, setProductOptions] = useState([]);
+  const [selectedHistoryInvoice, setSelectedHistoryInvoice] = useState(null);
+
+  const [historyHeader, setHistoryHeader] = useState([]);
+  const [historyDetails, setHistoryDetails] = useState([]);
+
+  const [currentHistoryHeader, setCurrentHistoryHeader] = useState(null);
+  const [currentHistoryDetails, setCurrentHistoryDetails] = useState([]);
+
+  const [selectedHistoryVersion, setSelectedHistoryVersion] = useState(null);
+  const [selectedHistoryDetails, setSelectedHistoryDetails] = useState([]);
+
+  const [userId, setUserId] = useState(
+    () => sessionStorage.getItem("UserId") || "",
+  );
+
+  // =====================================================
+  // SELECT HISTORY VERSION
+  // =====================================================
+
+  const handleHistoryVersionClick = (historyItem) => {
+    if (!historyItem) {
+      return;
+    }
+
+    const version = Number(historyItem?.VersionNo);
+
+    if (!version) {
+      toast.error("Version not found.");
+      return;
+    }
+
+    console.log("======================================");
+    console.log("HISTORY VERSION CLICK");
+    console.log("Invoice No:", historyItem?.InvoiceNo);
+    console.log("Invoice ID:", historyItem?.InvoiceId);
+    console.log("Version:", version);
+    console.log("======================================");
+
+    setSelectedHistoryVersion(version);
+
+    const versionDetails = historyDetails.filter(
+      (detail) => Number(detail?.VersionNo) === version,
+    );
+
+    console.log("SELECTED VERSION DETAILS:", versionDetails);
+
+    setSelectedHistoryDetails(versionDetails);
+  };
+
+  // =====================================================
+  // GET PRODUCT NAME FROM PRODUCT ID
+  // =====================================================
+  const getHistoryProductName = (productId, detail = {}) => {
+    if (productId === null || productId === undefined || productId === "") {
+      return detail?.ProductName || detail?.productName || "-";
+    }
+
+    const matchedProduct = productOptions.find(
+      (product) =>
+        String(product?.value) === String(productId) ||
+        String(product?.Id) === String(productId) ||
+        String(product?.ProductId) === String(productId),
+    );
+
+    return (
+      matchedProduct?.label ||
+      matchedProduct?.ProductName ||
+      detail?.ProductName ||
+      detail?.productName ||
+      "-"
+    );
+  };
+
+  // =====================================================
+  // FETCH CURRENT INVOICE FOR HISTORY
+  // =====================================================
+
+  const fetchCurrentInvoiceForHistory = async (invoiceId) => {
+    try {
+      // ==========================================
+      // CURRENT HEADER
+      // ==========================================
+
+      const headerResponse = await axios.get(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=Id&Colvalue=${invoiceId}`,
+      );
+
+      const headerData = headerResponse.data;
+
+      const currentHeader = Array.isArray(headerData)
+        ? headerData[0] || null
+        : Array.isArray(headerData?.data)
+          ? headerData.data[0] || null
+          : headerData?.data || headerData || null;
+
+      // ==========================================
+      // CURRENT DETAILS
+      // ==========================================
+
+      const detailResponse = await axios.get(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${invoiceId}`,
+      );
+
+      const detailData = detailResponse.data;
+
+      const currentDetails = Array.isArray(detailData)
+        ? detailData
+        : Array.isArray(detailData?.data)
+          ? detailData.data
+          : detailData?.data
+            ? [detailData.data]
+            : detailData
+              ? [detailData]
+              : [];
+
+      setCurrentHistoryHeader(currentHeader);
+      setCurrentHistoryDetails(currentDetails);
+
+      return {
+        header: currentHeader,
+        details: currentDetails,
+      };
+    } catch (error) {
+      console.error("CURRENT INVOICE HISTORY FETCH ERROR:", error);
+
+      throw error;
+    }
+  };
+
+  // =====================================================
+  // OPEN INVOICE EDIT HISTORY
+  // =====================================================
+
+  const handleInvoiceHistoryClick = async (invoice) => {
+    try {
+      const invoiceId = invoice?.Id || invoice?.InvoiceId;
+
+      if (!invoiceId) {
+        toast.error("Invoice ID not found.");
+        return;
+      }
+
+      console.log("======================================");
+      console.log("INVOICE HISTORY CLICK");
+      console.log("Invoice ID:", invoiceId);
+      console.log("======================================");
+
+      setSelectedHistoryInvoice(invoice);
+      setHistoryOpen(true);
+      setHistoryLoading(true);
+
+      setSelectedHistoryVersion(null);
+      setSelectedHistoryDetails([]);
+
+      // =================================================
+      // 1. OLD HEADER HISTORY
+      // =================================================
+
+      const headerResponse = await axios.get(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+      );
+
+      console.log("OLD HEADER HISTORY:", headerResponse.data);
+
+      const headerData = headerResponse.data;
+
+      const oldHeaders = Array.isArray(headerData)
+        ? headerData
+        : Array.isArray(headerData?.data)
+          ? headerData.data
+          : headerData?.data
+            ? [headerData.data]
+            : headerData
+              ? [headerData]
+              : [];
+
+      setHistoryHeader(oldHeaders);
+
+      // =================================================
+      // 2. OLD DETAIL HISTORY
+      // =================================================
+
+      const detailResponse = await axios.get(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+      );
+
+      console.log("OLD DETAIL HISTORY:", detailResponse.data);
+
+      const detailData = detailResponse.data;
+
+      const oldDetails = Array.isArray(detailData)
+        ? detailData
+        : Array.isArray(detailData?.data)
+          ? detailData.data
+          : detailData?.data
+            ? [detailData.data]
+            : detailData
+              ? [detailData]
+              : [];
+
+      setHistoryDetails(oldDetails);
+
+      // =================================================
+      // 3. CURRENT INVOICE
+      // =================================================
+
+      await fetchCurrentInvoiceForHistory(invoiceId);
+
+      // =================================================
+      // 4. DEFAULT LATEST OLD VERSION
+      // =================================================
+
+      if (oldHeaders.length > 0) {
+        const latestVersionItem = [...oldHeaders].sort(
+          (a, b) => Number(b?.VersionNo || 0) - Number(a?.VersionNo || 0),
+        )[0];
+
+        const latestVersion = Number(latestVersionItem?.VersionNo);
+
+        if (latestVersion) {
+          setSelectedHistoryVersion(latestVersion);
+
+          const latestVersionDetails = oldDetails.filter(
+            (detail) => Number(detail?.VersionNo) === latestVersion,
+          );
+
+          setSelectedHistoryDetails(latestVersionDetails);
+        }
+      }
+    } catch (error) {
+      console.error("INVOICE HISTORY ERROR:", error);
+
+      toast.error("Unable to load invoice history.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const [productOptions, setProductOptions] = useState([]);
   // =========================
-// INVOICE FILTERS
-// =========================
-const [searchText, setSearchText] = useState("");
-const [categoryFilter, setCategoryFilter] = useState("");
-const [fromDate, setFromDate] = useState("");
-const [toDate, setToDate] = useState("");
+  // INVOICE FILTERS
+  // =========================
+  const [searchText, setSearchText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [balanceDue, setBalanceDue] = useState(0);
 
@@ -93,103 +16504,124 @@ const [toDate, setToDate] = useState("");
   // Customer's previous outstanding balance
   const [previousBalanceDue, setPreviousBalanceDue] = useState(0);
 
-
   // ======================================================
-// FILTER INVOICE DATA
-// ======================================================
-const filteredInvoiceData = useMemo(() => {
-  const search = searchText.trim().toLowerCase();
+  // FILTER INVOICE DATA
+  // ======================================================
+  const filteredInvoiceData = useMemo(() => {
+    const search = searchText.trim().toLowerCase();
 
-  return invoiceheaders.filter((invoice) => {
-    // ==============================
-    // BILL NO
-    // ==============================
-    const billNo = String(invoice?.InvoiceNo || "").toLowerCase();
+    return invoiceheaders.filter((invoice) => {
+      // ==============================
+      // BILL NO
+      // ==============================
+      const billNo = String(invoice?.InvoiceNo || "").toLowerCase();
 
-    // ==============================
-    // CUSTOMER NAME
-    // ==============================
-    const customerName = String(
-      invoice?.accountDetails?.AccountName || ""
-    ).toLowerCase();
+      // ==============================
+      // CUSTOMER NAME
+      // ==============================
+      const customerName = String(
+        invoice?.accountDetails?.AccountName || "",
+      ).toLowerCase();
 
-    // ==============================
-    // CATEGORY
-    // ==============================
-    const customerType = String(
-      invoice?.accountDetails?.CustomerType || ""
-    )
-      .trim()
-      .toUpperCase();
+      // ==============================
+      // CATEGORY
+      // ==============================
+      const customerType = String(invoice?.accountDetails?.CustomerType || "")
+        .trim()
+        .toUpperCase();
 
-    let categoryName = "";
 
-    if (customerType === "R") {
-      categoryName = "retailer";
-    } else if (customerType === "D") {
-      categoryName = "dealer";
-    } else if (customerType === "C") {
-      categoryName = "caterers";
-    }
+        // =====================================================
+// SALES CATERERS = ONLY CATERERS CUSTOMERS
+// C = Caterers
+// =====================================================
 
-    // ==============================
-    // INVOICE DATE
-    // ==============================
-    const invoiceDate = invoice?.InvoiceDate?.date
-      ? invoice.InvoiceDate.date.substring(0, 10)
-      : "";
+if (customerType !== PAGE_CUSTOMER_TYPE) {
+  return false;
+}
 
-    // ==============================
-    // CATEGORY FILTER
-    // ==============================
-    const categoryMatch =
-      categoryFilter === "" ||
-      customerType === categoryFilter;
+      let categoryName = "";
 
-    // ==============================
-    // SEARCH FILTER
-    // ==============================
-    const searchMatch =
-      search === "" ||
-      billNo.includes(search) ||
-      customerName.includes(search) ||
-      categoryName.includes(search);
+      if (customerType === "R") {
+        categoryName = "retailer";
+      } else if (customerType === "D") {
+        categoryName = "dealer";
+      } else if (customerType === "C") {
+        categoryName = "caterers";
+      }
 
-    // ==============================
-    // FROM DATE FILTER
-    // ==============================
-    const fromDateMatch =
-      fromDate === "" ||
-      (invoiceDate !== "" && invoiceDate >= fromDate);
+      // ==============================
+      // INVOICE DATE
+      // ==============================
+      const invoiceDate = invoice?.InvoiceDate?.date
+        ? invoice.InvoiceDate.date.substring(0, 10)
+        : "";
 
-    // ==============================
-    // TO DATE FILTER
-    // ==============================
-    const toDateMatch =
-      toDate === "" ||
-      (invoiceDate !== "" && invoiceDate <= toDate);
+      // ==============================
+      // CATEGORY FILTER
+      // ==============================
+      const categoryMatch =
+        categoryFilter === "" || customerType === categoryFilter;
 
-    // ==============================
-    // ALL FILTERS MUST MATCH
-    // ==============================
-    return (
-      categoryMatch &&
-      searchMatch &&
-      fromDateMatch &&
-      toDateMatch
-    );
-  });
-}, [
-  invoiceheaders,
-  searchText,
-  categoryFilter,
-  fromDate,
-  toDate,
-]);
+      // ==============================
+      // SEARCH FILTER
+      // ==============================
+      const searchMatch =
+        search === "" ||
+        billNo.includes(search) ||
+        customerName.includes(search) ||
+        categoryName.includes(search);
 
+      // ==============================
+      // FROM DATE FILTER
+      // ==============================
+      const fromDateMatch =
+        fromDate === "" || (invoiceDate !== "" && invoiceDate >= fromDate);
+
+      // ==============================
+      // TO DATE FILTER
+      // ==============================
+      const toDateMatch =
+        toDate === "" || (invoiceDate !== "" && invoiceDate <= toDate);
+
+      // ==============================
+      // ALL FILTERS MUST MATCH
+      // ==============================
+      return categoryMatch && searchMatch && fromDateMatch && toDateMatch;
+    });
+  }, [invoiceheaders, searchText, categoryFilter, fromDate, toDate]);
 
   const discountRef = useRef(null);
   const receivedAmountRef = useRef(null);
+
+  // =====================================================
+  // FORMAT HISTORY DATE SAFELY
+  // =====================================================
+  const formatHistoryDate = (value) => {
+    if (!value) {
+      return "-";
+    }
+
+    // API may return:
+    // { date, timezone_type, timezone }
+    const dateValue = typeof value === "object" ? value?.date : value;
+
+    if (!dateValue) {
+      return "-";
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(dateValue);
+    }
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   // ======================================================
   // ESC = GO ONE STEP BACK
@@ -269,227 +16701,299 @@ const filteredInvoiceData = useMemo(() => {
     // fetchInvdetails();
   }, []);
 
+  useEffect(() => {
+    const storedUserId = sessionStorage.getItem("UserId");
+
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      toast.error("User is not logged in.");
+    }
+  }, []);
+
   // ======================================================
   // FETCH ALL INVOICE HEADERS
   // LATEST BILL FIRST
   // ======================================================
-const fetchInvoiceHeader = async () => {
-  const requestOptions = {
-    method: "GET",
-    redirect: "follow",
-  };
+  const fetchInvoiceHeader = async () => {
+    const requestOptions = {
+      method: "GET",
+      redirect: "follow",
+    };
 
-  try {
-    // --------------------------------------------------
-    // 1. GET FIRST PAGE
-    // --------------------------------------------------
-    const firstResponse = await fetch(
-      `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=1`,
-      requestOptions,
-    );
+    try {
+      // --------------------------------------------------
+      // 1. GET FIRST PAGE
+      // --------------------------------------------------
+      const firstResponse = await fetch(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=1`,
+        requestOptions,
+      );
 
-    const firstResult = await firstResponse.json();
+      const firstResult = await firstResponse.json();
 
-    console.log("========== INVOICE HEADER GET DATA ==========");
-    console.log("First Invoice:", firstResult?.data?.[0]);
-    console.log(
-      "BalanceDue:",
-      firstResult?.data?.[0]?.BalanceDue,
-    );
-    console.log(
-      "ReceivedAmount:",
-      firstResult?.data?.[0]?.ReceivedAmount,
-    );
-    console.log(
-      "PreviousBalanceDue:",
-      firstResult?.data?.[0]?.PreviousBalanceDue,
-    );
-    console.log("==============================================");
+      console.log("========== INVOICE HEADER GET DATA ==========");
+      console.log("First Invoice:", firstResult?.data?.[0]);
+      console.log("BalanceDue:", firstResult?.data?.[0]?.BalanceDue);
+      console.log("ReceivedAmount:", firstResult?.data?.[0]?.ReceivedAmount);
+      console.log(
+        "PreviousBalanceDue:",
+        firstResult?.data?.[0]?.PreviousBalanceDue,
+      );
+      console.log("==============================================");
 
-    const totalPages = Number(
-      firstResult.total_pages || 1,
-    );
+      const totalPages = Number(firstResult.total_pages || 1);
 
-    let allInvoiceData = [
-      ...(firstResult.data || []),
-    ];
+      let allInvoiceData = [...(firstResult.data || [])];
 
-    // --------------------------------------------------
-    // 2. GET REMAINING PAGES
-    // --------------------------------------------------
-    if (totalPages > 1) {
-      for (let page = 2; page <= totalPages; page++) {
-        const response = await fetch(
-          `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=${page}`,
-          requestOptions,
-        );
-
-        const result = await response.json();
-
-        allInvoiceData = [
-          ...allInvoiceData,
-          ...(result.data || []),
-        ];
-      }
-    }
-
-    // --------------------------------------------------
-    // 3. SORT BY BILL ID
-    // LATEST / NEWEST BILL FIRST
-    // --------------------------------------------------
-    allInvoiceData.sort(
-      (a, b) =>
-        Number(b.Id || 0) - Number(a.Id || 0),
-    );
-
-    // --------------------------------------------------
-    // 4. FETCH CUSTOMER + ADDRESS DETAILS
-    // --------------------------------------------------
-    const invoicesList = await Promise.all(
-      allInvoiceData.map(async (invoice) => {
-        try {
-          // ==========================================
-          // ACCOUNT DETAILS
-          // ==========================================
-          let accountDetails = null;
-
-          if (
-            invoice.AccountId &&
-            Number(invoice.AccountId) !== 0
-          ) {
-            const acctResponse = await fetch(
-              `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${invoice.AccountId}`,
-              requestOptions,
-            );
-
-            if (acctResponse.ok) {
-              const acctResult =
-                await acctResponse.json();
-
-              accountDetails = Array.isArray(acctResult)
-                ? acctResult[0] || null
-                : acctResult?.data
-                  ? Array.isArray(acctResult.data)
-                    ? acctResult.data[0] || null
-                    : acctResult.data
-                  : null;
-            }
-          }
-
-          // ==========================================
-          // ADDRESS DETAILS
-          // CustomerType is stored in Address
-          // ==========================================
-          let addressDetails = null;
-
-          if (
-            invoice.AccountId &&
-            Number(invoice.AccountId) !== 0
-          ) {
-            const addressResponse = await fetch(
-              `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${invoice.AccountId}`,
-              requestOptions,
-            );
-
-            if (addressResponse.ok) {
-              const addressResult =
-                await addressResponse.json();
-
-              addressDetails =
-                Array.isArray(addressResult)
-                  ? addressResult[0] || null
-                  : Array.isArray(
-                        addressResult?.data,
-                      )
-                    ? addressResult.data[0] || null
-                    : addressResult?.data ||
-                      addressResult ||
-                      null;
-            }
-          }
-
-          // ==========================================
-          // CUSTOMER TYPE / CATEGORY
-          // ==========================================
-          const customerType = String(
-            addressDetails?.CustomerType ||
-              addressDetails?.customerType ||
-              accountDetails?.CustomerType ||
-              accountDetails?.customerType ||
-              invoice?.CustomerType ||
-              invoice?.customerType ||
-              "",
-          )
-            .trim()
-            .toUpperCase();
-
-          // ==========================================
-          // FINAL INVOICE OBJECT
-          // ==========================================
-          return {
-            ...invoice,
-
-            accountDetails: {
-              ...(accountDetails || {}),
-              CustomerType: customerType,
-            },
-
-            addressDetails: addressDetails,
-          };
-        } catch (error) {
-          console.error(
-            `Failed to fetch customer details for invoice ${invoice.Id}:`,
-            error,
+      // --------------------------------------------------
+      // 2. GET REMAINING PAGES
+      // --------------------------------------------------
+      if (totalPages > 1) {
+        for (let page = 2; page <= totalPages; page++) {
+          const response = await fetch(
+            `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=${page}`,
+            requestOptions,
           );
 
-          // ==========================================
-          // RETURN INVOICE EVEN IF CUSTOMER API FAILS
-          // ==========================================
-          return {
-            ...invoice,
+          const result = await response.json();
 
-            accountDetails: {
-              AccountName:
-                invoice?.AccountName || "",
-              CustomerType:
+          allInvoiceData = [...allInvoiceData, ...(result.data || [])];
+        }
+      }
+
+      // --------------------------------------------------
+      // 3. SORT BY BILL ID
+      // LATEST / NEWEST BILL FIRST
+      // --------------------------------------------------
+      allInvoiceData.sort((a, b) => Number(b.Id || 0) - Number(a.Id || 0));
+
+      // --------------------------------------------------
+      // 4. FETCH CUSTOMER + ADDRESS DETAILS
+      // --------------------------------------------------
+      const invoicesList = await Promise.all(
+        allInvoiceData.map(async (invoice) => {
+          try {
+            // ==========================================
+            // ACCOUNT DETAILS
+            // ==========================================
+            let accountDetails = null;
+
+            if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+              const acctResponse = await fetch(
+                `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${invoice.AccountId}`,
+                requestOptions,
+              );
+
+              if (acctResponse.ok) {
+                const acctResult = await acctResponse.json();
+
+                accountDetails = Array.isArray(acctResult)
+                  ? acctResult[0] || null
+                  : acctResult?.data
+                    ? Array.isArray(acctResult.data)
+                      ? acctResult.data[0] || null
+                      : acctResult.data
+                    : null;
+              }
+            }
+
+            // ==========================================
+            // ADDRESS DETAILS
+            // CustomerType is stored in Address
+            // ==========================================
+            let addressDetails = null;
+
+            if (invoice.AccountId && Number(invoice.AccountId) !== 0) {
+              const addressResponse = await fetch(
+                `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${invoice.AccountId}`,
+                requestOptions,
+              );
+
+              if (addressResponse.ok) {
+                const addressResult = await addressResponse.json();
+
+                addressDetails = Array.isArray(addressResult)
+                  ? addressResult[0] || null
+                  : Array.isArray(addressResult?.data)
+                    ? addressResult.data[0] || null
+                    : addressResult?.data || addressResult || null;
+              }
+            }
+
+            // ==========================================
+            // CUSTOMER TYPE / CATEGORY
+            // ==========================================
+            const customerType = String(
+              addressDetails?.CustomerType ||
+                addressDetails?.customerType ||
+                accountDetails?.CustomerType ||
+                accountDetails?.customerType ||
                 invoice?.CustomerType ||
                 invoice?.customerType ||
                 "",
-            },
+            )
+              .trim()
+              .toUpperCase();
 
-            addressDetails: null,
-          };
-        }
-      }),
-    );
+            // ==========================================
+            // FINAL INVOICE OBJECT
+            // ==========================================
+            return {
+              ...invoice,
 
-    // --------------------------------------------------
-    // 5. SAVE ALL INVOICES
-    // --------------------------------------------------
-    setInvoiceheaders(invoicesList);
+              accountDetails: {
+                ...(accountDetails || {}),
+                CustomerType: customerType,
+              },
 
-    // IMPORTANT:
-    // We already fetched ALL pages above,
-    // so don't force totalPages to 1.
-    setTotalPages(totalPages);
+              addressDetails: addressDetails,
+            };
+          } catch (error) {
+            console.error(
+              `Failed to fetch customer details for invoice ${invoice.Id}:`,
+              error,
+            );
 
-    console.log(
-      "ALL CATERERS INVOICES:",
-      invoicesList,
-    );
+            // ==========================================
+            // RETURN INVOICE EVEN IF CUSTOMER API FAILS
+            // ==========================================
+            return {
+              ...invoice,
 
-    console.log(
-      "TOTAL INVOICE COUNT:",
-      invoicesList.length,
-    );
-  } catch (error) {
-    console.error(
-      "Error fetching all invoice headers:",
-      error,
-    );
-  }
-};
+              accountDetails: {
+                AccountName: invoice?.AccountName || "",
+                CustomerType:
+                  invoice?.CustomerType || invoice?.customerType || "",
+              },
 
+              addressDetails: null,
+            };
+          }
+        }),
+      );
+
+      // --------------------------------------------------
+      // 5. SAVE ALL INVOICES
+      // --------------------------------------------------
+     // =====================================================
+// FILTER ONLY CATERERS INVOICES
+// C = Caterers
+// =====================================================
+
+const catererInvoices = invoicesList.filter((invoice) => {
+  const customerType = String(
+    invoice?.addressDetails?.CustomerType ||
+      invoice?.addressDetails?.customerType ||
+      invoice?.accountDetails?.CustomerType ||
+      invoice?.accountDetails?.customerType ||
+      invoice?.CustomerType ||
+      invoice?.customerType ||
+      "",
+  )
+    .trim()
+    .toUpperCase();
+
+  return customerType === PAGE_CUSTOMER_TYPE;
+});
+
+// =====================================================
+// DEBUG
+// =====================================================
+
+console.log("====================================");
+console.log("ALL INVOICES:", invoicesList.length);
+console.log("CATERERS INVOICES:", catererInvoices.length);
+console.log("CATERERS DATA:", catererInvoices);
+console.log("====================================");
+
+// =====================================================
+// SHOW ONLY CATERERS INVOICES
+// =====================================================
+
+setInvoiceheaders(catererInvoices);
+
+// =====================================================
+// HISTORY ONLY FOR CATERERS
+// =====================================================
+
+await checkInvoiceHistory(catererInvoices);
+
+setTotalPages(totalPages);
+
+      console.log("ALL CATERERS INVOICES:", invoicesList);
+
+      console.log("TOTAL INVOICE COUNT:", invoicesList.length);
+    } catch (error) {
+      console.error("Error fetching all invoice headers:", error);
+    }
+  };
+
+  // =====================================================
+  // CHECK INVOICE EDIT HISTORY
+  // =====================================================
+  const checkInvoiceHistory = async (invoiceList) => {
+    try {
+      const historyStatus = {};
+
+      await Promise.all(
+        invoiceList.map(async (invoice) => {
+          const invoiceId = invoice?.Id;
+
+          if (!invoiceId) {
+            return;
+          }
+
+          try {
+            const response = await axios.get(
+              `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader_history&Colname=InvoiceId&Colvalue=${invoiceId}`,
+            );
+
+            const data = response.data;
+
+            const historyList = Array.isArray(data)
+              ? data
+              : Array.isArray(data?.data)
+                ? data.data
+                : data?.data
+                  ? [data.data]
+                  : data
+                    ? [data]
+                    : [];
+
+            // ==========================================
+            // IMPORTANT
+            // ==========================================
+            const hasHistory = historyList.length > 0;
+
+            historyStatus[String(invoiceId)] = hasHistory;
+
+            console.log("HISTORY CHECK:", {
+              InvoiceId: invoiceId,
+              HistoryCount: historyList.length,
+              HasHistory: hasHistory,
+              HistoryData: historyList,
+            });
+          } catch (error) {
+            console.error(
+              `History check failed for InvoiceId ${invoiceId}:`,
+              error,
+            );
+
+            historyStatus[String(invoiceId)] = false;
+          }
+        }),
+      );
+
+      console.log("========== FINAL INVOICE HISTORY STATUS ==========");
+
+      console.log(historyStatus);
+
+      setInvoiceHistoryStatus(historyStatus);
+    } catch (error) {
+      console.error("History status error:", error);
+    }
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -509,6 +17013,124 @@ const fetchInvoiceHeader = async () => {
     setIsEditing(false);
     setOpen(false);
   };
+
+
+  // ======================================================
+// OPEN CATERERS BILL ENTRY DIRECTLY FROM SALES SHORTCUT
+// ======================================================
+
+useEffect(() => {
+  if (location.state?.openCreateForm === true) {
+    handleNewClick();
+
+    navigate(location.pathname, {
+      replace: true,
+      state: {},
+    });
+  }
+}, [location.state, location.pathname, navigate]);
+
+// ======================================================
+// SALES ENTRY KEYBOARD SHORTCUTS
+// C = CATERERS
+// D = DEALER
+// R = REGULAR
+// ======================================================
+useEffect(() => {
+  const handleSalesShortcut = (event) => {
+    // --------------------------------------------------
+    // Do not run shortcut while typing
+    // --------------------------------------------------
+    const tagName = event.target?.tagName?.toLowerCase();
+
+    const isTyping =
+      tagName === "input" ||
+      tagName === "textarea" ||
+      tagName === "select" ||
+      event.target?.isContentEditable;
+
+    if (isTyping) {
+      return;
+    }
+
+    // --------------------------------------------------
+    // Drawer open असेल तर shortcut बंद
+    // --------------------------------------------------
+    if (isDrawerOpen) {
+      return;
+    }
+
+    // --------------------------------------------------
+    // Ctrl / Alt / Windows combinations ignore
+    // --------------------------------------------------
+    if (event.ctrlKey || event.altKey || event.metaKey) {
+      return;
+    }
+
+    // ==================================================
+    // C = CATERERS SALES ENTRY
+    // ==================================================
+    if (event.key?.toLowerCase() === "c") {
+      event.preventDefault();
+      event.stopPropagation();
+
+      console.log("C pressed - Opening Caterers Sales Entry");
+
+      setIsDrawerOpen(true);
+      resetForm();
+      setIsEditing(false);
+      setOpen(false);
+
+      return;
+    }
+
+    // ==================================================
+    // D = DEALER SALES ENTRY
+    // ==================================================
+    if (event.key?.toLowerCase() === "d") {
+      event.preventDefault();
+      event.stopPropagation();
+
+      console.log("D pressed - Opening Dealer Sales Entry");
+
+      navigate("/salesdealer", {
+        state: {
+          openCreateForm: true,
+        },
+      });
+
+      return;
+    }
+
+    // ==================================================
+    // R = REGULAR SALES ENTRY
+    // ==================================================
+    if (event.key?.toLowerCase() === "r") {
+      event.preventDefault();
+      event.stopPropagation();
+
+      console.log("R pressed - Opening Regular Sales Entry");
+
+      navigate("/salesentry", {
+        state: {
+          openCreateForm: true,
+        },
+      });
+
+      return;
+    }
+  };
+
+  // Capture phase
+  window.addEventListener("keydown", handleSalesShortcut, true);
+
+  return () => {
+    window.removeEventListener("keydown", handleSalesShortcut, true);
+  };
+}, [navigate, isDrawerOpen]);
+
+
+
 
   // ======================================================
   // OPEN CATERERS BILL ENTRY DIRECTLY FROM SALES SHORTCUT
@@ -701,13 +17323,11 @@ const fetchInvoiceHeader = async () => {
       // 6. HEADER DATA
       // --------------------------------------------------
       setInvoiceNo(
-  invheader.InvoiceNo != null
-    ? String(invheader.InvoiceNo)
-    : ""
-);
+        invheader.InvoiceNo != null ? String(invheader.InvoiceNo) : "",
+      );
       setInvoiceDate(invoiceDate);
       setPhone(invheader.ContactNo || "");
-      setDevice(invheader.Device || "");
+      setDevice(getDeviceForLoggedInUser());
 
       setBillFor(invheader.BillFor || "");
 
@@ -808,405 +17428,210 @@ const fetchInvoiceHeader = async () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
 
-const columns = useMemo(
-  () => [
-    // ==================================================
-    // BILL NO
-    // ==================================================
-    {
-      accessorKey: "InvoiceNo",
-      header: "Bill No",
-      size: 80,
+  const columns = useMemo(
+    () => [
+      // ==================================================
+      // BILL NO
+      // ==================================================
+      {
+        accessorKey: "InvoiceNo",
+        header: "Bill No",
+        size: 80,
 
-      Cell: ({ cell }) => (
-        <span>
-          {cell.getValue() || "-"}
-        </span>
-      ),
-    },
-
-    // ==================================================
-    // INVOICE DATE
-    // ==================================================
-    {
-      accessorKey: "InvoiceDate.date",
-      header: "Invoice Date",
-      size: 50,
-
-      Cell: ({ cell }) => (
-        <span>
-          {cell.getValue()
-            ? moment(cell.getValue()).format("DD-MM-YYYY")
-            : "-"}
-        </span>
-      ),
-    },
-
-    // ==================================================
-    // CUSTOMER NAME
-    // ==================================================
-    {
-      header: "Customer Name",
-      size: 100,
-
-      accessorFn: (row) =>
-        row?.accountDetails?.AccountName || "N/A",
-
-      Cell: ({ cell }) => (
-        <span>
-          {cell.getValue()}
-        </span>
-      ),
-    },
-
-    // ==================================================
-    // CATEGORY
-    // ==================================================
-    {
-      header: "Category",
-      size: 130,
-
-      accessorFn: (row) => {
-        const customerType = String(
-          row?.accountDetails?.CustomerType ||
-            row?.CustomerType ||
-            ""
-        )
-          .trim()
-          .toUpperCase();
-
-        if (customerType === "R") {
-          return "Retailer";
-        }
-
-        if (customerType === "D") {
-          return "Dealer";
-        }
-
-        if (customerType === "C") {
-          return "Caterers";
-        }
-
-        return "-";
+        Cell: ({ cell }) => <span>{cell.getValue() || "-"}</span>,
       },
 
-      Cell: ({ cell }) => (
-        <span>
-          {cell.getValue()}
-        </span>
-      ),
-    },
+      // ==================================================
+      // INVOICE DATE
+      // ==================================================
+      {
+        accessorKey: "InvoiceDate.date",
+        header: "Invoice Date",
+        size: 50,
+
+        Cell: ({ cell }) => (
+          <span>
+            {cell.getValue()
+              ? moment(cell.getValue()).format("DD-MM-YYYY")
+              : "-"}
+          </span>
+        ),
+      },
+
+      // ==================================================
+      // CUSTOMER NAME
+      // ==================================================
+      {
+        header: "Customer Name",
+        size: 100,
+
+        accessorFn: (row) => row?.accountDetails?.AccountName || "N/A",
+
+        Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+      },
+
+      // ==================================================
+      // CATEGORY
+      // ==================================================
+      {
+        header: "Category",
+        size: 130,
+
+        accessorFn: (row) => {
+          const customerType = String(
+            row?.accountDetails?.CustomerType || row?.CustomerType || "",
+          )
+            .trim()
+            .toUpperCase();
+
+          if (customerType === "R") {
+            return "Retailer";
+          }
+
+          if (customerType === "D") {
+            return "Dealer";
+          }
+
+          if (customerType === "C") {
+            return "Caterers";
+          }
+
+          return "-";
+        },
+
+        Cell: ({ cell }) => <span>{cell.getValue()}</span>,
+      },
+
+      // ==================================================
+      // TOTAL
+      // ==================================================
+      {
+        accessorKey: "Total",
+        header: "Total",
+        size: 50,
+      },
+
+      // ==================================================
+      // ACTIONS
+      // ==================================================
+      {
+        header: "Actions",
+        size: 200,
+
+        Cell: ({ row }) => (
+          <Box display="flex" gap={1}>
+            {/* EDIT */}
+            <Button
+              sx={{
+                background: "var(--primary-color)",
+              }}
+              variant="contained"
+              size="small"
+              onClick={() => {
+                handleEdit(row);
+              }}
+            >
+              Edit
+            </Button>
+
+            {/* PREVIEW */}
+            <Button
+              variant="contained"
+              sx={{
+                background: "var(--complementary-color)",
+              }}
+              size="small"
+              onClick={async () => {
+                // तुमचा existing Preview code
+              }}
+            >
+              Preview
+            </Button>
+          </Box>
+        ),
+      },
+
+      // ==================================================
+      // REMARK / EDITED
+      // SAME LOGIC AS SALES ENTRY
+      // ==================================================
+      {
+        header: "Remark",
+        size: 140,
+
+        accessorFn: (row) => {
+          const createdOn = row?.CreatedOn?.date || row?.CreatedOn || "";
+
+          const updatedOn = row?.UpdatedOn?.date || row?.UpdatedOn || "";
+
+          const updateCount = Number(row?.UpdateCount ?? 0);
+
+          const isEdited =
+            updateCount > 1 ||
+            (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+          return isEdited ? "Edited" : "-";
+        },
+
+        Cell: ({ row }) => {
+          const invoice = row.original;
+
+          const createdOn =
+            invoice?.CreatedOn?.date || invoice?.CreatedOn || "";
+
+          const updatedOn =
+            invoice?.UpdatedOn?.date || invoice?.UpdatedOn || "";
+
+          const updateCount = Number(invoice?.UpdateCount ?? 0);
+
+          const isEdited =
+            updateCount > 1 ||
+            (createdOn && updatedOn && String(createdOn) !== String(updatedOn));
+
+          // ==========================================
+          // NOT EDITED
+          // ==========================================
+          if (!isEdited) {
+            return (
+              <Typography
+                sx={{
+                  color: "#999",
+                  fontWeight: 500,
+                }}
+              >
+                -
+              </Typography>
+            );
+          }
+
+          // ==========================================
+          // EDITED
+          // ==========================================
+          return (
+            <Button
+              variant="contained"
+              size="small"
+              sx={{
+                background: "var(--primary-color)",
+                minWidth: "90px",
+                fontWeight: 600,
+              }}
+              onClick={() => {
+                handleInvoiceHistoryClick(invoice);
+              }}
+            >
+              EDITED
+            </Button>
+          );
+        },
+      },
+    ],
 
     // ==================================================
-    // TOTAL
+    // DEPENDENCIES
     // ==================================================
-    {
-      accessorKey: "Total",
-      header: "Total",
-      size: 50,
-    },
-
-    // ==================================================
-    // ACTIONS
-    // ==================================================
-    {
-      header: "Actions",
-      size: 200,
-
-      Cell: ({ row }) => (
-        <Box display="flex" gap={1}>
-
-          {/* EDIT */}
-          <Button
-            sx={{
-              background: "var(--primary-color)",
-            }}
-            variant="contained"
-            size="small"
-            onClick={() => {
-              handleEdit(row);
-            }}
-          >
-            Edit
-          </Button>
-
-          {/* PREVIEW */}
-          <Button
-            variant="contained"
-            sx={{
-              background: "var(--complementary-color)",
-            }}
-            size="small"
-            onClick={async () => {
-              try {
-                const invoiceId = row?.original?.Id;
-
-                if (!invoiceId) {
-                  toast.error("Invoice ID not found.");
-                  return;
-                }
-
-                const response = await axios.get(
-                  `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${invoiceId}`,
-                );
-
-                let invdetail = [];
-
-                if (Array.isArray(response.data)) {
-                  invdetail = response.data;
-                } else if (
-                  Array.isArray(response.data?.data)
-                ) {
-                  invdetail = response.data.data;
-                } else if (response.data) {
-                  invdetail = [response.data];
-                }
-
-                const finalDetails = invdetail.map(
-                  (detail) => {
-                    const matchedMaterial =
-                      productOptions.find(
-                        (item) =>
-                          String(item.value) ===
-                          String(detail.ProductId),
-                      );
-
-                    return {
-                      ...detail,
-
-                      ProductName:
-                        matchedMaterial?.label ||
-                        detail.ProductName ||
-                        "Unknown",
-
-                      Quantity:
-                        parseFloat(detail.Quantity) || 0,
-
-                      Rate:
-                        parseFloat(detail.Rate) || 0,
-
-                      Amount:
-                        parseFloat(detail.Amount) || 0,
-
-                      DiscountAmt:
-                        parseFloat(detail.DiscountAmt) || 0,
-                    };
-                  },
-                );
-
-                const cashAmountSaved = Number(
-                  row.original?.CashAmount || 0,
-                );
-
-                const onlineAmountSaved = Number(
-                  row.original?.OnlineAmount || 0,
-                );
-
-                const savedReceivedAmount =
-                  row.original?.ReceivedAmount != null
-                    ? Number(
-                        row.original.ReceivedAmount,
-                      )
-                    : cashAmountSaved +
-                      onlineAmountSaved;
-
-              // ======================================================
-// PREVIEW BALANCE CALCULATION
-// ======================================================
-
-// Invoice Total
-const previewTotal = Number(
-  row.original?.Total || 0,
-);
-
-// Received Amount
-const previewReceived =
-  row.original?.ReceivedAmount != null
-    ? Number(row.original.ReceivedAmount || 0)
-    : Number(row.original?.CashAmount || 0) +
-      Number(row.original?.OnlineAmount || 0);
-
-// ======================================================
-// CURRENT BILL DUE
-// Total - Received
-// Example:
-// Total = 2000
-// Received = 1500
-// Current Bill Due = 500
-// ======================================================
-
-const previewCurrentDue = Math.max(
-  previewTotal - previewReceived,
-  0,
-);
-
-
-
-// ======================================================
-// PREVIOUS CUSTOMER OUTSTANDING
-// ALL INVOICES - CURRENT INVOICE EXCLUDED
-// ======================================================
-const previewPreviousDue =
-  await fetchPreviousBalance(
-    row.original?.AccountId,
-    invoiceId
+    [invoiceheaders, pageNo, productOptions, invoiceHistoryStatus],
   );
-
-// ======================================================
-// TOTAL CUSTOMER OUTSTANDING
-//
-// Previous Due + Current Bill Due
-//
-// Example:
-// Previous Due = 500
-// Current Bill Due = 200
-// Total Outstanding = 700
-// ======================================================
-
-const previewTotalOutstanding =
-  previewPreviousDue + previewCurrentDue;
-
-
-// ======================================================
-// FINAL PREVIEW DATA
-// ======================================================
-
-const finalPreviewData = {
-  ...row.original,
-
-  // ====================================================
-  // RECEIVED AMOUNT
-  // ====================================================
-
-  ReceivedAmount: previewReceived,
-
-  // ====================================================
-  // PREVIOUS CUSTOMER DUE
-  // ====================================================
-
-  PreviousBalanceDue: Number(
-    previewPreviousDue.toFixed(2),
-  ),
-
-  // ====================================================
-  // CURRENT BILL DUE
-  // ====================================================
-
-  CurrentInvoiceDue: Number(
-    previewCurrentDue.toFixed(2),
-  ),
-
-  // ====================================================
-  // TOTAL CUSTOMER OUTSTANDING
-  // ====================================================
-
-  BalanceDue: Number(
-    previewTotalOutstanding.toFixed(2),
-  ),
-
-  // ====================================================
-  // CUSTOMER DETAILS
-  // ====================================================
-
-  accountDetails:
-    row.original?.accountDetails || {
-      AccountName:
-        row.original?.AccountName || "",
-
-      Address1:
-        row.original?.Address1 || "",
-
-      Address2:
-        row.original?.Address2 || "",
-
-      Address3:
-        row.original?.Address3 || "",
-
-      GSTNo:
-        row.original?.GSTNo || "",
-    },
-
-  // ====================================================
-  // INVOICE DETAILS
-  // ====================================================
-
-  invdetail: finalDetails,
-};
-
-
-// ======================================================
-// DEBUG
-// ======================================================
-
-console.log(
-  "========== PREVIEW BALANCE ==========",
-);
-
-console.log(
-  "Invoice Total:",
-  previewTotal,
-);
-
-console.log(
-  "Received Amount:",
-  previewReceived,
-);
-
-console.log(
-  "Previous Due:",
-  previewPreviousDue,
-);
-
-console.log(
-  "Current Bill Due:",
-  previewCurrentDue,
-);
-
-console.log(
-  "Total Outstanding:",
-  previewTotalOutstanding,
-);
-
-console.log(
-  "FINAL PREVIEW DATA:",
-  finalPreviewData,
-);
-
-console.log(
-  "=====================================",
-);
-
-                setPreviewData(finalPreviewData);
-                setPreviewOpen(true);
-
-                console.log(
-                  "FINAL PREVIEW DATA:",
-                  finalPreviewData,
-                );
-              } catch (error) {
-                console.error(
-                  "PREVIEW ERROR:",
-                  error,
-                );
-
-                toast.error(
-                  "Unable to load invoice preview.",
-                );
-              }
-            }}
-          >
-            Preview
-          </Button>
-        </Box>
-      ),
-    },
-  ],
-
-  // ==================================================
-  // DEPENDENCIES
-  // ==================================================
-  [invoiceheaders, pageNo, productOptions],
-);
 
   useEffect(() => {
     fetchInvoiceHeader();
@@ -1239,7 +17664,6 @@ console.log(
   const [amount, SetAmount] = useState("");
 
   // Product Options
-
 
   // Keyboard navigation refs
   const quantityRef = useRef(null);
@@ -1287,6 +17711,22 @@ console.log(
 
   const [acctGSTNo, setacctGSTNo] = useState("");
 
+  const getDeviceForLoggedInUser = () => {
+    const userRole = String(sessionStorage.getItem("UserRole") || "")
+      .trim()
+      .toUpperCase();
+
+    if (userRole === "SALE") {
+      return "Device1";
+    }
+
+    if (userRole === "SALE2") {
+      return "Device2";
+    }
+
+    return "";
+  };
+
   useEffect(() => {
     // fetchAccounts();
 
@@ -1295,6 +17735,8 @@ console.log(
     fetchMachines();
 
     fetchInvoiceHeader();
+
+    setDevice(getDeviceForLoggedInUser());
   }, []);
 
   //fetch customer from  account table
@@ -1369,14 +17811,20 @@ console.log(
     setInvoiceNo("");
     setInvoiceDate(new Date());
     setPhone("");
-    setDevice("");
 
+    // Dynamic Device of logged-in user
+    setDevice(getDeviceForLoggedInUser());
+
+    // =========================
     // NEW BILL HEADER FIELDS
+    // =========================
     setBillFor("");
     setMachineID("");
     setIsGST(false);
 
+    // =========================
     // Customer
+    // =========================
     setSelectedAccount("");
     setSelectedCustomerName("");
     setSelectedCustomerAddress("");
@@ -1389,9 +17837,9 @@ console.log(
     setRate("");
     SetAmount("");
 
+    // =========================
     // Discount
-
-    // Discount
+    // =========================
     setDiscount("");
     setBaseAmount(0);
 
@@ -1433,6 +17881,9 @@ console.log(
       phone: "",
     };
 
+    // जर errors साठी state असेल तर:
+    // setErrors(newErrors);
+
     // =========================
     // Customer Search
     // =========================
@@ -1468,81 +17919,81 @@ console.log(
     setTotal(0);
   };
 
-const handleSubmit = async (e, shouldPrint = false) => {
-  // ======================================================
-  // 0. PREVENT DEFAULT FORM / BROWSER ACTION
-  // ======================================================
+  const handleSubmit = async (e, shouldPrint = false) => {
+    // ======================================================
+    // 0. PREVENT DEFAULT FORM / BROWSER ACTION
+    // ======================================================
 
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-  // ======================================================
-  // 1. PREVENT DOUBLE SUBMIT
-  // ======================================================
+    // ======================================================
+    // 1. PREVENT DOUBLE SUBMIT
+    // ======================================================
 
-  if (isSubmittingRef.current) {
-    console.log("SUBMIT ALREADY IN PROGRESS - IGNORING");
-    return;
-  }
+    if (isSubmittingRef.current) {
+      console.log("SUBMIT ALREADY IN PROGRESS - IGNORING");
+      return;
+    }
 
-  // ======================================================
-  // 2. MAIN FORM VALIDATION
-  // ======================================================
+    // ======================================================
+    // 2. MAIN FORM VALIDATION
+    // ======================================================
 
-  if (!validateForm()) {
-    console.log("FORM VALIDATION FAILED");
-    return;
-  }
+    if (!validateForm()) {
+      console.log("FORM VALIDATION FAILED");
+      return;
+    }
 
-  // ======================================================
-  // 3. RECEIVED AMOUNT VALIDATION
-  // ======================================================
+    // ======================================================
+    // 3. RECEIVED AMOUNT VALIDATION
+    // ======================================================
 
- if (!validateReceivedAmount()) {
-  console.log("RECEIVED AMOUNT VALIDATION FAILED");
-  isSubmittingRef.current = false;
-  return;
-}
+    if (!validateReceivedAmount()) {
+      console.log("RECEIVED AMOUNT VALIDATION FAILED");
+      isSubmittingRef.current = false;
+      return;
+    }
 
-  // ======================================================
-  // 4. MIX PAYMENT VALIDATION
-  // ======================================================
+    // ======================================================
+    // 4. MIX PAYMENT VALIDATION
+    // ======================================================
 
- if (!validatePaymentSplit()) {
-  console.log("PAYMENT VALIDATION FAILED");
-  isSubmittingRef.current = false;
-  return;
-}
+    if (!validatePaymentSplit()) {
+      console.log("PAYMENT VALIDATION FAILED");
+      isSubmittingRef.current = false;
+      return;
+    }
 
-  // ======================================================
-  // 5. LOCK SUBMIT
-  // ======================================================
+    // ======================================================
+    // 5. LOCK SUBMIT
+    // ======================================================
 
-  isSubmittingRef.current = true;
+    isSubmittingRef.current = true;
 
-  // ======================================================
-  // 6. OPEN PRINT WINDOW ONLY WHEN PRINT IS REQUESTED
-  // ======================================================
+    // ======================================================
+    // 6. OPEN PRINT WINDOW ONLY WHEN PRINT IS REQUESTED
+    // ======================================================
 
-  let printWindow = null;
+    let printWindow = null;
 
-  try {
-    if (shouldPrint) {
-      printWindow = window.open("", "_blank");
+    try {
+      if (shouldPrint) {
+        printWindow = window.open("", "_blank");
 
-     if (!printWindow) {
-  toast.error("Please allow popups for printing.");
-  isSubmittingRef.current = false;
-  return;
-}
+        if (!printWindow) {
+          toast.error("Please allow popups for printing.");
+          isSubmittingRef.current = false;
+          return;
+        }
 
-      // ======================================================
-      // TEMPORARY PRINT WINDOW CONTENT
-      // ======================================================
+        // ======================================================
+        // TEMPORARY PRINT WINDOW CONTENT
+        // ======================================================
 
-      printWindow.document.write(`
+        printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -1564,573 +18015,411 @@ const handleSubmit = async (e, shouldPrint = false) => {
         </html>
       `);
 
-      printWindow.document.close();
-    }
-
-    // ======================================================
-    // 7. FORMAT INVOICE DATE
-    // ======================================================
-
-    const formattedInvoicedate =
-      moment(invoiceDate).format("YYYY-MM-DD");
-
-    // ======================================================
-    // 8. INVOICE HEADER DATA
-    // ======================================================
-
-    const invoiceheaderdata = {
-      // ====================================================
-      // BASIC INVOICE DETAILS
-      // ====================================================
-
-      Id: isEditing ? editId : "",
-
-      InvoiceNo: invoiceNo,
-
-      InvoiceDate: formattedInvoicedate,
-
-      AccountId: selectedAccount
-        ? selectedAccount
-        : customerName,
-
-      ContactNo: phone,
-
-      // ====================================================
-      // NEW BILL HEADER FIELDS
-      // ====================================================
-
-      BillFor: billFor || "",
-
-      MachineID: machineID
-        ? parseInt(machineID, 10)
-        : 0,
-
-      IsGST: isGST ? 1 : 0,
-
-      // ====================================================
-      // PAYMENT DETAILS
-      // ====================================================
-
-      PaymentMode: paymentMode || "",
-
-      CashAmount:
-        parseFloat(cashAmount) || 0,
-
-      OnlineAmount:
-        parseFloat(onlineAmount) || 0,
-
-      // ====================================================
-      // BILL HEADER FIELDS
-      // ====================================================
-
-      Discount:
-        parseFloat(discount) || 0,
-
-      Transport:
-        parseFloat(transport) || 0,
-
-      CGSTAmount:
-        parseFloat(cgstTotal) || 0,
-
-      SGSTAmount:
-        parseFloat(sgstTotal) || 0,
-
-      IGSTAmount:
-        parseFloat(igstTotal) || 0,
-
-      Total:
-        parseFloat(total) || 0,
-
-      // IMPORTANT:
-      // ReceivedAmount must be sent separately
-      ReceivedAmount:
-        parseFloat(receivedAmount) || 0,
-
-      SubTotal:
-        parseFloat(subTotalcal) || 0,
-    };
-
-    // ======================================================
-    // 9. CHECK DATA BEFORE API CALL
-    // ======================================================
-
-    console.log(
-      "========== INVOICE HEADER DATA TO API =========="
-    );
-
-    console.log(
-      "PaymentMode:",
-      invoiceheaderdata.PaymentMode
-    );
-
-    console.log(
-      "CashAmount:",
-      invoiceheaderdata.CashAmount
-    );
-
-    console.log(
-      "OnlineAmount:",
-      invoiceheaderdata.OnlineAmount
-    );
-
-    console.log(
-      "Total:",
-      invoiceheaderdata.Total
-    );
-
-    console.log(
-      "ReceivedAmount:",
-      invoiceheaderdata.ReceivedAmount
-    );
-
-    console.log(
-      "INVOICE HEADER DATA TO API:",
-      invoiceheaderdata
-    );
-
-    console.log(
-      "==============================================="
-    );
-
-    // ======================================================
-    // 10. SELECT HEADER API
-    // ======================================================
-
-    const invoiceurl = isEditing
-      ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoiceheader.php"
-      : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoiceheader.php";
-
-    console.log(
-      "Saving invoice using:",
-      invoiceurl
-    );
-
-    // ======================================================
-    // 11. SAVE INVOICE HEADER
-    // ======================================================
-
-    const response = await axios.post(
-      invoiceurl,
-      qs.stringify(invoiceheaderdata),
-      {
-        headers: {
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-        },
+        printWindow.document.close();
       }
-    );
 
-    console.log(
-      "Invoice Header Response:",
-      response.data
-    );
+      // ======================================================
+      // 7. FORMAT INVOICE DATE
+      // ======================================================
 
-    // ======================================================
-    // 12. CALCULATE CURRENT INVOICE DUE
-    // ======================================================
+      const formattedInvoicedate = moment(invoiceDate).format("YYYY-MM-DD");
 
-    const currentDueForSave = Math.max(
-      (parseFloat(total) || 0) -
-        (parseFloat(receivedAmount) || 0),
-      0
-    );
+      // ======================================================
+      // 8. INVOICE HEADER DATA
+      // ======================================================
 
-    // ======================================================
-    // 13. GET PREVIOUS CUSTOMER DUE
-    //
-    // ALL INVOICES
-    // CURRENT EDITED INVOICE EXCLUDED
-    // NO DATE FILTER
-    // ======================================================
+      const invoiceheaderdata = {
+        Id: isEditing ? editId : "",
 
-    const previousDueForSave =
-      await fetchPreviousBalance(
-        selectedAccount,
-        isEditing ? editId : null
-      );
+        InvoiceNo: invoiceNo,
 
-    // ======================================================
-    // 14. TOTAL CUSTOMER OUTSTANDING
-    // ======================================================
+        InvoiceDate: formattedInvoicedate,
 
-    const totalOutstandingForSave =
-      Number(previousDueForSave || 0) +
-      Number(currentDueForSave || 0);
+        AccountId: selectedAccount ? selectedAccount : customerName,
 
-    console.log(
-      "========== SAVE BALANCE =========="
-    );
+        ContactNo: phone,
 
-    console.log(
-      "Previous Due:",
-      previousDueForSave
-    );
+        // ⭐ Dynamic logged-in user's device
+        Device: device,
 
-    console.log(
-      "Current Bill Due:",
-      currentDueForSave
-    );
+        BillFor: billFor || "",
 
-    console.log(
-      "Total Outstanding:",
-      totalOutstandingForSave
-    );
+        MachineID: machineID ? parseInt(machineID, 10) : 0,
 
-    console.log(
-      "================================="
-    );
+        IsGST: isGST ? 1 : 0,
 
-    // ======================================================
-    // 15. UPDATE DISPLAY BALANCE
-    // ======================================================
+        PaymentMode: paymentMode || "",
 
-    setPreviousBalanceDue(
-      Number(
-        Number(previousDueForSave || 0).toFixed(2)
-      )
-    );
+        CashAmount: parseFloat(cashAmount) || 0,
 
-    setBalanceDue(
-      Number(
-        Number(currentDueForSave || 0).toFixed(2)
-      )
-    );
+        OnlineAmount: parseFloat(onlineAmount) || 0,
 
-    // ======================================================
-// 16. GET INVOICE ID
-// ======================================================
+        Discount: parseFloat(discount) || 0,
 
-const invoiceId = isEditing
-  ? editId
-  : parseInt(response.data.Id, 10);
+        Transport: parseFloat(transport) || 0,
 
-const savedInvoiceNo = isEditing
-  ? invoiceNo
-  : response.data.InvoiceNo;
+        CGSTAmount: parseFloat(cgstTotal) || 0,
 
-console.log("Invoice ID:", invoiceId);
-console.log("Saved Invoice No:", savedInvoiceNo);
+        SGSTAmount: parseFloat(sgstTotal) || 0,
 
-if (!invoiceId) {
-  throw new Error(
-    "Invoice ID was not received from server."
-  );
-}
+        IGSTAmount: parseFloat(igstTotal) || 0,
 
-    // ======================================================
-    // 17. SAVE INVOICE DETAILS
-    // ======================================================
+        Total: parseFloat(total) || 0,
 
-    for (const [index, row] of rows.entries()) {
-      const rowData = {
-        Id: row.Id
-          ? parseInt(row.Id, 10)
-          : "",
+        ReceivedAmount: parseFloat(receivedAmount) || 0,
 
-        InvoiceId:
-          parseInt(invoiceId, 10),
+        SubTotal: parseFloat(subTotalcal) || 0,
 
-        SerialNo:
-          index + 1,
+        // ⭐ Dynamic logged-in user
+        CreatedBy: !isEditing ? userId : undefined,
 
-        ProductId:
-          parseInt(row.ProductId, 10),
-
-        Quantity:
-          parseFloat(row.Quantity) || 0,
-
-        Rate:
-          parseFloat(row.Rate) || 0,
-
-        Amount:
-          parseFloat(row.Amount) || 0,
-
-        CGSTPercentage:
-          parseFloat(row.CGSTPercentage) || 0,
-
-        CGSTAmount:
-          parseFloat(row.CGSTAmount) || 0,
-
-        SGSTPercentage:
-          parseFloat(row.SGSTPercentage) || 0,
-
-        SGSTAmount:
-          parseFloat(row.SGSTAmount) || 0,
-
-        IGSTPercentage:
-          parseFloat(row.IGSTPercentage) || 0,
-
-        IGSTAmount:
-          parseFloat(row.IGSTAmount) || 0,
+        // ⭐ Dynamic logged-in user during edit
+        UpdatedBy: isEditing ? userId : undefined,
       };
 
-      console.log(
-        `Invoice Detail ${index + 1}:`,
-        rowData
+      // ======================================================
+      // 9. CHECK DATA BEFORE API CALL
+      // ======================================================
+
+      console.log("========== INVOICE HEADER DATA TO API ==========");
+
+      console.log("PaymentMode:", invoiceheaderdata.PaymentMode);
+
+      console.log("CashAmount:", invoiceheaderdata.CashAmount);
+
+      console.log("OnlineAmount:", invoiceheaderdata.OnlineAmount);
+
+      console.log("Total:", invoiceheaderdata.Total);
+
+      console.log("ReceivedAmount:", invoiceheaderdata.ReceivedAmount);
+
+      console.log("INVOICE HEADER DATA TO API:", invoiceheaderdata);
+
+      console.log("===============================================");
+
+      // ======================================================
+      // 10. SELECT HEADER API
+      // ======================================================
+
+      const invoiceurl = isEditing
+        ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoiceheader.php"
+        : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoiceheader.php";
+
+      console.log("Saving invoice using:", invoiceurl);
+
+      // ======================================================
+      // 11. SAVE INVOICE HEADER
+      // ======================================================
+
+      const response = await axios.post(
+        invoiceurl,
+        qs.stringify(invoiceheaderdata),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        },
       );
 
-      const invoicdedetailurl = row.Id
-        ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoicedetail.php"
-        : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoicedetail.php";
+      console.log("Invoice Header Response:", response.data);
 
-      try {
-        await axios.post(
-          invoicdedetailurl,
-          qs.stringify(rowData),
-          {
-            headers: {
-              "Content-Type":
-                "application/x-www-form-urlencoded",
-            },
-          }
-        );
-      } catch (error) {
-        console.error(
-          "Invoice detail save error:",
-          error
-        );
+      // ======================================================
+      // 12. CALCULATE CURRENT INVOICE DUE
+      // ======================================================
 
-        throw error;
+      const currentDueForSave = Math.max(
+        (parseFloat(total) || 0) - (parseFloat(receivedAmount) || 0),
+        0,
+      );
+
+      // ======================================================
+      // 13. GET PREVIOUS CUSTOMER DUE
+      //
+      // ALL INVOICES
+      // CURRENT EDITED INVOICE EXCLUDED
+      // NO DATE FILTER
+      // ======================================================
+
+      const previousDueForSave = await fetchPreviousBalance(
+        selectedAccount,
+        isEditing ? editId : null,
+      );
+
+      // ======================================================
+      // 14. TOTAL CUSTOMER OUTSTANDING
+      // ======================================================
+
+      const totalOutstandingForSave =
+        Number(previousDueForSave || 0) + Number(currentDueForSave || 0);
+
+      console.log("========== SAVE BALANCE ==========");
+
+      console.log("Previous Due:", previousDueForSave);
+
+      console.log("Current Bill Due:", currentDueForSave);
+
+      console.log("Total Outstanding:", totalOutstandingForSave);
+
+      console.log("=================================");
+
+      // ======================================================
+      // 15. UPDATE DISPLAY BALANCE
+      // ======================================================
+
+      setPreviousBalanceDue(Number(Number(previousDueForSave || 0).toFixed(2)));
+
+      setBalanceDue(Number(Number(currentDueForSave || 0).toFixed(2)));
+
+      // ======================================================
+      // 16. GET INVOICE ID
+      // ======================================================
+
+      const invoiceId = isEditing ? editId : parseInt(response.data.Id, 10);
+
+      const savedInvoiceNo = isEditing ? invoiceNo : response.data.InvoiceNo;
+
+      console.log("Invoice ID:", invoiceId);
+      console.log("Saved Invoice No:", savedInvoiceNo);
+
+      if (!invoiceId) {
+        throw new Error("Invoice ID was not received from server.");
       }
-    }
 
-    // ======================================================
-    // 18. CUSTOMER NAME FOR PRINT
-    // ======================================================
+      // ======================================================
+      // 17. SAVE INVOICE DETAILS
+      // ======================================================
 
-    const customerNameForPrint =
-      accountOptions.find(
-        ({ Id }) =>
-          String(Id) ===
-          String(selectedAccount)
-      )?.AccountName ||
-      accountName ||
-      "-";
+      for (const [index, row] of rows.entries()) {
+        const rowData = {
+          Id: row.Id ? parseInt(row.Id, 10) : "",
 
-    console.log(
-      "Customer Name For Print:",
-      customerNameForPrint
-    );
+          InvoiceId: parseInt(invoiceId, 10),
 
-    // ======================================================
-    // 19. PREPARE PRINT DATA
-    // ======================================================
+          SerialNo: index + 1,
 
-   const printData = {
-  ...invoiceheaderdata,
+          ProductId: parseInt(row.ProductId, 10),
 
-  // Invoice ID
-  Id: invoiceId,
+          Quantity: parseFloat(row.Quantity) || 0,
 
-  // ACTUAL INVOICE NUMBER
-  InvoiceNo: savedInvoiceNo,
+          Rate: parseFloat(row.Rate) || 0,
 
-      // ====================================================
-      // BALANCE
-      // ====================================================
+          Amount: parseFloat(row.Amount) || 0,
 
-      PreviousBalanceDue:
-        Number(
-          Number(previousDueForSave || 0)
-            .toFixed(2)
-        ),
+          CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
 
-      CurrentInvoiceDue:
-        Number(
-          Number(currentDueForSave || 0)
-            .toFixed(2)
-        ),
+          CGSTAmount: parseFloat(row.CGSTAmount) || 0,
 
-      BalanceDue:
-        Number(
-          Number(totalOutstandingForSave || 0)
-            .toFixed(2)
-        ),
+          SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
 
-      // ====================================================
-      // DEVICE
-      // ====================================================
+          SGSTAmount: parseFloat(row.SGSTAmount) || 0,
 
-      Device:
-        device || "-",
+          IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
 
-      // ====================================================
-      // PAYMENT MODE
-      // ====================================================
+          IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+        };
 
-      PaymentMode:
-        paymentMode || "-",
+        console.log(`Invoice Detail ${index + 1}:`, rowData);
 
-      // ====================================================
-      // CUSTOMER
-      // ====================================================
+        const invoicdedetailurl = row.Id
+          ? "https://amrutdairyapi.microtechsolutions.net.in/php/updateinvoicedetail.php"
+          : "https://amrutdairyapi.microtechsolutions.net.in/php/postinvoicedetail.php";
 
-      accountDetails: {
-        AccountName:
-          customerNameForPrint,
-      },
+        try {
+          await axios.post(invoicdedetailurl, qs.stringify(rowData), {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          });
+        } catch (error) {
+          console.error("Invoice detail save error:", error);
 
-      customerName:
-        customerNameForPrint,
+          throw error;
+        }
+      }
 
-      // ====================================================
-      // INVOICE DETAILS
-      // ====================================================
+      // ======================================================
+      // 18. CUSTOMER NAME FOR PRINT
+      // ======================================================
 
-      invdetail: rows.map((row) => ({
-        ...row,
+      const customerNameForPrint =
+        accountOptions.find(({ Id }) => String(Id) === String(selectedAccount))
+          ?.AccountName ||
+        accountName ||
+        "-";
 
-        ProductName:
-          row.ProductName ||
-          productOptions.find(
-            (option) =>
-              String(option.value) ===
-              String(row.ProductId)
-          )?.label ||
-          "Unknown",
+      console.log("Customer Name For Print:", customerNameForPrint);
 
-        Quantity:
-          parseFloat(row.Quantity) || 0,
+      // ======================================================
+      // 19. PREPARE PRINT DATA
+      // ======================================================
 
-        Rate:
-          parseFloat(row.Rate) || 0,
+      const printData = {
+        ...invoiceheaderdata,
 
-        Amount:
-          parseFloat(row.Amount) || 0,
+        // Invoice ID
+        Id: invoiceId,
 
-        DiscountAmt:
-          parseFloat(row.DiscountAmt) || 0,
+        // ACTUAL INVOICE NUMBER
+        InvoiceNo: savedInvoiceNo,
 
-        CGSTPercentage:
-          parseFloat(row.CGSTPercentage) || 0,
+        // ====================================================
+        // BALANCE
+        // ====================================================
 
-        CGSTAmount:
-          parseFloat(row.CGSTAmount) || 0,
+        PreviousBalanceDue: Number(Number(previousDueForSave || 0).toFixed(2)),
 
-        SGSTPercentage:
-          parseFloat(row.SGSTPercentage) || 0,
+        CurrentInvoiceDue: Number(Number(currentDueForSave || 0).toFixed(2)),
 
-        SGSTAmount:
-          parseFloat(row.SGSTAmount) || 0,
+        BalanceDue: Number(Number(totalOutstandingForSave || 0).toFixed(2)),
 
-        IGSTPercentage:
-          parseFloat(row.IGSTPercentage) || 0,
+        // ====================================================
+        // DEVICE
+        // ====================================================
 
-        IGSTAmount:
-          parseFloat(row.IGSTAmount) || 0,
-      })),
-    };
+        Device: device || "-",
 
-    // ======================================================
-    // 20. PRINT DATA CONSOLE
-    // ======================================================
+        // ====================================================
+        // PAYMENT MODE
+        // ====================================================
 
-    console.log(
-      "PRINT DATA:",
-      printData
-    );
+        PaymentMode: paymentMode || "-",
 
-    setPreviewData(printData);
+        // ====================================================
+        // CUSTOMER
+        // ====================================================
 
-    // ======================================================
-    // 21. GENERATE PDF
-    //
-    // IMPORTANT:
-    // generatePDF ONLY ONCE
-    // ======================================================
+        accountDetails: {
+          AccountName: customerNameForPrint,
+        },
 
-    if (shouldPrint && printWindow) {
-      console.log(
-        "CALLING generatePDF..."
+        customerName: customerNameForPrint,
+
+        // ====================================================
+        // INVOICE DETAILS
+        // ====================================================
+
+        invdetail: rows.map((row) => ({
+          ...row,
+
+          ProductName:
+            row.ProductName ||
+            productOptions.find(
+              (option) => String(option.value) === String(row.ProductId),
+            )?.label ||
+            "Unknown",
+
+          Quantity: parseFloat(row.Quantity) || 0,
+
+          Rate: parseFloat(row.Rate) || 0,
+
+          Amount: parseFloat(row.Amount) || 0,
+
+          DiscountAmt: parseFloat(row.DiscountAmt) || 0,
+
+          CGSTPercentage: parseFloat(row.CGSTPercentage) || 0,
+
+          CGSTAmount: parseFloat(row.CGSTAmount) || 0,
+
+          SGSTPercentage: parseFloat(row.SGSTPercentage) || 0,
+
+          SGSTAmount: parseFloat(row.SGSTAmount) || 0,
+
+          IGSTPercentage: parseFloat(row.IGSTPercentage) || 0,
+
+          IGSTAmount: parseFloat(row.IGSTAmount) || 0,
+        })),
+      };
+
+      // ======================================================
+      // 20. PRINT DATA CONSOLE
+      // ======================================================
+
+      console.log("PRINT DATA:", printData);
+
+      setPreviewData(printData);
+
+      // ======================================================
+      // 21. GENERATE PDF
+      //
+      // IMPORTANT:
+      // generatePDF ONLY ONCE
+      // ======================================================
+
+      if (shouldPrint && printWindow) {
+        console.log("CALLING generatePDF...");
+
+        generatePDF(printData, printWindow);
+      } else {
+        console.log("SAVE ONLY - PRINT NOT REQUESTED");
+      }
+
+      // ======================================================
+      // 22. SUCCESS MESSAGE
+      // ======================================================
+
+      toast.success(
+        isEditing
+          ? "Sales Entry- Caterers Updated successfully!"
+          : "Sales Entry- Caterers Created successfully!",
       );
 
-      generatePDF(
-        printData,
-        printWindow
+      // ======================================================
+      // 23. CLOSE DRAWER
+      // ======================================================
+
+      setIsDrawerOpen(false);
+
+      // ======================================================
+      // 24. RESET FORM
+      // ======================================================
+
+      resetForm();
+
+      // ======================================================
+      // 25. REFRESH TABLE DATA
+      // ======================================================
+
+      await fetchInvoiceHeader();
+    } catch (error) {
+      // ======================================================
+      // ERROR
+      // ======================================================
+
+      console.error("Error submitting invoice:", error);
+
+      // ======================================================
+      // CLOSE PRINT WINDOW IF SAVE FAILED
+      // ======================================================
+
+      if (printWindow && !printWindow.closed) {
+        printWindow.close();
+      }
+
+      // ======================================================
+      // CLOSE DRAWER
+      // ======================================================
+
+      setIsDrawerOpen(false);
+
+      // ======================================================
+      // ERROR MESSAGE
+      // ======================================================
+
+      toast.error(
+        isEditing
+          ? "Sales Entry- Caterers Updated unsuccessfully!"
+          : "Sales Entry- Caterers unsuccessfully!",
       );
-    } else {
-      console.log(
-        "SAVE ONLY - PRINT NOT REQUESTED"
-      );
+    } finally {
+      // ======================================================
+      // ALWAYS UNLOCK SUBMIT
+      // ======================================================
+
+      isSubmittingRef.current = false;
+
+      console.log("SUBMIT LOCK RELEASED");
     }
-
-    // ======================================================
-    // 22. SUCCESS MESSAGE
-    // ======================================================
-
-    toast.success(
-      isEditing
-        ? "Sales Entry- Caterers Updated successfully!"
-        : "Sales Entry- Caterers Created successfully!"
-    );
-
-    // ======================================================
-    // 23. CLOSE DRAWER
-    // ======================================================
-
-    setIsDrawerOpen(false);
-
-    // ======================================================
-    // 24. RESET FORM
-    // ======================================================
-
-    resetForm();
-
-    // ======================================================
-    // 25. REFRESH TABLE DATA
-    // ======================================================
-
-    await fetchInvoiceHeader();
-
-  } catch (error) {
-    // ======================================================
-    // ERROR
-    // ======================================================
-
-    console.error(
-      "Error submitting invoice:",
-      error
-    );
-
-    // ======================================================
-    // CLOSE PRINT WINDOW IF SAVE FAILED
-    // ======================================================
-
-    if (
-      printWindow &&
-      !printWindow.closed
-    ) {
-      printWindow.close();
-    }
-
-    // ======================================================
-    // CLOSE DRAWER
-    // ======================================================
-
-    setIsDrawerOpen(false);
-
-    // ======================================================
-    // ERROR MESSAGE
-    // ======================================================
-
-    toast.error(
-      isEditing
-        ? "Sales Entry- Caterers Updated unsuccessfully!"
-        : "Sales Entry- Caterers unsuccessfully!"
-    );
-
-  } finally {
-    // ======================================================
-    // ALWAYS UNLOCK SUBMIT
-    // ======================================================
-
-    isSubmittingRef.current = false;
-
-    console.log(
-      "SUBMIT LOCK RELEASED"
-    );
-  }
-};
+  };
 
   // ======================================================
   // CTRL + S = SAVE ONLY
@@ -2273,52 +18562,52 @@ if (!invoiceId) {
   // Current invoice balance only
   const currentInvoiceBalanceDue = difference < 0 ? Math.abs(difference) : 0;
 
-const handleReceivedAmountChange = (e) => {
-  const value = e.target.value;
+  const handleReceivedAmountChange = (e) => {
+    const value = e.target.value;
 
-  // Empty value
-  if (value === "") {
-    setReceivedAmount("");
+    // Empty value
+    if (value === "") {
+      setReceivedAmount("");
 
+      if (paymentMode === "C") {
+        setCashAmount("");
+        setOnlineAmount("");
+      }
+
+      if (paymentMode === "O") {
+        setCashAmount("");
+        setOnlineAmount("");
+      }
+
+      // Mix मध्ये cash + online manually enter होतात
+      return;
+    }
+
+    const receivedValue = parseFloat(value);
+
+    // Negative amount not allowed
+    if (receivedValue < 0) {
+      return;
+    }
+
+    // Main received amount
+    setReceivedAmount(value);
+
+    // Cash payment
     if (paymentMode === "C") {
-      setCashAmount("");
+      setCashAmount(value);
       setOnlineAmount("");
     }
 
+    // Online payment
     if (paymentMode === "O") {
+      setOnlineAmount(value);
       setCashAmount("");
-      setOnlineAmount("");
     }
 
-    // Mix मध्ये cash + online manually enter होतात
-    return;
-  }
-
-  const receivedValue = parseFloat(value);
-
-  // Negative amount not allowed
-  if (receivedValue < 0) {
-    return;
-  }
-
-  // Main received amount
-  setReceivedAmount(value);
-
-  // Cash payment
-  if (paymentMode === "C") {
-    setCashAmount(value);
-    setOnlineAmount("");
-  }
-
-  // Online payment
-  if (paymentMode === "O") {
-    setOnlineAmount(value);
-    setCashAmount("");
-  }
-
-  // Mix payment
-  // Cash + Online fields स्वतः भरले जातील
-};
+    // Mix payment
+    // Cash + Online fields स्वतः भरले जातील
+  };
 
   const handleCashAmountChange = (e) => {
     const value = e.target.value;
@@ -2837,6 +19126,16 @@ const handleReceivedAmountChange = (e) => {
     };
   }, [showDropdown]);
 
+  useEffect(() => {
+    const storedUserId = sessionStorage.getItem("UserId");
+
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      toast.error("User is not logged in.");
+    }
+  }, []);
+
   // create new Customer
   const [accountName, setAccountName] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -3072,232 +19371,171 @@ const handleReceivedAmountChange = (e) => {
       });
   };
 
+  // ======================================================
+  // FETCH CUSTOMER PREVIOUS OUTSTANDING BALANCE
+  // ======================================================
+  // RULE:
+  // Previous Due = ALL OTHER INVOICES of same customer
+  // Current invoice is excluded
+  //
+  // Invoice Due = Total - ReceivedAmount
+  // ======================================================
 
-
-// ======================================================
-// FETCH CUSTOMER PREVIOUS OUTSTANDING BALANCE
-// ======================================================
-// RULE:
-// Previous Due = ALL OTHER INVOICES of same customer
-// Current invoice is excluded
-//
-// Invoice Due = Total - ReceivedAmount
-// ======================================================
-
-const fetchPreviousBalance = async (
-  customerId,
-  excludeInvoiceId = null
-) => {
-  if (!customerId) {
-    setPreviousBalanceDue(0);
-    return 0;
-  }
-
-  try {
-    const response = await fetch(
-      `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=AccountId&Colvalue=${encodeURIComponent(
-        customerId
-      )}`
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Invoice header API failed with status ${response.status}`
-      );
+  const fetchPreviousBalance = async (customerId, excludeInvoiceId = null) => {
+    if (!customerId) {
+      setPreviousBalanceDue(0);
+      return 0;
     }
 
-    const result = await response.json();
-
-    const invoiceList = Array.isArray(result)
-      ? result
-      : Array.isArray(result?.data)
-        ? result.data
-        : result?.data
-          ? [result.data]
-          : [];
-
-    // ======================================================
-    // DEBUG - SHOW EXACT INVOICES RECEIVED FROM API
-    // ======================================================
-
-    console.log(
-      "=============================================="
-    );
-
-    console.log(
-      "PREVIOUS BALANCE API RESPONSE"
-    );
-
-    console.log(
-      "Customer ID:",
-      customerId
-    );
-
-    console.log(
-      "Exclude Invoice ID:",
-      excludeInvoiceId
-    );
-
-    console.log(
-      "Total Invoices Returned:",
-      invoiceList.length
-    );
-
-    console.table(
-      invoiceList.map((invoice) => ({
-        Id: invoice?.Id,
-        AccountId: invoice?.AccountId,
-        Total: invoice?.Total,
-        ReceivedAmount: invoice?.ReceivedAmount,
-        CashAmount: invoice?.CashAmount,
-        OnlineAmount: invoice?.OnlineAmount,
-      }))
-    );
-
-    console.log(
-      "=============================================="
-    );
-
-    // ======================================================
-    // CALCULATE PREVIOUS BALANCE
-    // ======================================================
-
-    let previousBalance = 0;
-
-    for (const invoice of invoiceList) {
-
-      const invoiceId = Number(
-        invoice?.Id || 0
+    try {
+      const response = await fetch(
+        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoiceheader&Colname=AccountId&Colvalue=${encodeURIComponent(
+          customerId,
+        )}`,
       );
 
-      // ====================================================
-      // IMPORTANT:
-      // Current invoice must NOT be included
-      // ====================================================
-
-      if (
-        excludeInvoiceId !== null &&
-        excludeInvoiceId !== undefined &&
-        invoiceId === Number(excludeInvoiceId)
-      ) {
-        console.log(
-          "SKIPPING CURRENT INVOICE:",
-          invoiceId
+      if (!response.ok) {
+        throw new Error(
+          `Invoice header API failed with status ${response.status}`,
         );
-
-        continue;
       }
 
-      // ====================================================
-      // TOTAL
-      // ====================================================
+      const result = await response.json();
 
-      const invoiceTotal = Number(
-        invoice?.Total || 0
+      const invoiceList = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.data)
+          ? result.data
+          : result?.data
+            ? [result.data]
+            : [];
+
+      // ======================================================
+      // DEBUG - SHOW EXACT INVOICES RECEIVED FROM API
+      // ======================================================
+
+      console.log("==============================================");
+
+      console.log("PREVIOUS BALANCE API RESPONSE");
+
+      console.log("Customer ID:", customerId);
+
+      console.log("Exclude Invoice ID:", excludeInvoiceId);
+
+      console.log("Total Invoices Returned:", invoiceList.length);
+
+      console.table(
+        invoiceList.map((invoice) => ({
+          Id: invoice?.Id,
+          AccountId: invoice?.AccountId,
+          Total: invoice?.Total,
+          ReceivedAmount: invoice?.ReceivedAmount,
+          CashAmount: invoice?.CashAmount,
+          OnlineAmount: invoice?.OnlineAmount,
+        })),
       );
 
-      // ====================================================
-      // RECEIVED
-      //
-      // Prefer ReceivedAmount.
-      // If unavailable use Cash + Online.
-      // ====================================================
+      console.log("==============================================");
 
-      let invoiceReceived = 0;
+      // ======================================================
+      // CALCULATE PREVIOUS BALANCE
+      // ======================================================
 
-      if (
-        invoice?.ReceivedAmount !== null &&
-        invoice?.ReceivedAmount !== undefined &&
-        invoice?.ReceivedAmount !== ""
-      ) {
-        invoiceReceived = Number(
-          invoice.ReceivedAmount
-        ) || 0;
+      let previousBalance = 0;
 
-      } else {
+      for (const invoice of invoiceList) {
+        const invoiceId = Number(invoice?.Id || 0);
 
-        invoiceReceived =
-          (Number(invoice?.CashAmount) || 0) +
-          (Number(invoice?.OnlineAmount) || 0);
-      }
+        // ====================================================
+        // IMPORTANT:
+        // Current invoice must NOT be included
+        // ====================================================
 
-      // ====================================================
-      // INVOICE DUE
-      // ====================================================
+        if (
+          excludeInvoiceId !== null &&
+          excludeInvoiceId !== undefined &&
+          invoiceId === Number(excludeInvoiceId)
+        ) {
+          console.log("SKIPPING CURRENT INVOICE:", invoiceId);
 
-      const invoiceDue = Math.max(
-        invoiceTotal - invoiceReceived,
-        0
-      );
+          continue;
+        }
 
-      // ====================================================
-      // ADD TO PREVIOUS BALANCE
-      // ====================================================
+        // ====================================================
+        // TOTAL
+        // ====================================================
 
-      previousBalance += invoiceDue;
+        const invoiceTotal = Number(invoice?.Total || 0);
 
-      // ====================================================
-      // DEBUG EACH INVOICE
-      // ====================================================
+        // ====================================================
+        // RECEIVED
+        //
+        // Prefer ReceivedAmount.
+        // If unavailable use Cash + Online.
+        // ====================================================
 
-      console.log(
-        "PREVIOUS BALANCE INVOICE:",
-        {
+        let invoiceReceived = 0;
+
+        if (
+          invoice?.ReceivedAmount !== null &&
+          invoice?.ReceivedAmount !== undefined &&
+          invoice?.ReceivedAmount !== ""
+        ) {
+          invoiceReceived = Number(invoice.ReceivedAmount) || 0;
+        } else {
+          invoiceReceived =
+            (Number(invoice?.CashAmount) || 0) +
+            (Number(invoice?.OnlineAmount) || 0);
+        }
+
+        // ====================================================
+        // INVOICE DUE
+        // ====================================================
+
+        const invoiceDue = Math.max(invoiceTotal - invoiceReceived, 0);
+
+        // ====================================================
+        // ADD TO PREVIOUS BALANCE
+        // ====================================================
+
+        previousBalance += invoiceDue;
+
+        // ====================================================
+        // DEBUG EACH INVOICE
+        // ====================================================
+
+        console.log("PREVIOUS BALANCE INVOICE:", {
           InvoiceId: invoiceId,
           Total: invoiceTotal,
           ReceivedAmount: invoiceReceived,
           Due: invoiceDue,
-          RunningPreviousBalance:
-            previousBalance,
-        }
-      );
+          RunningPreviousBalance: previousBalance,
+        });
+      }
+
+      // ======================================================
+      // FINAL PREVIOUS BALANCE
+      // ======================================================
+
+      const finalPreviousBalance = Number(previousBalance.toFixed(2));
+
+      console.log("==============================================");
+
+      console.log("FINAL PREVIOUS BALANCE:", finalPreviousBalance);
+
+      console.log("==============================================");
+
+      setPreviousBalanceDue(finalPreviousBalance);
+
+      return finalPreviousBalance;
+    } catch (error) {
+      console.error("Error fetching customer previous balance:", error);
+
+      setPreviousBalanceDue(0);
+
+      return 0;
     }
-
-    // ======================================================
-    // FINAL PREVIOUS BALANCE
-    // ======================================================
-
-    const finalPreviousBalance = Number(
-      previousBalance.toFixed(2)
-    );
-
-    console.log(
-      "=============================================="
-    );
-
-    console.log(
-      "FINAL PREVIOUS BALANCE:",
-      finalPreviousBalance
-    );
-
-    console.log(
-      "=============================================="
-    );
-
-    setPreviousBalanceDue(
-      finalPreviousBalance
-    );
-
-    return finalPreviousBalance;
-
-  } catch (error) {
-
-    console.error(
-      "Error fetching customer previous balance:",
-      error
-    );
-
-    setPreviousBalanceDue(0);
-
-    return 0;
-  }
-};
-
-
-
-
-
-
+  };
 
   const fetchAccountName = (acctname) => {
     const requestOptions = {
@@ -3509,8 +19747,6 @@ const fetchPreviousBalance = async (
 
   //for yearId
   const [yearid, setYearId] = useState("");
-  
-  
 
   useEffect(() => {
     const storedYearId = Cookies.get("YearId");
@@ -3543,7 +19779,6 @@ const fetchPreviousBalance = async (
   // ============================================================
   // GENERATE PDF / DIRECT PRINT
   // ============================================================
-
 
   const generatePDF = async (printData = previewData, printWindow = null) => {
     // ============================================================
@@ -4297,28 +20532,18 @@ const fetchPreviousBalance = async (
     // 42. GRAND TOTAL
     // ============================================================
 
-   const grandTotal = Number(
-  printData?.Total || 0
-);
+    const grandTotal = Number(printData?.Total || 0);
 
-const receivedAmount = Number(
-  printData?.ReceivedAmount || 0
-);
+    const receivedAmount = Number(printData?.ReceivedAmount || 0);
 
-// Previous customer outstanding
-const previousDue = Number(
-  printData?.PreviousBalanceDue || 0
-);
+    // Previous customer outstanding
+    const previousDue = Number(printData?.PreviousBalanceDue || 0);
 
-// Current bill due
-const currentBillDue = Math.max(
-  grandTotal - receivedAmount,
-  0
-);
+    // Current bill due
+    const currentBillDue = Math.max(grandTotal - receivedAmount, 0);
 
-// Total customer outstanding
-const totalOutstanding =
-  previousDue + currentBillDue;
+    // Total customer outstanding
+    const totalOutstanding = previousDue + currentBillDue;
 
     // ============================================================
     // 44. BALANCE
@@ -4495,100 +20720,78 @@ const totalOutstanding =
     const amountInWords = `${numberToWords(grandTotal)} Rupees only`;
 
     // ============================================================
-// 48. SUMMARY TABLE
-// ============================================================
+    // 48. SUMMARY TABLE
+    // ============================================================
 
-y = doc.lastAutoTable?.finalY
-  ? doc.lastAutoTable.finalY + 4
-  : y + 4;
+    y = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 4 : y + 4;
 
-autoTable(doc, {
-  body: [
-    [
-      {
-        content: "Invoice Amount In Words",
-        styles: {
-          fontStyle: "bold",
-        },
+    autoTable(doc, {
+      body: [
+        [
+          {
+            content: "Invoice Amount In Words",
+            styles: {
+              fontStyle: "bold",
+            },
+          },
+
+          {
+            content: "Sub Total",
+            styles: {
+              fontStyle: "bold",
+            },
+          },
+
+          `Rs. ${subTotal.toFixed(2)}`,
+        ],
+
+        [amountInWords, "Total", `Rs. ${grandTotal.toFixed(2)}`],
+
+        ["", "Received", `Rs. ${receivedAmount.toFixed(2)}`],
+
+        ["", "Previous Due", `Rs. ${previousDue.toFixed(2)}`],
+
+        ["", "Current Bill Due", `Rs. ${currentBillDue.toFixed(2)}`],
+
+        ["", "Total Outstanding", `Rs. ${totalOutstanding.toFixed(2)}`],
+      ],
+
+      startY: y,
+
+      margin: {
+        left: 6,
+        right: 6,
       },
 
-      {
-        content: "Sub Total",
-        styles: {
-          fontStyle: "bold",
-        },
+      tableWidth: 68,
+
+      theme: "grid",
+
+      styles: {
+        font: "helvetica",
+        fontSize: 5.3,
+        cellPadding: 1.5,
+        lineWidth: 0.2,
+        valign: "middle",
+        overflow: "linebreak",
       },
 
-      `Rs. ${subTotal.toFixed(2)}`,
-    ],
+      columnStyles: {
+        0: {
+          cellWidth: 39,
+        },
 
-    [
-      amountInWords,
-      "Total",
-      `Rs. ${grandTotal.toFixed(2)}`,
-    ],
+        1: {
+          cellWidth: 14,
+          fontStyle: "bold",
+        },
 
-    [
-      "",
-      "Received",
-      `Rs. ${receivedAmount.toFixed(2)}`,
-    ],
-
-    [
-      "",
-      "Previous Due",
-      `Rs. ${previousDue.toFixed(2)}`,
-    ],
-
-    [
-      "",
-      "Current Bill Due",
-      `Rs. ${currentBillDue.toFixed(2)}`,
-    ],
-
-    [
-      "",
-      "Total Outstanding",
-      `Rs. ${totalOutstanding.toFixed(2)}`,
-    ],
-  ],
-
-  startY: y,
-
-  margin: {
-    left: 6,
-    right: 6,
-  },
-
-  tableWidth: 68,
-
-  theme: "grid",
-
-  styles: {
-    font: "helvetica",
-    fontSize: 5.3,
-    cellPadding: 1.5,
-    lineWidth: 0.2,
-    valign: "middle",
-    overflow: "linebreak",
-  },
-
-  columnStyles: {
-    0: {
-      cellWidth: 39,
-    },
-
-    1: {
-      cellWidth: 14,
-      fontStyle: "bold",
-    },
-
-    2: {
-      cellWidth: 15,
-      halign: "right",
-    },
-  },
-});
+        2: {
+          cellWidth: 15,
+          halign: "right",
+        },
+      },
+    });
     // ============================================================
     // 49. TERMS
     // ============================================================
@@ -4632,81 +20835,76 @@ autoTable(doc, {
     doc.text("Authorized Signatory", pageWidth / 2, y, {
       align: "center",
     });
-// ============================================================
-// 51. PRINT + DOWNLOAD PDF - 80MM ROLL
-// ============================================================
+    // ============================================================
+    // 51. PRINT + DOWNLOAD PDF - 80MM ROLL
+    // ============================================================
 
-try {
-  // ----------------------------------------------------------
-  // CREATE PDF BLOB
-  // ----------------------------------------------------------
+    try {
+      // ----------------------------------------------------------
+      // CREATE PDF BLOB
+      // ----------------------------------------------------------
 
-  const pdfBlob = doc.output("blob");
+      const pdfBlob = doc.output("blob");
 
-  if (!pdfBlob) {
-    throw new Error("PDF could not be created.");
-  }
+      if (!pdfBlob) {
+        throw new Error("PDF could not be created.");
+      }
 
-  // ----------------------------------------------------------
-  // CREATE TEMPORARY PDF URL
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // CREATE TEMPORARY PDF URL
+      // ----------------------------------------------------------
 
-  const pdfBlobUrl = URL.createObjectURL(pdfBlob);
+      const pdfBlobUrl = URL.createObjectURL(pdfBlob);
 
-  console.log("========================================");
-  console.log("80MM ROLL PDF CREATED");
-  console.log("PDF URL:", pdfBlobUrl);
-  console.log("========================================");
+      console.log("========================================");
+      console.log("80MM ROLL PDF CREATED");
+      console.log("PDF URL:", pdfBlobUrl);
+      console.log("========================================");
 
-  // ----------------------------------------------------------
-  // PDF FILE NAME
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // PDF FILE NAME
+      // ----------------------------------------------------------
 
-  const safeInvoiceNo = String(
-    invoiceNo || "Invoice"
-  ).replace(
-    /[^a-zA-Z0-9-_]/g,
-    "_"
-  );
+      const safeInvoiceNo = String(invoiceNo || "Invoice").replace(
+        /[^a-zA-Z0-9-_]/g,
+        "_",
+      );
 
-  const fileName =
-    `Sales-Caterers-${safeInvoiceNo}.pdf`;
+      const fileName = `Sales-Caterers-${safeInvoiceNo}.pdf`;
 
-  // ----------------------------------------------------------
-  // USE ALREADY OPENED PRINT WINDOW
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // USE ALREADY OPENED PRINT WINDOW
+      // ----------------------------------------------------------
 
-  let targetWindow = printWindow;
+      let targetWindow = printWindow;
 
-  // ----------------------------------------------------------
-  // IF WINDOW IS NOT AVAILABLE
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // IF WINDOW IS NOT AVAILABLE
+      // ----------------------------------------------------------
 
-  if (!targetWindow || targetWindow.closed) {
-    targetWindow = window.open("", "_blank");
-  }
+      if (!targetWindow || targetWindow.closed) {
+        targetWindow = window.open("", "_blank");
+      }
 
-  // ----------------------------------------------------------
-  // POPUP BLOCKED
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // POPUP BLOCKED
+      // ----------------------------------------------------------
 
-  if (!targetWindow) {
-    URL.revokeObjectURL(pdfBlobUrl);
+      if (!targetWindow) {
+        URL.revokeObjectURL(pdfBlobUrl);
 
-    toast.error(
-      "Please allow popups for printing."
-    );
+        toast.error("Please allow popups for printing.");
 
-    return;
-  }
+        return;
+      }
 
-  // ----------------------------------------------------------
-  // CREATE PDF VIEWER PAGE
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // CREATE PDF VIEWER PAGE
+      // ----------------------------------------------------------
 
-  targetWindow.document.open();
+      targetWindow.document.open();
 
-  targetWindow.document.write(`
+      targetWindow.document.write(`
     <!DOCTYPE html>
 
     <html>
@@ -4892,86 +21090,54 @@ try {
     </html>
   `);
 
-  targetWindow.document.close();
+      targetWindow.document.close();
 
-  targetWindow.focus();
+      targetWindow.focus();
 
-  console.log(
-    "PDF opened successfully."
-  );
+      console.log("PDF opened successfully.");
 
-  // ----------------------------------------------------------
-  // KEEP BLOB URL ALIVE FOR PDF VIEWER
-  // ----------------------------------------------------------
+      // ----------------------------------------------------------
+      // KEEP BLOB URL ALIVE FOR PDF VIEWER
+      // ----------------------------------------------------------
 
-  setTimeout(() => {
+      setTimeout(
+        () => {
+          try {
+            URL.revokeObjectURL(pdfBlobUrl);
 
-    try {
-
-      URL.revokeObjectURL(
-        pdfBlobUrl
+            console.log("PDF Blob URL released successfully.");
+          } catch (error) {
+            console.warn("Unable to release PDF Blob URL:", error);
+          }
+        },
+        5 * 60 * 1000,
       );
-
-      console.log(
-        "PDF Blob URL released successfully."
-      );
-
     } catch (error) {
+      // ==========================================================
+      // PDF GENERATION ERROR
+      // ==========================================================
 
-      console.warn(
-        "Unable to release PDF Blob URL:",
-        error
-      );
+      console.error("Error generating invoice PDF:", error);
 
-    }
+      // ----------------------------------------------------------
+      // CLOSE PRINT WINDOW
+      // ----------------------------------------------------------
 
-  }, 5 * 60 * 1000);
+      if (printWindow && !printWindow.closed) {
+        try {
+          printWindow.close();
+        } catch (closeError) {
+          console.warn("Unable to close print window:", closeError);
+        }
+      }
 
-} catch (error) {
+      // ----------------------------------------------------------
+      // SHOW ERROR
+      // ----------------------------------------------------------
 
-  // ==========================================================
-  // PDF GENERATION ERROR
-  // ==========================================================
-
-  console.error(
-    "Error generating invoice PDF:",
-    error
-  );
-
-  // ----------------------------------------------------------
-  // CLOSE PRINT WINDOW
-  // ----------------------------------------------------------
-
-  if (
-    printWindow &&
-    !printWindow.closed
-  ) {
-
-    try {
-
-      printWindow.close();
-
-    } catch (closeError) {
-
-      console.warn(
-        "Unable to close print window:",
-        closeError
-      );
-
-    }
-
-  }
-
-  // ----------------------------------------------------------
-  // SHOW ERROR
-  // ----------------------------------------------------------
-
-  toast.error(
-        "Unable to generate invoice PDF."
-      );
+      toast.error("Unable to generate invoice PDF.");
     }
   };
-
 
   return (
     <Box>
@@ -4996,103 +21162,96 @@ try {
             Create Sales Entry - Caterers
           </Button>
         </Box>
- 
-      {/* =========================
+        {/* =========================
     INVOICE FILTERS
 ========================= */}
-<Box
-  sx={{
-    display: "flex",
-    gap: 2,
-    alignItems: "center",
-    flexWrap: "wrap",
-    mt: 2,
-    mb: 2,
-  }}
->
-  {/* SEARCH */}
-  <TextField
-    size="small"
-    label="Search"
-    placeholder="Bill No / Customer / Category"
-    value={searchText}
-    onChange={(e) => setSearchText(e.target.value)}
-    sx={{ minWidth: 250 }}
-  />
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            flexWrap: "wrap",
+            mt: 2,
+            mb: 2,
+          }}
+        >
+          {/* SEARCH */}
+          <TextField
+            size="small"
+            label="Search"
+            placeholder="Bill No / Customer / Category"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            sx={{ minWidth: 250 }}
+          />
 
-  {/* FROM DATE */}
-  <TextField
-    size="small"
-    type="date"
-    label="From Date"
-    value={fromDate}
-    onChange={(e) => setFromDate(e.target.value)}
-    InputLabelProps={{
-      shrink: true,
-    }}
-    sx={{ minWidth: 160 }}
-  />
+          {/* FROM DATE */}
+          <TextField
+            size="small"
+            type="date"
+            label="From Date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={{ minWidth: 160 }}
+          />
 
-  {/* TO DATE */}
-  <TextField
-    size="small"
-    type="date"
-    label="To Date"
-    value={toDate}
-    onChange={(e) => setToDate(e.target.value)}
-    InputLabelProps={{
-      shrink: true,
-    }}
-    sx={{ minWidth: 160 }}
-  />
+          {/* TO DATE */}
+          <TextField
+            size="small"
+            type="date"
+            label="To Date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={{ minWidth: 160 }}
+          />
 
-  {/* CATEGORY */}
-  <TextField
-    select
-    size="small"
-    label="Category"
-    value={categoryFilter}
-    onChange={(e) => setCategoryFilter(e.target.value)}
-    sx={{ minWidth: 160 }}
-  >
-    <MenuItem value="">All</MenuItem>
-    <MenuItem value="R">Retailer</MenuItem>
-    <MenuItem value="D">Dealer</MenuItem>
-    <MenuItem value="C">Caterers</MenuItem>
-  </TextField>
+          {/* CATEGORY */}
+          <TextField
+            select
+            size="small"
+            label="Category"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            sx={{ minWidth: 160 }}
+          >
+           <MenuItem value="">All</MenuItem>
+<MenuItem value="C">Caterers</MenuItem>
+          </TextField>
 
-  {/* CLEAR */}
-  <Button
-    variant="outlined"
-    size="small"
-    onClick={() => {
-      setSearchText("");
-      setFromDate("");
-      setToDate("");
-      setCategoryFilter("");
-    }}
-  >
-    Clear
-  </Button>
-</Box>
-
-       <MaterialReactTable
-  columns={columns}
-  data={filteredInvoiceData}
-  enablePagination={false}
-
-  initialState={{
-    sorting: [{ id: "Id", desc: true }],
-  }}
-
-  muiTableHeadCellProps={{
-    sx: {
-      backgroundColor: "#E9ECEF",
-      color: "black",
-      fontSize: "16px",
-    },
-  }}
-         
+          {/* CLEAR */}
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              setSearchText("");
+              setFromDate("");
+              setToDate("");
+              setCategoryFilter("");
+            }}
+          >
+            Clear
+          </Button>
+        </Box>
+        <MaterialReactTable
+          columns={columns}
+          data={filteredInvoiceData}
+          enablePagination={false}
+          initialState={{
+            sorting: [{ id: "Id", desc: true }],
+          }}
+          muiTableHeadCellProps={{
+            sx: {
+              backgroundColor: "#E9ECEF",
+              color: "black",
+              fontSize: "16px",
+            },
+          }}
           renderBottomToolbarCustomActions={() => (
             <Box
               mt={2}
@@ -5187,14 +21346,14 @@ try {
                       <strong>Invoice No:</strong> {previewData.InvoiceNo}
                     </Typography>
                     <Typography>
-  <strong>Invoice Date:</strong>{" "}
-  {previewData?.InvoiceDate
-    ? new Date(
-        previewData.InvoiceDate?.date ||
-          previewData.InvoiceDate
-      ).toLocaleDateString()
-    : "-"}
-</Typography>
+                      <strong>Invoice Date:</strong>{" "}
+                      {previewData?.InvoiceDate
+                        ? new Date(
+                            previewData.InvoiceDate?.date ||
+                              previewData.InvoiceDate,
+                          ).toLocaleDateString()
+                        : "-"}
+                    </Typography>
                   </Box>
 
                   <Box
@@ -5209,14 +21368,14 @@ try {
                       </Typography>
                     </Box>
                     <Box>
-                     <Typography>
-  <strong>Order Date:</strong>{" "}
-  {previewData?.OrderDate?.date
-    ? new Date(
-        previewData.OrderDate.date
-      ).toLocaleDateString()
-    : "-"}
-</Typography>
+                      <Typography>
+                        <strong>Order Date:</strong>{" "}
+                        {previewData?.OrderDate?.date
+                          ? new Date(
+                              previewData.OrderDate.date,
+                            ).toLocaleDateString()
+                          : "-"}
+                      </Typography>
                     </Box>
                     <Box>
                       <Typography>
@@ -5422,64 +21581,62 @@ try {
                             </TableRow>
 
                             {/* Cumulative Current Bill Due */}
-                          {/* ===================================================== */}
-{/* PREVIOUS CUSTOMER DUE */}
-{/* ===================================================== */}
+                            {/* ===================================================== */}
+                            {/* PREVIOUS CUSTOMER DUE */}
+                            {/* ===================================================== */}
 
-<TableRow>
-  <TableCell>
-    <strong style={{ color: "#e65100" }}>
-      Previous Customer Due
-    </strong>
-  </TableCell>
+                            <TableRow>
+                              <TableCell>
+                                <strong style={{ color: "#e65100" }}>
+                                  Previous Customer Due
+                                </strong>
+                              </TableCell>
 
-  <TableCell align="right">
-    ₹{" "}
-    {Number(
-      previewData?.PreviousBalanceDue || 0,
-    ).toFixed(2)}
-  </TableCell>
-</TableRow>
+                              <TableCell align="right">
+                                ₹{" "}
+                                {Number(
+                                  previewData?.PreviousBalanceDue || 0,
+                                ).toFixed(2)}
+                              </TableCell>
+                            </TableRow>
 
+                            {/* ===================================================== */}
+                            {/* CURRENT BILL DUE */}
+                            {/* ===================================================== */}
 
-{/* ===================================================== */}
-{/* CURRENT BILL DUE */}
-{/* ===================================================== */}
+                            <TableRow>
+                              <TableCell>
+                                <strong style={{ color: "#d32f2f" }}>
+                                  Current Bill Due
+                                </strong>
+                              </TableCell>
 
-<TableRow>
-  <TableCell>
-    <strong style={{ color: "#d32f2f" }}>
-      Current Bill Due
-    </strong>
-  </TableCell>
+                              <TableCell align="right">
+                                ₹{" "}
+                                {Number(
+                                  previewData?.CurrentInvoiceDue || 0,
+                                ).toFixed(2)}
+                              </TableCell>
+                            </TableRow>
 
-  <TableCell align="right">
-    ₹{" "}
-    {Number(
-      previewData?.CurrentInvoiceDue || 0,
-    ).toFixed(2)}
-  </TableCell>
-</TableRow>
+                            {/* ===================================================== */}
+                            {/* TOTAL CUSTOMER OUTSTANDING */}
+                            {/* ===================================================== */}
 
+                            <TableRow>
+                              <TableCell>
+                                <strong style={{ color: "#b71c1c" }}>
+                                  Total Customer Outstanding
+                                </strong>
+                              </TableCell>
 
-{/* ===================================================== */}
-{/* TOTAL CUSTOMER OUTSTANDING */}
-{/* ===================================================== */}
-
-<TableRow>
-  <TableCell>
-    <strong style={{ color: "#b71c1c" }}>
-      Total Customer Outstanding
-    </strong>
-  </TableCell>
-
-  <TableCell align="right">
-    ₹{" "}
-    {Number(
-      previewData?.BalanceDue || 0,
-    ).toFixed(2)}
-  </TableCell>
-</TableRow>
+                              <TableCell align="right">
+                                ₹{" "}
+                                {Number(previewData?.BalanceDue || 0).toFixed(
+                                  2,
+                                )}
+                              </TableCell>
+                            </TableRow>
 
                             {/* Refund / Current Bill Due */}
                             <TableRow>
@@ -5749,24 +21906,24 @@ try {
                 <Typography variant="body2">Invoice No</Typography>
 
                 <TextField
-  variant="standard"
-  sx={{
-    mt: 0.5,
-    "& .MuiInput-underline:after": {
-      borderBottomWidth: 1.5,
-      borderBottomColor: "#44ad74",
-    },
-  }}
-  focused
-  value={invoiceNo}
-  size="small"
-  margin="none"
-  placeholder="Invoice No Auto Generated"
-  fullWidth
-  InputProps={{
-    readOnly: true,
-  }}
-/>
+                  variant="standard"
+                  sx={{
+                    mt: 0.5,
+                    "& .MuiInput-underline:after": {
+                      borderBottomWidth: 1.5,
+                      borderBottomColor: "#44ad74",
+                    },
+                  }}
+                  focused
+                  value={invoiceNo}
+                  size="small"
+                  margin="none"
+                  placeholder="Invoice No Auto Generated"
+                  fullWidth
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
               </Box>
 
               {/* DEVICE */}
@@ -5777,11 +21934,10 @@ try {
                 <TextField
                   variant="standard"
                   value={device}
-                  onChange={(e) => setDevice(e.target.value)}
                   fullWidth
                   size="small"
-                  sx={{
-                    mt: 0.5,
+                  InputProps={{
+                    readOnly: true,
                   }}
                 />
               </Box>
@@ -6290,8 +22446,9 @@ try {
                               width: 80,
                             }}
                             inputProps={{
-                              min: 0,
-                            }}
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                           />
                         </TableCell>
 
@@ -6323,9 +22480,10 @@ try {
                             sx={{
                               width: 100,
                             }}
-                            inputProps={{
-                              min: 0,
-                            }}
+                           inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                           />
                         </TableCell>
 
@@ -6499,9 +22657,10 @@ try {
                           sx={{
                             width: 80,
                           }}
-                          inputProps={{
-                            min: 0,
-                          }}
+                         inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                         />
                       </TableCell>
 
@@ -6521,9 +22680,10 @@ try {
                           sx={{
                             width: 100,
                           }}
-                          inputProps={{
-                            min: 0,
-                          }}
+                         inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                         />
                       </TableCell>
 
@@ -6692,9 +22852,10 @@ try {
                         onChange={handleCashAmountChange}
                         size="small"
                         fullWidth
-                        inputProps={{
-                          min: 0,
-                        }}
+                       inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                       />
 
                       <TextField
@@ -6704,9 +22865,10 @@ try {
                         onChange={handleOnlineAmountChange}
                         size="small"
                         fullWidth
-                        inputProps={{
-                          min: 0,
-                        }}
+                       inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                       />
                     </Box>
 
@@ -6741,14 +22903,17 @@ try {
                     Transport
                   </Typography>
 
-                  <TextField
-                    variant="standard"
-                    value={transport}
-                    onChange={(e) => setTransport(e.target.value)}
-                    placeholder="Transport"
-                    fullWidth
-                    type="number"
-                  />
+                 <TextField
+  variant="standard"
+  value={transport}
+  onChange={(e) => setTransport(e.target.value)}
+  placeholder="Transport"
+  fullWidth
+  type="number"
+  inputProps={{
+    onWheel: preventNumberInputScroll,
+  }}
+/>
                 </Box>
               </Grid>
             </Grid>
@@ -6871,9 +23036,10 @@ try {
                           fontWeight: 500,
                         },
                       }}
-                      inputProps={{
-                        min: 0,
-                      }}
+                     inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                     />
                   </Box>
                 </Grid>
@@ -6947,9 +23113,10 @@ try {
                           fontWeight: 500,
                         },
                       }}
-                      inputProps={{
-                        min: 0,
-                      }}
+                     inputProps={{
+  min: 0,
+  onWheel: preventNumberInputScroll,
+}}
                     />
                   </Box>
                 </Grid>
@@ -7232,6 +23399,899 @@ try {
 
                 <Button onClick={handleConfirmDelete} color="error" autoFocus>
                   Delete
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* ============================================================
+    INVOICE EDIT HISTORY DIALOG
+============================================================ */}
+
+            <Dialog
+              open={historyOpen}
+              onClose={() => {
+                setHistoryOpen(false);
+                setSelectedHistoryVersion(null);
+                setSelectedHistoryDetails([]);
+              }}
+              fullWidth
+              maxWidth="xl"
+              PaperProps={{
+                sx: {
+                  borderRadius: 3,
+                  maxHeight: "92vh",
+                },
+              }}
+            >
+              {/* ================= HEADER ================= */}
+
+              <DialogTitle
+                sx={{
+                  background: "linear-gradient(135deg, #1976d2, #0d47a1)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Box>
+                  Invoice Edit History
+                  <Typography
+                    sx={{
+                      fontSize: "13px",
+                      opacity: 0.9,
+                      mt: 0.5,
+                    }}
+                  >
+                    Invoice No:{" "}
+                    {selectedHistoryInvoice?.InvoiceNo ||
+                      selectedHistoryInvoice?.BillNo ||
+                      "-"}
+                  </Typography>
+                </Box>
+
+                <IconButton
+                  onClick={() => {
+                    setHistoryOpen(false);
+                    setSelectedHistoryVersion(null);
+                    setSelectedHistoryDetails([]);
+                  }}
+                  sx={{ color: "#fff" }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+
+              {/* ================= CONTENT ================= */}
+
+              <DialogContent
+                dividers
+                sx={{
+                  backgroundColor: "#f7f9fc",
+                }}
+              >
+                {historyLoading ? (
+                  <Box
+                    sx={{
+                      minHeight: 300,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography fontWeight={600}>
+                      Loading invoice history...
+                    </Typography>
+                  </Box>
+                ) : (
+                  <>
+                    {/* =====================================================
+            CURRENT INVOICE
+        ===================================================== */}
+
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        mb: 3,
+                        borderRadius: 2,
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "18px",
+                          fontWeight: 700,
+                          color: "#1976d2",
+                          mb: 2,
+                        }}
+                      >
+                        Current Invoice
+                      </Typography>
+
+                      {currentHistoryHeader ? (
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(180px, 1fr))",
+                            gap: 2,
+                          }}
+                        >
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Invoice No
+                            </Typography>
+
+                            <Typography fontWeight={600}>
+                              {currentHistoryHeader?.InvoiceNo ||
+                                currentHistoryHeader?.BillNo ||
+                                "-"}
+                            </Typography>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Invoice Date
+                            </Typography>
+
+                            <Typography fontWeight={600}>
+                              {formatHistoryDate(
+                                currentHistoryHeader?.InvoiceDate,
+                              )}
+                            </Typography>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Customer
+                            </Typography>
+
+                            <Typography fontWeight={600}>
+                              {currentHistoryHeader?.AccountName ||
+                                currentHistoryHeader?.CustomerName ||
+                                currentHistoryHeader?.PartyName ||
+                                selectedHistoryInvoice?.AccountName ||
+                                "-"}
+                            </Typography>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Total
+                            </Typography>
+
+                            <Typography
+                              fontWeight={700}
+                              sx={{ color: "#1976d2" }}
+                            >
+                              ₹{" "}
+                              {Number(currentHistoryHeader?.Total || 0).toFixed(
+                                2,
+                              )}
+                            </Typography>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Received
+                            </Typography>
+
+                            <Typography fontWeight={600}>
+                              ₹{" "}
+                              {Number(
+                                currentHistoryHeader?.ReceivedAmount || 0,
+                              ).toFixed(2)}
+                            </Typography>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Balance
+                            </Typography>
+
+                            <Typography
+                              fontWeight={700}
+                              sx={{ color: "#d32f2f" }}
+                            >
+                              ₹{" "}
+                              {Number(
+                                currentHistoryHeader?.BalanceDue || 0,
+                              ).toFixed(2)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ) : (
+                        <Typography color="text.secondary">
+                          Current invoice data not available.
+                        </Typography>
+                      )}
+                    </Paper>
+
+                    {/* =====================================================
+            PREVIOUS INVOICE HISTORY
+        ===================================================== */}
+
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        mb: 3,
+                        borderRadius: 2,
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "18px",
+                          fontWeight: 700,
+                          color: "#d97706",
+                          mb: 2,
+                        }}
+                      >
+                        Previous Invoice History
+                      </Typography>
+
+                      {historyHeader.length === 0 ? (
+                        <Typography color="text.secondary" sx={{ py: 3 }}>
+                          No previous history found.
+                        </Typography>
+                      ) : (
+                        <TableContainer
+                          component={Paper}
+                          elevation={0}
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                          }}
+                        >
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow
+                                sx={{
+                                  backgroundColor: "#f1f5f9",
+                                }}
+                              >
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Version
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Invoice No
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Invoice Date
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Customer
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  Total
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  Received
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  View
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+
+                            <TableBody>
+                              {[...historyHeader]
+                                .sort(
+                                  (a, b) =>
+                                    Number(a?.VersionNo || 0) -
+                                    Number(b?.VersionNo || 0),
+                                )
+                                .map((historyItem, index) => {
+                                  const version = Number(
+                                    historyItem?.VersionNo,
+                                  );
+
+                                  const isSelected =
+                                    selectedHistoryVersion === version;
+
+                                  return (
+                                    <TableRow
+                                      key={
+                                        historyItem?.Id || `${version}-${index}`
+                                      }
+                                      sx={{
+                                        backgroundColor: isSelected
+                                          ? "#e3f2fd"
+                                          : "inherit",
+                                      }}
+                                    >
+                                      <TableCell>
+                                        <Button
+                                          size="small"
+                                          variant={
+                                            isSelected
+                                              ? "contained"
+                                              : "outlined"
+                                          }
+                                          onClick={() =>
+                                            handleHistoryVersionClick(
+                                              historyItem,
+                                            )
+                                          }
+                                        >
+                                          Version {version}
+                                        </Button>
+                                      </TableCell>
+
+                                      <TableCell>
+                                        {historyItem?.InvoiceNo ||
+                                          historyItem?.BillNo ||
+                                          "-"}
+                                      </TableCell>
+
+                                      <TableCell>
+                                        {formatHistoryDate(
+                                          historyItem?.InvoiceDate,
+                                        )}
+                                      </TableCell>
+
+                                      <TableCell>
+                                        {historyItem?.AccountName ||
+                                          historyItem?.CustomerName ||
+                                          historyItem?.PartyName ||
+                                          selectedHistoryInvoice?.AccountName ||
+                                          "-"}
+                                      </TableCell>
+
+                                      <TableCell
+                                        sx={{
+                                          textAlign: "right",
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        ₹{" "}
+                                        {Number(
+                                          historyItem?.Total || 0,
+                                        ).toFixed(2)}
+                                      </TableCell>
+
+                                      <TableCell
+                                        sx={{
+                                          textAlign: "right",
+                                        }}
+                                      >
+                                        ₹{" "}
+                                        {Number(
+                                          historyItem?.ReceivedAmount || 0,
+                                        ).toFixed(2)}
+                                      </TableCell>
+
+                                      <TableCell
+                                        sx={{
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        <Button
+                                          size="small"
+                                          onClick={() =>
+                                            handleHistoryVersionClick(
+                                              historyItem,
+                                            )
+                                          }
+                                        >
+                                          VIEW
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </Paper>
+
+                    {/* =====================================================
+            OLD VS CURRENT
+        ===================================================== */}
+
+                    {selectedHistoryVersion && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          mb: 3,
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "18px",
+                            fontWeight: 700,
+                            color: "#7b1fa2",
+                            mb: 2,
+                          }}
+                        >
+                          Old vs Current Invoice
+                        </Typography>
+
+                        {(() => {
+                          const selectedOldHeader = historyHeader.find(
+                            (item) =>
+                              Number(item?.VersionNo) ===
+                              Number(selectedHistoryVersion),
+                          );
+
+                          const comparisonRows = [
+                            {
+                              label: "Invoice No",
+                              oldValue:
+                                selectedOldHeader?.InvoiceNo ||
+                                selectedOldHeader?.BillNo ||
+                                "-",
+                              currentValue:
+                                currentHistoryHeader?.InvoiceNo ||
+                                currentHistoryHeader?.BillNo ||
+                                "-",
+                            },
+
+                            {
+                              label: "Invoice Date",
+                              oldValue: formatHistoryDate(
+                                selectedOldHeader?.InvoiceDate,
+                              ),
+                              currentValue: formatHistoryDate(
+                                currentHistoryHeader?.InvoiceDate,
+                              ),
+                            },
+
+                            {
+                              label: "Customer",
+                              oldValue:
+                                selectedOldHeader?.AccountName ||
+                                selectedOldHeader?.CustomerName ||
+                                selectedOldHeader?.PartyName ||
+                                "-",
+                              currentValue:
+                                currentHistoryHeader?.AccountName ||
+                                currentHistoryHeader?.CustomerName ||
+                                currentHistoryHeader?.PartyName ||
+                                selectedHistoryInvoice?.AccountName ||
+                                "-",
+                            },
+
+                            {
+                              label: "Total",
+                              oldValue: `₹ ${Number(
+                                selectedOldHeader?.Total || 0,
+                              ).toFixed(2)}`,
+                              currentValue: `₹ ${Number(
+                                currentHistoryHeader?.Total || 0,
+                              ).toFixed(2)}`,
+                            },
+
+                            {
+                              label: "Received",
+                              oldValue: `₹ ${Number(
+                                selectedOldHeader?.ReceivedAmount || 0,
+                              ).toFixed(2)}`,
+                              currentValue: `₹ ${Number(
+                                currentHistoryHeader?.ReceivedAmount || 0,
+                              ).toFixed(2)}`,
+                            },
+
+                            {
+                              label: "Discount",
+                              oldValue: `₹ ${Number(
+                                selectedOldHeader?.Discount || 0,
+                              ).toFixed(2)}`,
+                              currentValue: `₹ ${Number(
+                                currentHistoryHeader?.Discount || 0,
+                              ).toFixed(2)}`,
+                            },
+                          ];
+
+                          return (
+                            <TableContainer
+                              component={Paper}
+                              elevation={0}
+                              sx={{
+                                border: "1px solid #e0e0e0",
+                              }}
+                            >
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow
+                                    sx={{
+                                      backgroundColor: "#f3e5f5",
+                                    }}
+                                  >
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                      Field
+                                    </TableCell>
+
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                      Previous — Version{" "}
+                                      {selectedHistoryVersion}
+                                    </TableCell>
+
+                                    <TableCell sx={{ fontWeight: 700 }}>
+                                      Current
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+
+                                <TableBody>
+                                  {comparisonRows.map((item) => {
+                                    const changed =
+                                      String(item.oldValue) !==
+                                      String(item.currentValue);
+
+                                    return (
+                                      <TableRow key={item.label}>
+                                        <TableCell fontWeight={600}>
+                                          {item.label}
+                                        </TableCell>
+
+                                        <TableCell
+                                          sx={{
+                                            backgroundColor: changed
+                                              ? "#fff3e0"
+                                              : "inherit",
+                                            fontWeight: changed ? 700 : 400,
+                                          }}
+                                        >
+                                          {item.oldValue}
+                                        </TableCell>
+
+                                        <TableCell
+                                          sx={{
+                                            backgroundColor: changed
+                                              ? "#e8f5e9"
+                                              : "inherit",
+                                            fontWeight: changed ? 700 : 400,
+                                          }}
+                                        >
+                                          {item.currentValue}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          );
+                        })()}
+                      </Paper>
+                    )}
+
+                    {/* =====================================================
+            PREVIOUS PRODUCT DETAILS
+        ===================================================== */}
+
+                    {selectedHistoryVersion && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 2,
+                          mb: 3,
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "18px",
+                            fontWeight: 700,
+                            color: "#d97706",
+                            mb: 2,
+                          }}
+                        >
+                          Previous Product Details — Version{" "}
+                          {selectedHistoryVersion}
+                        </Typography>
+
+                        {selectedHistoryDetails.length === 0 ? (
+                          <Typography color="text.secondary" sx={{ py: 3 }}>
+                            No product details found for this version.
+                          </Typography>
+                        ) : (
+                          <TableContainer
+                            component={Paper}
+                            elevation={0}
+                            sx={{
+                              border: "1px solid #e0e0e0",
+                            }}
+                          >
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow
+                                  sx={{
+                                    backgroundColor: "#fff3e0",
+                                  }}
+                                >
+                                  <TableCell sx={{ fontWeight: 700 }}>
+                                    Sr.
+                                  </TableCell>
+
+                                  <TableCell sx={{ fontWeight: 700 }}>
+                                    Product
+                                  </TableCell>
+
+                                  <TableCell sx={{ fontWeight: 700 }}>
+                                    Qty
+                                  </TableCell>
+
+                                  <TableCell sx={{ fontWeight: 700 }}>
+                                    Rate
+                                  </TableCell>
+
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 700,
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    Amount
+                                  </TableCell>
+
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 700,
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    Discount
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+
+                              <TableBody>
+                                {selectedHistoryDetails.map((detail, index) => (
+                                  <TableRow
+                                    key={
+                                      detail?.Id ||
+                                      `${detail?.ProductId}-${index}`
+                                    }
+                                  >
+                                    <TableCell>
+                                      {detail?.SerialNo || index + 1}
+                                    </TableCell>
+
+                                    <TableCell sx={{ fontWeight: 600 }}>
+                                      {getHistoryProductName(
+                                        detail?.ProductId,
+                                        detail,
+                                      )}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      {Number(detail?.Quantity || 0)}
+                                    </TableCell>
+
+                                    <TableCell>
+                                      ₹ {Number(detail?.Rate || 0).toFixed(2)}
+                                    </TableCell>
+
+                                    <TableCell
+                                      sx={{
+                                        textAlign: "right",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      ₹ {Number(detail?.Amount || 0).toFixed(2)}
+                                    </TableCell>
+
+                                    <TableCell
+                                      sx={{
+                                        textAlign: "right",
+                                      }}
+                                    >
+                                      ₹{" "}
+                                      {Number(detail?.DiscountAmt || 0).toFixed(
+                                        2,
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        )}
+                      </Paper>
+                    )}
+
+                    {/* =====================================================
+            CURRENT PRODUCT DETAILS
+        ===================================================== */}
+
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        mb: 2,
+                        borderRadius: 2,
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: "18px",
+                          fontWeight: 700,
+                          color: "#2e7d32",
+                          mb: 2,
+                        }}
+                      >
+                        Current Product Details
+                      </Typography>
+
+                      {currentHistoryDetails.length === 0 ? (
+                        <Typography color="text.secondary" sx={{ py: 3 }}>
+                          No current product details found.
+                        </Typography>
+                      ) : (
+                        <TableContainer
+                          component={Paper}
+                          elevation={0}
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                          }}
+                        >
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow
+                                sx={{
+                                  backgroundColor: "#e8f5e9",
+                                }}
+                              >
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Sr.
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Product
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Qty
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Rate
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  Amount
+                                </TableCell>
+
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  Discount
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+
+                            <TableBody>
+                              {currentHistoryDetails.map((detail, index) => (
+                                <TableRow
+                                  key={
+                                    detail?.Id ||
+                                    `${detail?.ProductId}-${index}`
+                                  }
+                                >
+                                  <TableCell>
+                                    {detail?.SerialNo || index + 1}
+                                  </TableCell>
+
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    {getHistoryProductName(
+                                      detail?.ProductId,
+                                      detail,
+                                    )}
+                                  </TableCell>
+
+                                  <TableCell>
+                                    {Number(detail?.Quantity || 0)}
+                                  </TableCell>
+
+                                  <TableCell>
+                                    ₹ {Number(detail?.Rate || 0).toFixed(2)}
+                                  </TableCell>
+
+                                  <TableCell
+                                    sx={{
+                                      textAlign: "right",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    ₹ {Number(detail?.Amount || 0).toFixed(2)}
+                                  </TableCell>
+
+                                  <TableCell
+                                    sx={{
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    ₹{" "}
+                                    {Number(detail?.DiscountAmt || 0).toFixed(
+                                      2,
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </Paper>
+                  </>
+                )}
+              </DialogContent>
+
+              {/* ================= FOOTER ================= */}
+
+              <DialogActions
+                sx={{
+                  p: 2,
+                  backgroundColor: "#fff",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    setHistoryOpen(false);
+                    setSelectedHistoryVersion(null);
+                    setSelectedHistoryDetails([]);
+                  }}
+                >
+                  CLOSE
                 </Button>
               </DialogActions>
             </Dialog>

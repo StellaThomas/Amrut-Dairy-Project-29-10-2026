@@ -1,11 +1,570 @@
 
 
-import { useMemo, useState, useEffect } from 'react'
-import { Box, useMediaQuery, Button, Typography, TextField, Drawer, Divider, FormControl, Select, MenuItem, } from '@mui/material';
+// import { useMemo, useState, useEffect } from 'react'
+// import { Box, useMediaQuery, Button, Typography, TextField, Drawer, Divider, FormControl, Select, MenuItem, } from '@mui/material';
+// import CloseIcon from '@mui/icons-material/Close';
+// import { MaterialReactTable, } from 'material-react-table';
+// import { useTheme } from "@mui/material/styles";
+// import { toast } from "react-toastify";
+// import axios from 'axios';
+
+// import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+// import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+// import LastPageIcon from '@mui/icons-material/LastPage';
+// import FirstPageIcon from '@mui/icons-material/FirstPage';
+
+
+// const UserMaster = () => {
+//     const theme = useTheme();
+//     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+//     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+//     const [isEditing, setIsEditing] = useState(false);
+//     const handleDrawerOpen = () => {
+//         setIsDrawerOpen(true);
+//         // resetForm();
+//         handleClearTemplate();
+//         setIsEditing(false);
+//     };
+
+//     const handleDrawerClose = () => {
+//         setIsDrawerOpen(false);
+//     };
+
+//     //table
+//     const fetchData = async () => {
+//         const requestOptions = {
+//             method: "GET",
+//             redirect: "follow"
+//         };
+
+//         try {
+
+
+          
+//             const response = await fetch(`https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=User&PageNo=${pageNo}`, requestOptions);
+//             const result = await response.json();
+//             // console.log("Fetched result:", result);
+//             setData(result.data);
+//             setTotalPages(result.total_pages)
+//         } catch (error) {
+//             console.error(error);
+//         }
+//     };
+
+//     useEffect(() => {
+//         // fetchData();
+//         fetchLevel();
+//         fetchBranch()
+//     }, []);
+
+
+
+//     const [pageNo, setPageNo] = useState(1)
+//     const columns = useMemo(() => {
+//         return [
+//             {
+//                 accessorKey: 'srNo',
+//                 header: 'Sr No',
+//                 size: 100,
+//                 Cell: ({ row }) => (pageNo - 1) * 15 + row.index + 1,
+//             },
+
+//             {
+//                 accessorKey: 'Name',
+//                 header: 'FullName',
+//                 size: 150,
+//             },
+//             {
+//                 accessorKey: 'UserId',
+//                 header: 'User Name',
+//                 size: 150,
+//             },
+
+//             {
+//                 accessorKey: 'LoginStatus',
+//                 header: 'Login Status',
+//                 size: 150,
+//                 Cell: ({ row }) => (row.original.LoginStatus === 1 ? 'True' : 'False'),
+//             },
+
+
+//         ];
+//     }, [pageNo]);
+
+//     useEffect(() => {
+//         fetchData();
+//     }, [pageNo]);
+
+//     const [idwiseData, setIdwiseData] = useState('')
+//     const [data, setData] = useState([]);
+
+//     // const table = useMaterialReactTable({
+//     //     columns,
+//     //     data: data,
+//     //     muiTableHeadCellProps: {
+//     //         style: {
+//     //             backgroundColor: "#E9ECEF",
+//     //             color: "black",
+//     //             fontSize: "16px",
+//     //         },
+//     //     },
+//     //     muiTableBodyRowProps: ({ row }) => ({
+//     //         onClick: () => handleSubmit(row.original),
+//     //         style: { cursor: "pointer" },
+//     //     }),
+//     // });
+
+//     const handleSubmit = (rowData) => {
+//         // console.log("This row has been clicked:", rowData);
+
+//         // console.log("rowData.Id:", rowData.Id);
+//         setIsDrawerOpen(true);
+//         setIsEditing(!!rowData.Id);
+//         setIdwiseData(rowData.Id);
+//         setName(rowData.Name)
+//         setUser(rowData.UserId)
+//         setPassword(rowData.Password)
+//         setSelectedLevelOption(rowData.LevelId)
+//         setSelectedBranchOption(rowData.BranchId)
+//     };
+
+//     //
+//     const [name, setName] = useState('');
+//     const [user, setUser] = useState('');
+//     const [password, setPassword] = useState('');
+//     const [error, setError] = useState(false);
+//     const handlePasswordChange = (e) => {
+//         const value = e.target.value;
+//         setPassword(value);
+
+//         // Validate: Exactly 6 letters, digits, or a mix of both
+//         if (/^[A-Za-z0-9]{6}$/.test(value) || value === "") {
+//             setError(false);
+//         } else {
+//             setError(true);
+//         }
+//     };
+
+//     //fetch Level
+//     const [levelOption, setLevelOption] = useState([]);
+//     const [selectedLevelOption, setSelectedLevelOption] = useState('');
+
+//     const fetchLevel = async () => {
+//         try {
+//             const response = await fetch(
+//                 "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=levelMaster"
+//             );
+//             const result = await response.json();
+
+//             // console.log("level info:", result);
+
+//             const options = result.map((level) => ({
+//                 value: level.Id,
+//                 label: level.LevelName,
+//             }));
+
+//             setLevelOption(options);
+//         } catch (error) {
+//             console.error("Error fetching accounts:", error);
+//         }
+//     };
+
+
+//     //fetch Branch
+//     const [branchOption, setBranchOption] = useState([]);
+//     const [selectedBranchOption, setSelectedBranchOption] = useState('');
+
+//     const fetchBranch = async () => {
+//         try {
+//             const response = await fetch(
+//                 "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=Branch"
+//             );
+//             const result = await response.json();
+
+//             // console.log("Branch info:", result);
+
+//             const options = result.map((branch) => ({
+//                 value: branch.Id,
+//                 label: branch.Storelocation,
+//             }));
+
+//             setBranchOption(options);
+//         } catch (error) {
+//             console.error("Error fetching accounts:", error);
+//         }
+//     };
+
+//     //create UserMaster
+//     const CreateUserMaster = () => {
+//         if (!name || name.trim() === "") {
+//             toast.error("Name is required");
+//             return;
+//         }
+
+//          if (!user || user.trim() === "") {
+//             toast.error("User Name is required");
+//             return;
+//         }
+
+//          if (!password || password.trim() === "") {
+//             toast.error("password is required");
+//             return;
+//         }
+
+
+//         const urlencoded = new URLSearchParams();
+//         urlencoded.append("Name", name);
+//         urlencoded.append("UserId", user);
+//         urlencoded.append("Password", password);
+//         urlencoded.append("LevelId", selectedLevelOption);
+//         urlencoded.append("LoginStatus", false);
+//         urlencoded.append("BranchId", selectedBranchOption);
+//         urlencoded.append("CompanyId", 1);
+//         const requestOptions = {
+//             headers: {
+//                 "Content-Type": "application/x-www-form-urlencoded",
+//             },
+//         };
+
+//         axios
+//             .post(
+//                 "https://amrutdairyapi.microtechsolutions.net.in/php/postuser.php",
+//                 urlencoded,
+//                 requestOptions
+//             )
+//             .then((response) => {
+//                 console.log("API Response:", response.data);
+
+//                 toast.success("User Master created successfully");
+//                 handleClearTemplate();
+//                 handleDrawerClose()
+//                 fetchData()
+//             })
+//             .catch((error) => {
+//                 console.error("Error:", error);
+//             });
+//     };
+
+//     //update user
+//     const UpdateUserMaster = () => {
+//         const urlencoded = new URLSearchParams();
+//         urlencoded.append("Name", name);
+//         urlencoded.append("UserId", user);
+//         urlencoded.append("Password", password);
+//         urlencoded.append("LevelId", selectedLevelOption);
+//         urlencoded.append("LoginStatus", false);
+//         urlencoded.append("BranchId", selectedBranchOption);
+//         urlencoded.append("CompanyId", 1);
+//         urlencoded.append("Id", idwiseData);
+
+//         const requestOptions = {
+//             headers: {
+//                 "Content-Type": "application/x-www-form-urlencoded",
+//             },
+//         };
+
+//         axios
+//             .post(
+//                 "https://amrutdairyapi.microtechsolutions.net.in/php/updateuser.php",
+//                 urlencoded,
+//                 requestOptions
+//             )
+
+//             .then((response) => {
+//                 console.log("API Response:", response.data);
+//                 toast.success("User Master Updated successfully");
+//                 handleClearTemplate();
+//                 fetchData();
+//                 handleDrawerClose()
+
+//             })
+//             .catch((error) => {
+//                 console.error("Error:", error);
+//             });
+//     };
+
+
+//     const handleClearTemplate = () => {
+//         setName('');
+//         setUser('');
+//         setPassword('');
+//         setSelectedLevelOption(' ');
+//         setSelectedBranchOption('');
+//     }
+
+
+//     ///Pagination
+//     const [totalPages, setTotalPages] = useState(1);
+
+
+//     return (
+
+//         <Box >
+//             <Box textAlign={'center'}>
+//                 <Typography sx={{ color: 'var(--complementary-color)', }} variant='h4'><b>User Master</b></Typography>
+//             </Box>
+
+
+
+//             <Box sx={{
+//                 //  background: 'rgb(236, 253, 230)', 
+//                 p: 5, height: 'auto'
+//             }}>
+
+//                 <Box sx={{ display: 'flex', gap: 3 }}>
+//                     <Button sx={{ background: 'var(--complementary-color)', }} variant="contained" onClick={handleDrawerOpen}>Create User Master </Button>
+//                 </Box>
+
+
+
+//                 <Box mt={4}>
+//                     <MaterialReactTable
+//                         columns={columns}
+//                         data={data}
+//                         enablePagination={false}
+//                         muiTableHeadCellProps={{
+//                             sx: {
+//                                 backgroundColor: '#E9ECEF',
+//                                 color: 'black',
+//                                 fontSize: '16px',
+//                             },
+//                         }}
+//                         muiTableBodyRowProps={({ row }) => ({
+//                             onClick: () => handleSubmit(row.original),
+//                             style: { cursor: 'pointer' },
+//                         })}
+//                         renderBottomToolbarCustomActions={() => (
+//                             <Box
+//                                 mt={2}
+//                                 alignItems="center"
+//                                 display="flex"
+//                                 justifyContent="flex-end"
+//                                 width="100%"
+//                             >
+//                                 <FirstPageIcon sx={{ cursor: 'pointer' }} onClick={() => setPageNo(1)} />
+//                                 <KeyboardArrowLeftIcon
+//                                     sx={{ cursor: 'pointer' }}
+//                                     onClick={() => setPageNo((prev) => Math.max(Number(prev) - 1, 1))}
+//                                 />
+//                                 <Box> Page No </Box>
+//                                 <TextField
+//                                     sx={{
+//                                         width: '4.5%', ml: 1,
+//                                         '@media (max-width: 768px)': {
+//                                             width: '10%',
+//                                         },
+//                                     }}
+//                                     value={pageNo}
+//                                     onChange={(e) => setPageNo(e.target.value)}
+//                                     size="small"
+//                                 />
+//                                 <KeyboardArrowRightIcon
+//                                     sx={{ cursor: 'pointer' }}
+//                                     onClick={() => setPageNo((prev) => Number(prev) + 1)}
+//                                 />
+//                                 <LastPageIcon
+//                                     sx={{ cursor: 'pointer' }}
+//                                     onClick={() => setPageNo(totalPages)}
+//                                 />
+//                                 Total Pages : {totalPages}
+//                             </Box>
+//                         )}
+//                     />
+//                 </Box>
+
+
+//                 <Drawer
+//                     anchor="right"
+//                     open={isDrawerOpen}
+//                     onClose={handleDrawerClose}
+//                     PaperProps={{
+//                         sx: {
+//                             borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
+//                             width: isSmallScreen ? "100%" : "650px",
+//                             zIndex: 1000,
+//                         },
+//                     }}
+//                 >
+//                     <Box sx={{ padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgb(236, 253, 230)' }}>
+//                         {/* <Typography m={2} variant="h6"><b>Create User Master</b></Typography> */}
+//                         <Typography m={2} fontWeight="bold" variant="h6">
+//                             {isEditing ? "Update User Master" : "Create User Master"}
+//                         </Typography>
+//                         <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleDrawerClose} />
+//                     </Box>
+//                     <Divider />
+
+//                     <Box m={2}>
+//                         <Box>
+//                             <Typography>Full Name</Typography>
+//                             <TextField
+//                                 variant="standard"
+//                                 sx={{
+//                                     '& .MuiInput-underline:after': {
+//                                         borderBottomWidth: 1.5,
+//                                         borderBottomColor: '#44ad74',
+//                                     }, mt: 1
+//                                 }}
+//                                 focused
+
+//                                 value={name}
+//                                 onChange={(e) => setName(e.target.value)}
+//                                 size="small" placeholder="Enter Account Name" fullWidth />
+//                         </Box>
+
+//                         <Box mt={2}>
+//                             <Typography>User Name</Typography>
+//                             <TextField
+//                                 variant="standard"
+//                                 sx={{
+//                                     '& .MuiInput-underline:after': {
+//                                         borderBottomWidth: 1.5,
+//                                         borderBottomColor: '#44ad74',
+//                                     }, mt: 1
+//                                 }}
+//                                 focused
+
+//                                 value={user}
+//                                 onChange={(e) => setUser(e.target.value)}
+//                                 size="small" placeholder="Enter User" fullWidth />
+//                         </Box>
+
+//                         <Box mt={2}>
+//                             <Typography>Password</Typography>
+//                             <TextField
+//                                 variant="standard"
+//                                 sx={{
+//                                     '& .MuiInput-underline:after': {
+//                                         borderBottomWidth: 1.5,
+//                                         borderBottomColor: '#44ad74',
+//                                     }, mt: 1
+//                                 }}
+//                                 focused
+
+//                                 value={password}
+//                                 // onChange={(e) => setPassword(e.target.value)}
+//                                 onChange={handlePasswordChange}
+//                                 error={error}
+//                                 helperText={error ? "Password must be exactly 6 digits" : ""}
+//                                 size="small" placeholder="Enter 6-digit Password" fullWidth />
+//                         </Box>
+
+//                         <Box display={'flex'} gap={2} alignItems={'center'} mt={2}>
+
+//                             <Box flex={1}  >
+//                                 <Typography variant="body2">Level</Typography>
+//                                 <FormControl fullWidth size="small" variant="standard"
+//                                     sx={{
+//                                         '& .MuiInput-underline:after': {
+//                                             borderBottomWidth: 1.5,
+//                                             borderBottomColor: '#44ad74',
+//                                         }, mt: 1
+//                                     }}
+//                                     focused
+//                                 >
+//                                     <Select
+//                                         value={selectedLevelOption || ""}
+//                                         onChange={(event) => setSelectedLevelOption(event.target.value)}
+//                                     >
+//                                         {levelOption.map((option) => (
+//                                             <MenuItem key={option.value} value={option.value}>
+//                                                 {option.label}
+//                                             </MenuItem>
+//                                         ))}
+//                                     </Select>
+//                                 </FormControl>
+//                             </Box>
+
+//                             <Box flex={1}>
+//                                 <Typography variant="body2">Branch</Typography>
+//                                 <FormControl fullWidth size="small" variant="standard"
+//                                     sx={{
+//                                         '& .MuiInput-underline:after': {
+//                                             borderBottomWidth: 1.5,
+//                                             borderBottomColor: '#44ad74',
+//                                         }, mt: 1
+//                                     }}
+//                                     focused
+//                                 >
+//                                     <Select
+//                                         value={selectedBranchOption || ""}
+//                                         onChange={(event) => setSelectedBranchOption(event.target.value)}
+//                                     >
+//                                         {branchOption.map((option) => (
+//                                             <MenuItem key={option.value} value={option.value}>
+//                                                 {option.label}
+//                                             </MenuItem>
+//                                         ))}
+//                                     </Select>
+//                                 </FormControl>
+//                             </Box>
+//                         </Box>
+//                     </Box>
+//                     <Box display={'flex'} alignItems={'center'} justifyContent={'center'} gap={2} mt={5}>
+//                         <Box>
+//                             <Button
+//                                 sx={{
+//                                     background: 'var(--primary-color)',
+//                                 }}
+//                                 // onClick={CreateUserMaster}
+//                                 onClick={isEditing ? UpdateUserMaster : CreateUserMaster}
+//                                 variant="contained"
+//                             >
+//                                 {isEditing ? "Update" : "Save"}
+//                             </Button>
+//                         </Box>
+
+//                         <Box>
+//                             <Button sx={{ borderColor: 'var(--complementary-color)', color: 'var(--complementary-color)' }}
+//                                 onClick={handleDrawerClose} variant='outlined'>Cancel </Button>
+//                         </Box>
+//                     </Box>
+//                 </Drawer>
+//             </Box>
+//         </Box>
+//     )
+// }
+// export default UserMaster
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { useMemo, useState, useEffect } from 'react';
+import {
+    Box,
+    useMediaQuery,
+    Button,
+    Typography,
+    TextField,
+    Drawer,
+    Divider,
+    FormControl,
+    Select,
+    MenuItem,
+} from '@mui/material';
+
 import CloseIcon from '@mui/icons-material/Close';
-import { MaterialReactTable, } from 'material-react-table';
-import { useTheme } from "@mui/material/styles";
-import { toast } from "react-toastify";
+import { MaterialReactTable } from 'material-react-table';
+import { useTheme } from '@mui/material/styles';
+import { toast } from 'react-toastify';
 import axios from 'axios';
 
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -15,58 +574,307 @@ import FirstPageIcon from '@mui/icons-material/FirstPage';
 
 
 const UserMaster = () => {
+
     const theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+    // ==========================================================
+    // DRAWER
+    // ==========================================================
+
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+
     const handleDrawerOpen = () => {
-        setIsDrawerOpen(true);
-        // resetForm();
         handleClearTemplate();
+        setIdwiseData('');
         setIsEditing(false);
+        setIsDrawerOpen(true);
     };
 
     const handleDrawerClose = () => {
         setIsDrawerOpen(false);
     };
 
-    //table
+
+    // ==========================================================
+    // PAGINATION
+    // ==========================================================
+
+    const [pageNo, setPageNo] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
+
+    // ==========================================================
+    // TABLE DATA
+    // ==========================================================
+
+    const [data, setData] = useState([]);
+
+
+    // ==========================================================
+    // FETCH USER DATA
+    // ==========================================================
+
     const fetchData = async () => {
-        const requestOptions = {
-            method: "GET",
-            redirect: "follow"
-        };
 
         try {
 
+            const response = await fetch(
+                `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=User&PageNo=${pageNo}`
+            );
 
-          
-            const response = await fetch(`https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=User&PageNo=${pageNo}`, requestOptions);
+            if (!response.ok) {
+                throw new Error(`User API Error: ${response.status}`);
+            }
+
             const result = await response.json();
-            // console.log("Fetched result:", result);
-            setData(result.data);
-            setTotalPages(result.total_pages)
+
+            console.log('USER API RESPONSE:', result);
+
+            const userData = Array.isArray(result)
+                ? result
+                : Array.isArray(result?.data)
+                    ? result.data
+                    : [];
+
+            setData(userData);
+
+            setTotalPages(
+                Number(result?.total_pages) ||
+                Number(result?.totalPages) ||
+                1
+            );
+
         } catch (error) {
-            console.error(error);
+
+            console.error('Error fetching users:', error);
+
+            setData([]);
+
+            toast.error('Unable to load User Master data');
         }
     };
 
+
+    // ==========================================================
+    // FORM STATES
+    // ==========================================================
+
+    const [idwiseData, setIdwiseData] = useState('');
+
+    const [name, setName] = useState('');
+    const [user, setUser] = useState('');
+    const [password, setPassword] = useState('');
+
+    const [error, setError] = useState(false);
+
+
+    // ==========================================================
+    // LEVEL STATES
+    // ==========================================================
+
+    const [levelOption, setLevelOption] = useState([]);
+    const [selectedLevelOption, setSelectedLevelOption] = useState('');
+
+
+    // ==========================================================
+    // BRANCH STATES
+    // ==========================================================
+
+    const [branchOption, setBranchOption] = useState([]);
+    const [selectedBranchOption, setSelectedBranchOption] = useState('');
+
+
+    // ==========================================================
+    // PASSWORD CHANGE
+    // ==========================================================
+
+    const handlePasswordChange = (e) => {
+
+        const value = e.target.value;
+
+        setPassword(value);
+
+        // Exactly 6 alphanumeric characters
+        if (/^[A-Za-z0-9]{6}$/.test(value) || value === '') {
+            setError(false);
+        } else {
+            setError(true);
+        }
+    };
+
+
+    // ==========================================================
+    // FETCH LEVEL
+    // ==========================================================
+
+   const fetchLevel = async () => {
+    try {
+        const response = await fetch(
+            "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=levelMaster"
+        );
+
+        const responseText = await response.text();
+
+        console.log("LEVEL STATUS:", response.status);
+        console.log("LEVEL RESPONSE:", responseText);
+
+        if (!response.ok) {
+            throw new Error(
+                `Level API Error: ${response.status} - ${responseText}`
+            );
+        }
+
+        let result;
+
+        try {
+            result = JSON.parse(responseText);
+        } catch (jsonError) {
+            throw new Error(
+                `Invalid JSON response: ${responseText}`
+            );
+        }
+
+        console.log("LEVEL JSON:", result);
+
+        const levelData = Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+                ? result.data
+                : [];
+
+        const options = levelData.map((level) => ({
+            value: String(
+                level.Id ??
+                level.ID ??
+                level.id ??
+                level.LevelId
+            ),
+            label:
+                level.LevelName ??
+                level.Level ??
+                level.Name ??
+                level.name ??
+                "",
+        }));
+
+        console.log("FINAL LEVEL OPTIONS:", options);
+
+        setLevelOption(options);
+
+    } catch (error) {
+        console.error("Error fetching Level:", error);
+        setLevelOption([]);
+    }
+};
+
+
+    // ==========================================================
+    // FETCH BRANCH
+    // ==========================================================
+
+   const fetchBranch = async () => {
+    try {
+        const response = await fetch(
+            "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=Branch"
+        );
+
+        const responseText = await response.text();
+
+        console.log("BRANCH STATUS:", response.status);
+        console.log("BRANCH RESPONSE:", responseText);
+
+        if (!response.ok) {
+            throw new Error(
+                `Branch API Error: ${response.status} - ${responseText}`
+            );
+        }
+
+        let result;
+
+        try {
+            result = JSON.parse(responseText);
+        } catch (jsonError) {
+            throw new Error(
+                `Invalid JSON response: ${responseText}`
+            );
+        }
+
+        console.log("BRANCH JSON:", result);
+
+        const branchData = Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+                ? result.data
+                : [];
+
+        const options = branchData.map((branch) => ({
+            value: String(
+                branch.Id ??
+                branch.ID ??
+                branch.id ??
+                branch.BranchId
+            ),
+            label:
+                branch.Storelocation ??
+                branch.StoreLocation ??
+                branch.BranchName ??
+                branch.Branch ??
+                branch.Name ??
+                branch.name ??
+                "",
+        }));
+
+        console.log("FINAL BRANCH OPTIONS:", options);
+
+        setBranchOption(options);
+
+    } catch (error) {
+        console.error("Error fetching Branch:", error);
+        setBranchOption([]);
+    }
+};
+
+
+    // ==========================================================
+    // INITIAL LOAD
+    // ==========================================================
+
     useEffect(() => {
-        // fetchData();
+
         fetchLevel();
-        fetchBranch()
+        fetchBranch();
+
     }, []);
 
 
+    // ==========================================================
+    // FETCH TABLE WHEN PAGE CHANGES
+    // ==========================================================
 
-    const [pageNo, setPageNo] = useState(1)
+    useEffect(() => {
+
+        fetchData();
+
+    }, [pageNo]);
+
+
+    // ==========================================================
+    // TABLE COLUMNS
+    // ==========================================================
+
     const columns = useMemo(() => {
+
         return [
+
             {
                 accessorKey: 'srNo',
                 header: 'Sr No',
                 size: 100,
-                Cell: ({ row }) => (pageNo - 1) * 15 + row.index + 1,
+
+                Cell: ({ row }) =>
+                    (Number(pageNo) - 1) * 15 + row.index + 1,
             },
 
             {
@@ -74,6 +882,7 @@ const UserMaster = () => {
                 header: 'FullName',
                 size: 150,
             },
+
             {
                 accessorKey: 'UserId',
                 header: 'User Name',
@@ -84,244 +893,458 @@ const UserMaster = () => {
                 accessorKey: 'LoginStatus',
                 header: 'Login Status',
                 size: 150,
-                Cell: ({ row }) => (row.original.LoginStatus === 1 ? 'True' : 'False'),
-            },
 
+                Cell: ({ row }) =>
+                    Number(row.original.LoginStatus) === 1
+                        ? 'True'
+                        : 'False',
+            },
 
         ];
+
     }, [pageNo]);
 
-    useEffect(() => {
-        fetchData();
-    }, [pageNo]);
 
-    const [idwiseData, setIdwiseData] = useState('')
-    const [data, setData] = useState([]);
-
-    // const table = useMaterialReactTable({
-    //     columns,
-    //     data: data,
-    //     muiTableHeadCellProps: {
-    //         style: {
-    //             backgroundColor: "#E9ECEF",
-    //             color: "black",
-    //             fontSize: "16px",
-    //         },
-    //     },
-    //     muiTableBodyRowProps: ({ row }) => ({
-    //         onClick: () => handleSubmit(row.original),
-    //         style: { cursor: "pointer" },
-    //     }),
-    // });
+    // ==========================================================
+    // EDIT USER
+    // ==========================================================
 
     const handleSubmit = (rowData) => {
-        // console.log("This row has been clicked:", rowData);
 
-        // console.log("rowData.Id:", rowData.Id);
+        console.log('EDIT USER:', rowData);
+
         setIsDrawerOpen(true);
-        setIsEditing(!!rowData.Id);
-        setIdwiseData(rowData.Id);
-        setName(rowData.Name)
-        setUser(rowData.UserId)
-        setPassword(rowData.Password)
-        setSelectedLevelOption(rowData.LevelId)
-        setSelectedBranchOption(rowData.BranchId)
-    };
 
-    //
-    const [name, setName] = useState('');
-    const [user, setUser] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(false);
-    const handlePasswordChange = (e) => {
-        const value = e.target.value;
-        setPassword(value);
+        setIsEditing(!!rowData?.Id);
 
-        // Validate: Exactly 6 letters, digits, or a mix of both
-        if (/^[A-Za-z0-9]{6}$/.test(value) || value === "") {
-            setError(false);
-        } else {
-            setError(true);
-        }
-    };
+        setIdwiseData(
+            rowData?.Id !== undefined && rowData?.Id !== null
+                ? String(rowData.Id)
+                : ''
+        );
 
-    //fetch Level
-    const [levelOption, setLevelOption] = useState([]);
-    const [selectedLevelOption, setSelectedLevelOption] = useState('');
+        setName(rowData?.Name || '');
 
-    const fetchLevel = async () => {
-        try {
-            const response = await fetch(
-                "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=levelMaster"
-            );
-            const result = await response.json();
+        setUser(rowData?.UserId || '');
 
-            // console.log("level info:", result);
+        setPassword(rowData?.Password || '');
 
-            const options = result.map((level) => ({
-                value: level.Id,
-                label: level.LevelName,
-            }));
+        setError(false);
 
-            setLevelOption(options);
-        } catch (error) {
-            console.error("Error fetching accounts:", error);
-        }
+        setSelectedLevelOption(
+            rowData?.LevelId !== undefined &&
+            rowData?.LevelId !== null
+                ? String(rowData.LevelId)
+                : ''
+        );
+
+        setSelectedBranchOption(
+            rowData?.BranchId !== undefined &&
+            rowData?.BranchId !== null
+                ? String(rowData.BranchId)
+                : ''
+        );
     };
 
 
-    //fetch Branch
-    const [branchOption, setBranchOption] = useState([]);
-    const [selectedBranchOption, setSelectedBranchOption] = useState('');
-
-    const fetchBranch = async () => {
-        try {
-            const response = await fetch(
-                "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=Branch"
-            );
-            const result = await response.json();
-
-            // console.log("Branch info:", result);
-
-            const options = result.map((branch) => ({
-                value: branch.Id,
-                label: branch.Storelocation,
-            }));
-
-            setBranchOption(options);
-        } catch (error) {
-            console.error("Error fetching accounts:", error);
-        }
-    };
-
-    //create UserMaster
-    const CreateUserMaster = () => {
-        if (!name || name.trim() === "") {
-            toast.error("Name is required");
-            return;
-        }
-
-         if (!user || user.trim() === "") {
-            toast.error("User Name is required");
-            return;
-        }
-
-         if (!password || password.trim() === "") {
-            toast.error("password is required");
-            return;
-        }
-
-
-        const urlencoded = new URLSearchParams();
-        urlencoded.append("Name", name);
-        urlencoded.append("UserId", user);
-        urlencoded.append("Password", password);
-        urlencoded.append("LevelId", selectedLevelOption);
-        urlencoded.append("LoginStatus", false);
-        urlencoded.append("BranchId", selectedBranchOption);
-        urlencoded.append("CompanyId", 1);
-        const requestOptions = {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-        };
-
-        axios
-            .post(
-                "https://amrutdairyapi.microtechsolutions.net.in/php/postuser.php",
-                urlencoded,
-                requestOptions
-            )
-            .then((response) => {
-                console.log("API Response:", response.data);
-
-                toast.success("User Master created successfully");
-                handleClearTemplate();
-                handleDrawerClose()
-                fetchData()
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-            });
-    };
-
-    //update user
-    const UpdateUserMaster = () => {
-        const urlencoded = new URLSearchParams();
-        urlencoded.append("Name", name);
-        urlencoded.append("UserId", user);
-        urlencoded.append("Password", password);
-        urlencoded.append("LevelId", selectedLevelOption);
-        urlencoded.append("LoginStatus", false);
-        urlencoded.append("BranchId", selectedBranchOption);
-        urlencoded.append("CompanyId", 1);
-        urlencoded.append("Id", idwiseData);
-
-        const requestOptions = {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-        };
-
-        axios
-            .post(
-                "https://amrutdairyapi.microtechsolutions.net.in/php/updateuser.php",
-                urlencoded,
-                requestOptions
-            )
-
-            .then((response) => {
-                console.log("API Response:", response.data);
-                toast.success("User Master Updated successfully");
-                handleClearTemplate();
-                fetchData();
-                handleDrawerClose()
-
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-            });
-    };
-
+    // ==========================================================
+    // CLEAR FORM
+    // ==========================================================
 
     const handleClearTemplate = () => {
+
         setName('');
+
         setUser('');
+
         setPassword('');
-        setSelectedLevelOption(' ');
+
+        setSelectedLevelOption('');
+
         setSelectedBranchOption('');
-    }
+
+        setIdwiseData('');
+
+        setError(false);
+    };
 
 
-    ///Pagination
-    const [totalPages, setTotalPages] = useState(1);
+    // ==========================================================
+    // CREATE USER MASTER
+    // ==========================================================
 
+    const CreateUserMaster = async () => {
+
+        // ----------------------------------------------
+        // NAME VALIDATION
+        // ----------------------------------------------
+
+        if (!name || name.trim() === '') {
+
+            toast.error('Name is required');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // USER NAME VALIDATION
+        // ----------------------------------------------
+
+        if (!user || user.trim() === '') {
+
+            toast.error('User Name is required');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // PASSWORD VALIDATION
+        // ----------------------------------------------
+
+        if (!password || password.trim() === '') {
+
+            toast.error('Password is required');
+
+            return;
+        }
+
+
+        if (!/^[A-Za-z0-9]{6}$/.test(password)) {
+
+            toast.error('Password must be exactly 6 characters');
+
+            setError(true);
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // LEVEL VALIDATION
+        // ----------------------------------------------
+
+        if (!selectedLevelOption) {
+
+            toast.error('Please select Level');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // BRANCH VALIDATION
+        // ----------------------------------------------
+
+        if (!selectedBranchOption) {
+
+            toast.error('Please select Branch');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // REQUEST DATA
+        // ----------------------------------------------
+
+        const urlencoded = new URLSearchParams();
+
+        urlencoded.append('Name', name);
+
+        urlencoded.append('UserId', user);
+
+        urlencoded.append('Password', password);
+
+        urlencoded.append(
+            'LevelId',
+            String(selectedLevelOption)
+        );
+
+        urlencoded.append(
+            'LoginStatus',
+            'false'
+        );
+
+        urlencoded.append(
+            'BranchId',
+            String(selectedBranchOption)
+        );
+
+        urlencoded.append(
+            'CompanyId',
+            '1'
+        );
+
+
+        try {
+
+            const response = await axios.post(
+                'https://amrutdairyapi.microtechsolutions.net.in/php/postuser.php',
+                urlencoded,
+                {
+                    headers: {
+                        'Content-Type':
+                            'application/x-www-form-urlencoded',
+                    },
+                }
+            );
+
+            console.log(
+                'CREATE USER API RESPONSE:',
+                response.data
+            );
+
+            toast.success(
+                'User Master created successfully'
+            );
+
+            handleClearTemplate();
+
+            handleDrawerClose();
+
+            fetchData();
+
+        } catch (error) {
+
+            console.error(
+                'Error creating User:',
+                error
+            );
+
+            toast.error(
+                'Unable to create User Master'
+            );
+        }
+    };
+
+
+    // ==========================================================
+    // UPDATE USER MASTER
+    // ==========================================================
+
+    const UpdateUserMaster = async () => {
+
+        // ----------------------------------------------
+        // NAME VALIDATION
+        // ----------------------------------------------
+
+        if (!name || name.trim() === '') {
+
+            toast.error('Name is required');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // USER NAME VALIDATION
+        // ----------------------------------------------
+
+        if (!user || user.trim() === '') {
+
+            toast.error('User Name is required');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // PASSWORD VALIDATION
+        // ----------------------------------------------
+
+        if (!password || password.trim() === '') {
+
+            toast.error('Password is required');
+
+            return;
+        }
+
+
+        if (!/^[A-Za-z0-9]{6}$/.test(password)) {
+
+            toast.error('Password must be exactly 6 characters');
+
+            setError(true);
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // LEVEL VALIDATION
+        // ----------------------------------------------
+
+        if (!selectedLevelOption) {
+
+            toast.error('Please select Level');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // BRANCH VALIDATION
+        // ----------------------------------------------
+
+        if (!selectedBranchOption) {
+
+            toast.error('Please select Branch');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // ID VALIDATION
+        // ----------------------------------------------
+
+        if (!idwiseData) {
+
+            toast.error('User ID is missing');
+
+            return;
+        }
+
+
+        // ----------------------------------------------
+        // REQUEST DATA
+        // ----------------------------------------------
+
+        const urlencoded = new URLSearchParams();
+
+        urlencoded.append('Name', name);
+
+        urlencoded.append('UserId', user);
+
+        urlencoded.append('Password', password);
+
+        urlencoded.append(
+            'LevelId',
+            String(selectedLevelOption)
+        );
+
+        urlencoded.append(
+            'LoginStatus',
+            'false'
+        );
+
+        urlencoded.append(
+            'BranchId',
+            String(selectedBranchOption)
+        );
+
+        urlencoded.append(
+            'CompanyId',
+            '1'
+        );
+
+        urlencoded.append(
+            'Id',
+            String(idwiseData)
+        );
+
+
+        try {
+
+            const response = await axios.post(
+                'https://amrutdairyapi.microtechsolutions.net.in/php/updateuser.php',
+                urlencoded,
+                {
+                    headers: {
+                        'Content-Type':
+                            'application/x-www-form-urlencoded',
+                    },
+                }
+            );
+
+            console.log(
+                'UPDATE USER API RESPONSE:',
+                response.data
+            );
+
+            toast.success(
+                'User Master Updated successfully'
+            );
+
+            handleClearTemplate();
+
+            handleDrawerClose();
+
+            fetchData();
+
+        } catch (error) {
+
+            console.error(
+                'Error updating User:',
+                error
+            );
+
+            toast.error(
+                'Unable to update User Master'
+            );
+        }
+    };
+
+
+    // ==========================================================
+    // RETURN UI
+    // ==========================================================
 
     return (
 
-        <Box >
+        <Box>
+
             <Box textAlign={'center'}>
-                <Typography sx={{ color: 'var(--complementary-color)', }} variant='h4'><b>User Master</b></Typography>
+
+                <Typography
+                    sx={{
+                        color: 'var(--complementary-color)',
+                    }}
+                    variant='h4'
+                >
+                    <b>User Master</b>
+                </Typography>
+
             </Box>
 
 
+            <Box
+                sx={{
+                    p: 5,
+                    height: 'auto',
+                }}
+            >
 
-            <Box sx={{
-                //  background: 'rgb(236, 253, 230)', 
-                p: 5, height: 'auto'
-            }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 3,
+                    }}
+                >
 
-                <Box sx={{ display: 'flex', gap: 3 }}>
-                    <Button sx={{ background: 'var(--complementary-color)', }} variant="contained" onClick={handleDrawerOpen}>Create User Master </Button>
+                    <Button
+                        sx={{
+                            background:
+                                'var(--complementary-color)',
+                        }}
+                        variant="contained"
+                        onClick={handleDrawerOpen}
+                    >
+                        Create User Master
+                    </Button>
+
                 </Box>
 
 
-
                 <Box mt={4}>
+
                     <MaterialReactTable
                         columns={columns}
                         data={data}
                         enablePagination={false}
+
                         muiTableHeadCellProps={{
                             sx: {
                                 backgroundColor: '#E9ECEF',
@@ -329,11 +1352,20 @@ const UserMaster = () => {
                                 fontSize: '16px',
                             },
                         }}
+
                         muiTableBodyRowProps={({ row }) => ({
-                            onClick: () => handleSubmit(row.original),
-                            style: { cursor: 'pointer' },
+
+                            onClick: () =>
+                                handleSubmit(row.original),
+
+                            style: {
+                                cursor: 'pointer',
+                            },
+
                         })}
+
                         renderBottomToolbarCustomActions={() => (
+
                             <Box
                                 mt={2}
                                 alignItems="center"
@@ -341,190 +1373,504 @@ const UserMaster = () => {
                                 justifyContent="flex-end"
                                 width="100%"
                             >
-                                <FirstPageIcon sx={{ cursor: 'pointer' }} onClick={() => setPageNo(1)} />
-                                <KeyboardArrowLeftIcon
-                                    sx={{ cursor: 'pointer' }}
-                                    onClick={() => setPageNo((prev) => Math.max(Number(prev) - 1, 1))}
+
+                                <FirstPageIcon
+                                    sx={{
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        setPageNo(1)
+                                    }
                                 />
-                                <Box> Page No </Box>
+
+                                <KeyboardArrowLeftIcon
+                                    sx={{
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        setPageNo(
+                                            (prev) =>
+                                                Math.max(
+                                                    Number(prev) - 1,
+                                                    1
+                                                )
+                                        )
+                                    }
+                                />
+
+                                <Box>
+                                    Page No
+                                </Box>
+
                                 <TextField
                                     sx={{
-                                        width: '4.5%', ml: 1,
+                                        width: '4.5%',
+                                        ml: 1,
+
                                         '@media (max-width: 768px)': {
                                             width: '10%',
                                         },
                                     }}
+
                                     value={pageNo}
-                                    onChange={(e) => setPageNo(e.target.value)}
+
+                                    onChange={(e) => {
+
+                                        const value =
+                                            e.target.value;
+
+                                        if (
+                                            value === '' ||
+                                            /^[0-9]+$/.test(value)
+                                        ) {
+
+                                            setPageNo(
+                                                value === ''
+                                                    ? 1
+                                                    : Number(value)
+                                            );
+                                        }
+
+                                    }}
+
                                     size="small"
                                 />
+
                                 <KeyboardArrowRightIcon
-                                    sx={{ cursor: 'pointer' }}
-                                    onClick={() => setPageNo((prev) => Number(prev) + 1)}
+                                    sx={{
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        setPageNo(
+                                            (prev) =>
+                                                Number(prev) + 1
+                                        )
+                                    }
                                 />
+
                                 <LastPageIcon
-                                    sx={{ cursor: 'pointer' }}
-                                    onClick={() => setPageNo(totalPages)}
+                                    sx={{
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() =>
+                                        setPageNo(totalPages)
+                                    }
                                 />
+
                                 Total Pages : {totalPages}
+
                             </Box>
                         )}
+
                     />
+
                 </Box>
 
+
+                {/* ======================================================
+                    DRAWER
+                ====================================================== */}
 
                 <Drawer
                     anchor="right"
                     open={isDrawerOpen}
                     onClose={handleDrawerClose}
+
                     PaperProps={{
                         sx: {
-                            borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
-                            width: isSmallScreen ? "100%" : "650px",
+                            borderRadius:
+                                isSmallScreen
+                                    ? '0'
+                                    : '10px 0 0 10px',
+
+                            width:
+                                isSmallScreen
+                                    ? '100%'
+                                    : '650px',
+
                             zIndex: 1000,
                         },
                     }}
                 >
-                    <Box sx={{ padding: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgb(236, 253, 230)' }}>
-                        {/* <Typography m={2} variant="h6"><b>Create User Master</b></Typography> */}
-                        <Typography m={2} fontWeight="bold" variant="h6">
-                            {isEditing ? "Update User Master" : "Create User Master"}
+
+                    {/* HEADER */}
+
+                    <Box
+                        sx={{
+                            padding: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background:
+                                'rgb(236, 253, 230)',
+                        }}
+                    >
+
+                        <Typography
+                            m={2}
+                            fontWeight="bold"
+                            variant="h6"
+                        >
+                            {isEditing
+                                ? 'Update User Master'
+                                : 'Create User Master'}
                         </Typography>
-                        <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleDrawerClose} />
+
+                        <CloseIcon
+                            sx={{
+                                cursor: 'pointer',
+                            }}
+                            onClick={handleDrawerClose}
+                        />
+
                     </Box>
+
                     <Divider />
 
+
                     <Box m={2}>
+
+                        {/* ==================================================
+                            FULL NAME
+                        ================================================== */}
+
                         <Box>
-                            <Typography>Full Name</Typography>
+
+                            <Typography>
+                                Full Name
+                            </Typography>
+
                             <TextField
                                 variant="standard"
+
                                 sx={{
                                     '& .MuiInput-underline:after': {
                                         borderBottomWidth: 1.5,
                                         borderBottomColor: '#44ad74',
-                                    }, mt: 1
+                                    },
+                                    mt: 1,
                                 }}
+
                                 focused
 
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                size="small" placeholder="Enter Account Name" fullWidth />
+
+                                onChange={(e) =>
+                                    setName(e.target.value)
+                                }
+
+                                size="small"
+
+                                placeholder="Enter Account Name"
+
+                                fullWidth
+                            />
+
                         </Box>
 
+
+                        {/* ==================================================
+                            USER NAME
+                        ================================================== */}
+
                         <Box mt={2}>
-                            <Typography>User Name</Typography>
+
+                            <Typography>
+                                User Name
+                            </Typography>
+
                             <TextField
                                 variant="standard"
+
                                 sx={{
                                     '& .MuiInput-underline:after': {
                                         borderBottomWidth: 1.5,
                                         borderBottomColor: '#44ad74',
-                                    }, mt: 1
+                                    },
+                                    mt: 1,
                                 }}
+
                                 focused
 
                                 value={user}
-                                onChange={(e) => setUser(e.target.value)}
-                                size="small" placeholder="Enter User" fullWidth />
+
+                                onChange={(e) =>
+                                    setUser(e.target.value)
+                                }
+
+                                size="small"
+
+                                placeholder="Enter User"
+
+                                fullWidth
+                            />
+
                         </Box>
 
+
+                        {/* ==================================================
+                            PASSWORD
+                        ================================================== */}
+
                         <Box mt={2}>
-                            <Typography>Password</Typography>
+
+                            <Typography>
+                                Password
+                            </Typography>
+
                             <TextField
                                 variant="standard"
+
                                 sx={{
                                     '& .MuiInput-underline:after': {
                                         borderBottomWidth: 1.5,
                                         borderBottomColor: '#44ad74',
-                                    }, mt: 1
+                                    },
+                                    mt: 1,
                                 }}
+
                                 focused
 
                                 value={password}
-                                // onChange={(e) => setPassword(e.target.value)}
+
                                 onChange={handlePasswordChange}
+
                                 error={error}
-                                helperText={error ? "Password must be exactly 6 digits" : ""}
-                                size="small" placeholder="Enter 6-digit Password" fullWidth />
+
+                                helperText={
+                                    error
+                                        ? 'Password must be exactly 6 digits'
+                                        : ''
+                                }
+
+                                size="small"
+
+                                placeholder="Enter 6-digit Password"
+
+                                fullWidth
+                            />
+
                         </Box>
 
-                        <Box display={'flex'} gap={2} alignItems={'center'} mt={2}>
 
-                            <Box flex={1}  >
-                                <Typography variant="body2">Level</Typography>
-                                <FormControl fullWidth size="small" variant="standard"
-                                    sx={{
-                                        '& .MuiInput-underline:after': {
-                                            borderBottomWidth: 1.5,
-                                            borderBottomColor: '#44ad74',
-                                        }, mt: 1
-                                    }}
-                                    focused
-                                >
-                                    <Select
-                                        value={selectedLevelOption || ""}
-                                        onChange={(event) => setSelectedLevelOption(event.target.value)}
-                                    >
-                                        {levelOption.map((option) => (
-                                            <MenuItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Box>
+                        {/* ==================================================
+                            LEVEL + BRANCH
+                        ================================================== */}
+
+                        <Box
+                            display={'flex'}
+                            gap={2}
+                            alignItems={'center'}
+                            mt={2}
+                        >
+
+                            {/* ==================================================
+                                LEVEL
+                            ================================================== */}
 
                             <Box flex={1}>
-                                <Typography variant="body2">Branch</Typography>
-                                <FormControl fullWidth size="small" variant="standard"
+
+                                <Typography variant="body2">
+                                    Level
+                                </Typography>
+
+                                <FormControl
+                                    fullWidth
+                                    size="small"
+                                    variant="standard"
+
                                     sx={{
                                         '& .MuiInput-underline:after': {
                                             borderBottomWidth: 1.5,
                                             borderBottomColor: '#44ad74',
-                                        }, mt: 1
+                                        },
+                                        mt: 1,
                                     }}
+
                                     focused
                                 >
+
                                     <Select
-                                        value={selectedBranchOption || ""}
-                                        onChange={(event) => setSelectedBranchOption(event.target.value)}
+
+                                        value={
+                                            selectedLevelOption || ''
+                                        }
+
+                                        onChange={(event) => {
+
+                                            const value =
+                                                event.target.value;
+
+                                            console.log(
+                                                'Selected Level:',
+                                                value
+                                            );
+
+                                            setSelectedLevelOption(
+                                                value
+                                            );
+                                        }}
                                     >
-                                        {branchOption.map((option) => (
-                                            <MenuItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </MenuItem>
-                                        ))}
+
+                                        {levelOption.map(
+                                            (option) => (
+
+                                                <MenuItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </MenuItem>
+
+                                            )
+                                        )}
+
                                     </Select>
+
                                 </FormControl>
+
                             </Box>
+
+
+                            {/* ==================================================
+                                BRANCH
+                            ================================================== */}
+
+                            <Box flex={1}>
+
+                                <Typography variant="body2">
+                                    Branch
+                                </Typography>
+
+                                <FormControl
+                                    fullWidth
+                                    size="small"
+                                    variant="standard"
+
+                                    sx={{
+                                        '& .MuiInput-underline:after': {
+                                            borderBottomWidth: 1.5,
+                                            borderBottomColor: '#44ad74',
+                                        },
+                                        mt: 1,
+                                    }}
+
+                                    focused
+                                >
+
+                                    <Select
+
+                                        value={
+                                            selectedBranchOption || ''
+                                        }
+
+                                        onChange={(event) => {
+
+                                            const value =
+                                                event.target.value;
+
+                                            console.log(
+                                                'Selected Branch:',
+                                                value
+                                            );
+
+                                            setSelectedBranchOption(
+                                                value
+                                            );
+                                        }}
+                                    >
+
+                                        {branchOption.map(
+                                            (option) => (
+
+                                                <MenuItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </MenuItem>
+
+                                            )
+                                        )}
+
+                                    </Select>
+
+                                </FormControl>
+
+                            </Box>
+
                         </Box>
+
                     </Box>
-                    <Box display={'flex'} alignItems={'center'} justifyContent={'center'} gap={2} mt={5}>
+
+
+                    {/* ======================================================
+                        SAVE / UPDATE + CANCEL
+                    ====================================================== */}
+
+                    <Box
+                        display={'flex'}
+                        alignItems={'center'}
+                        justifyContent={'center'}
+                        gap={2}
+                        mt={5}
+                    >
+
                         <Box>
+
                             <Button
                                 sx={{
-                                    background: 'var(--primary-color)',
+                                    background:
+                                        'var(--primary-color)',
                                 }}
-                                // onClick={CreateUserMaster}
-                                onClick={isEditing ? UpdateUserMaster : CreateUserMaster}
+
+                                onClick={
+                                    isEditing
+                                        ? UpdateUserMaster
+                                        : CreateUserMaster
+                                }
+
                                 variant="contained"
                             >
-                                {isEditing ? "Update" : "Save"}
+
+                                {isEditing
+                                    ? 'Update'
+                                    : 'Save'}
+
                             </Button>
+
                         </Box>
+
 
                         <Box>
-                            <Button sx={{ borderColor: 'var(--complementary-color)', color: 'var(--complementary-color)' }}
-                                onClick={handleDrawerClose} variant='outlined'>Cancel </Button>
+
+                            <Button
+                                sx={{
+                                    borderColor:
+                                        'var(--complementary-color)',
+
+                                    color:
+                                        'var(--complementary-color)',
+                                }}
+
+                                onClick={handleDrawerClose}
+
+                                variant="outlined"
+                            >
+                                Cancel
+                            </Button>
+
                         </Box>
+
                     </Box>
+
                 </Drawer>
+
             </Box>
+
         </Box>
-    )
-}
-export default UserMaster
+    );
+};
 
 
-
+export default UserMaster;

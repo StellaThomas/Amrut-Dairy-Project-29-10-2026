@@ -2555,25 +2555,25 @@ const fetchData = async () => {
                   />
                 </Box>
 
-                <Box m={1.5}>
-                  <Typography>Customer Type</Typography>
+              <Box m={1.5}>
+  <Typography>Customer Type</Typography>
 
-                  <FormControl fullWidth size="small">
-                    <Select
-                      value={customerType}
-                      onChange={(event) => setCustomerType(event.target.value)}
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>
-                        Select Customer Type
-                      </MenuItem>
+  <FormControl fullWidth size="small">
+    <Select
+      value={customerType}
+      onChange={(event) => setCustomerType(event.target.value)}
+      displayEmpty
+    >
+      <MenuItem value="" disabled>
+        Select Customer Type
+      </MenuItem>
 
-                      <MenuItem value="D">Dealer</MenuItem>
-
-                      <MenuItem value="C">Caterers</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
+      <MenuItem value="R">Regular</MenuItem>
+      <MenuItem value="D">Dealer</MenuItem>
+      <MenuItem value="C">Caterers</MenuItem>
+    </Select>
+  </FormControl>
+</Box>
               </Box>
             </Box>
 
@@ -2907,27 +2907,27 @@ const fetchData = async () => {
                   />
                 </Box>
 
-                <Box m={1.5}>
-                  <Typography>Customer Type</Typography>
+               <Box m={1.5}>
+  <Typography>Customer Type</Typography>
 
-                  <FormControl fullWidth size="small">
-                    <Select
-                      value={updatedCustomerType}
-                      onChange={(event) =>
-                        setUpdatedCustomerType(event.target.value)
-                      }
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>
-                        Select Customer Type
-                      </MenuItem>
+  <FormControl fullWidth size="small">
+    <Select
+      value={updatedCustomerType}
+      onChange={(event) =>
+        setUpdatedCustomerType(event.target.value)
+      }
+      displayEmpty
+    >
+      <MenuItem value="" disabled>
+        Select Customer Type
+      </MenuItem>
 
-                      <MenuItem value="D">Dealer</MenuItem>
-
-                      <MenuItem value="C">Caterers</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
+      <MenuItem value="R">Regular</MenuItem>
+      <MenuItem value="D">Dealer</MenuItem>
+      <MenuItem value="C">Caterers</MenuItem>
+    </Select>
+  </FormControl>
+</Box>
               </Box>
             </Box>
 
