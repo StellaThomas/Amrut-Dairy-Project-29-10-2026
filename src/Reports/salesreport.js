@@ -801,7 +801,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, Box, Typography, But
 import autoTable from 'jspdf-autotable';
 import jsPDF from 'jspdf';
 import PrintIcon from '@mui/icons-material/Print';
-import logonew from '../imgs/logo_white.png'
+
 import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -821,32 +821,699 @@ const [toDate, setToDate] = useState(today);
     const [previewOpen, setPreviewOpen] = useState(false);
 
 
-    const getSalesReport = () => {
-        // Format dates to 'YYYY-MM-DD' using split
+const getSalesReport = async () => {
+    try {
+
+        // =====================================================
+        // DATE FORMAT
+        // =====================================================
         const formatDate = (date) => {
-            if (!date) return '';
-            return new Date(date).toLocaleDateString('en-CA');
-        };
-        const formattedFromDate = formatDate(fromDate);
-        const formattedToDate = formatDate(toDate);
-        const url = `https://amrutdairyapi.microtechsolutions.net.in/php/getsalesreport.php?fromdate=${formattedFromDate}&todate=${formattedToDate}`;
-        console.log("URL:", url);
+            if (!date) return "";
 
-        const requestOptions = {
-            method: "GET",
-            redirect: "follow"
+            const d = new Date(date);
+
+            return `${d.getFullYear()}-${String(
+                d.getMonth() + 1
+            ).padStart(2, "0")}-${String(
+                d.getDate()
+            ).padStart(2, "0")}`;
         };
 
-        fetch(url, requestOptions)
-            .then((response) => response.json())
-            .then(data => {
-                // console.log('data', data)
-                setSalesData(data);
-                setShowTable(true);
-                setPreviewOpen(true)
-            })
-            .catch((error) => console.error(error));
+
+        // =====================================================
+// NORMALIZE API DATE
+// =====================================================
+const normalizeApiDate = (value) => {
+    if (!value) return "";
+
+    // API date object
+    if (typeof value === "object" && value?.date) {
+        return String(value.date).substring(0, 10);
+    }
+
+    // Normal string date
+    if (typeof value === "string") {
+        return value.substring(0, 10);
+    }
+
+    return "";
+};
+
+
+
+
+        const selectedFromDate = formatDate(fromDate);
+        const selectedToDate = formatDate(toDate);
+
+        console.log(
+            "SELECTED DATE RANGE:",
+            selectedFromDate,
+            "TO",
+            selectedToDate
+        );
+
+        // =====================================================
+        // 1. GET INVOICE HEADER - PAGE 1
+        // =====================================================
+        const firstResponse = await fetch(
+            "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=1"
+        );
+
+        if (!firstResponse.ok) {
+            throw new Error(
+                `Invoice Header API Error: ${firstResponse.status}`
+            );
+        }
+
+        const firstResult = await firstResponse.json();
+
+        console.log(
+            "INVOICE HEADER PAGE 1:",
+            firstResult
+        );
+
+        // =====================================================
+        // CHECK RESPONSE FORMAT
+        // =====================================================
+        const totalPages = Number(
+            firstResult?.total_pages ||
+            firstResult?.TotalPages ||
+            firstResult?.pages ||
+            1
+        );
+
+        console.log(
+            "TOTAL INVOICE PAGES:",
+            totalPages
+        );
+
+        // =====================================================
+        // PAGE 1 DATA
+        // =====================================================
+        const firstPageData =
+            Array.isArray(firstResult)
+                ? firstResult
+                : Array.isArray(firstResult?.data)
+                    ? firstResult.data
+                    : [];
+
+        // =====================================================
+        // GET REMAINING PAGES
+        // =====================================================
+        let allInvoiceHeaders = [
+            ...firstPageData
+        ];
+
+        if (totalPages > 1) {
+
+            const pageRequests = [];
+
+            for (
+                let page = 2;
+                page <= totalPages;
+                page++
+            ) {
+                pageRequests.push(
+                    fetch(
+                        `https://amrutdairyapi.microtechsolutions.net.in/php/get/gettblpage.php?Table=invoiceheader&PageNo=${page}`
+                    ).then((res) => res.json())
+                );
+            }
+
+            const remainingPages =
+                await Promise.all(pageRequests);
+
+            remainingPages.forEach((pageResult) => {
+
+                const pageData =
+                    Array.isArray(pageResult)
+                        ? pageResult
+                        : Array.isArray(pageResult?.data)
+                            ? pageResult.data
+                            : [];
+
+                allInvoiceHeaders.push(
+                    ...pageData
+                );
+            });
+        }
+
+        console.log(
+            "TOTAL INVOICE HEADERS:",
+            allInvoiceHeaders.length
+        );
+
+        // =====================================================
+        // 2. DATE FILTER
+        // =====================================================
+        const dateFilteredInvoices =
+            allInvoiceHeaders.filter((invoice) => {
+
+                const rawInvoiceDate =
+                    invoice?.InvoiceDate;
+
+                let invoiceDate = "";
+
+                if (
+                    typeof rawInvoiceDate === "object" &&
+                    rawInvoiceDate?.date
+                ) {
+                    invoiceDate =
+                        String(
+                            rawInvoiceDate.date
+                        ).substring(0, 10);
+                }
+                else if (rawInvoiceDate) {
+                    invoiceDate =
+                        String(
+                            rawInvoiceDate
+                        ).substring(0, 10);
+                }
+
+                const match =
+                    invoiceDate >= selectedFromDate &&
+                    invoiceDate <= selectedToDate;
+
+                console.log(
+                    "DATE CHECK:",
+                    invoice?.InvoiceNo,
+                    invoiceDate,
+                    match
+                );
+
+                return match;
+            });
+
+        console.log(
+            "DATE FILTERED INVOICES:",
+            dateFilteredInvoices
+        );
+
+
+
+
+
+
+// =====================================================
+// PRODUCT MASTER
+// =====================================================
+const productResponse = await fetch(
+    "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster"
+);
+
+if (!productResponse.ok) {
+    throw new Error(
+        `Product Master API Error: ${productResponse.status}`
+    );
+}
+
+const productResult = await productResponse.json();
+
+const productList =
+    Array.isArray(productResult)
+        ? productResult
+        : Array.isArray(productResult?.data)
+            ? productResult.data
+            : [];
+
+console.log("PRODUCT MASTER:", productList);
+
+// ProductId -> ProductName
+const productMap = new Map();
+
+productList.forEach((product) => {
+    const id =
+        product?.Id ??
+        product?.ProductId ??
+        product?.ProductCode;
+
+    const name =
+        product?.ProductName ??
+        product?.name ??
+        "";
+
+    if (id != null) {
+        productMap.set(
+            String(id),
+            name
+        );
+    }
+});
+
+console.log("PRODUCT MAP:", productMap);
+
+
+
+
+      // =====================================================
+// CUSTOMER INFO CACHE
+// =====================================================
+const customerInfoCache = new Map();
+
+// =====================================================
+// GET CUSTOMER TYPE + CUSTOMER NAME
+// =====================================================
+const getCustomerInfo = async (accountId) => {
+
+    // -------------------------------------------------
+    // AccountId = 0 => Regular Sale
+    // -------------------------------------------------
+    if (!accountId || Number(accountId) === 0) {
+        return {
+            type: "R",
+            name: ""
+        };
+    }
+
+    const cacheKey = String(accountId);
+
+    if (customerInfoCache.has(cacheKey)) {
+        return customerInfoCache.get(cacheKey);
+    }
+
+    let customerType = "";
+    let customerName = "";
+
+    try {
+
+        // =================================================
+        // ACCOUNT API
+        // =================================================
+        const accountResponse = await fetch(
+            `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=account&Colname=Id&Colvalue=${accountId}`
+        );
+
+        if (accountResponse.ok) {
+
+            const accountResult =
+                await accountResponse.json();
+
+            console.log(
+                "ACCOUNT RESPONSE:",
+                accountId,
+                accountResult
+            );
+
+            const account =
+                Array.isArray(accountResult)
+                    ? accountResult[0]
+                    : Array.isArray(accountResult?.data)
+                        ? accountResult.data[0]
+                        : accountResult?.data ||
+                          accountResult ||
+                          null;
+
+            if (account) {
+
+                // -------------------------------
+                // CUSTOMER TYPE
+                // -------------------------------
+                customerType = String(
+                    account?.CustomerType ||
+                    account?.customerType ||
+                    ""
+                )
+                    .trim()
+                    .toUpperCase();
+
+                // -------------------------------
+                // CUSTOMER NAME
+                // -------------------------------
+                customerName =
+                    account?.AccountName ||
+                    account?.accountName ||
+                    account?.Name ||
+                    account?.name ||
+                    "";
+            }
+        }
+
+        // =================================================
+        // ADDRESS API - ONLY IF TYPE NOT FOUND
+        // =================================================
+        if (!customerType) {
+
+            const addressResponse = await fetch(
+                `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${accountId}`
+            );
+
+            if (addressResponse.ok) {
+
+                const addressResult =
+                    await addressResponse.json();
+
+                console.log(
+                    "ADDRESS RESPONSE:",
+                    accountId,
+                    addressResult
+                );
+
+                const address =
+                    Array.isArray(addressResult)
+                        ? addressResult[0]
+                        : Array.isArray(addressResult?.data)
+                            ? addressResult.data[0]
+                            : addressResult?.data ||
+                              addressResult ||
+                              null;
+
+                if (address) {
+
+                    customerType = String(
+                        address?.CustomerType ||
+                        address?.customerType ||
+                        ""
+                    )
+                        .trim()
+                        .toUpperCase();
+
+                    if (!customerName) {
+                        customerName =
+                            address?.AccountName ||
+                            address?.accountName ||
+                            address?.Name ||
+                            address?.name ||
+                            "";
+                    }
+                }
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            "CUSTOMER INFO ERROR:",
+            accountId,
+            error
+        );
+    }
+
+    // =================================================
+    // NORMALIZE CUSTOMER TYPE
+    // =================================================
+
+    if (
+        customerType === "D" ||
+        customerType === "DEALER"
+    ) {
+        customerType = "D";
+    }
+    else if (
+        customerType === "C" ||
+        customerType === "CATERER" ||
+        customerType === "CATERERS"
+    ) {
+        customerType = "C";
+    }
+    else {
+        customerType = "R";
+    }
+
+    const result = {
+        type: customerType,
+        name: customerName
     };
+
+    customerInfoCache.set(
+        cacheKey,
+        result
+    );
+
+    return result;
+};
+
+        // =====================================================
+        // 5. GET DETAILS FOR EACH INVOICE
+        // =====================================================
+        const finalReportData = [];
+
+        for (
+            const invoice of dateFilteredInvoices
+        ) {
+
+            const invoiceId =
+                invoice?.Id ??
+                invoice?.InvoiceId;
+
+            const accountId =
+                invoice?.AccountId ?? 0;
+
+            console.log(
+                "PROCESSING INVOICE:",
+                invoice?.InvoiceNo,
+                "InvoiceId:",
+                invoiceId,
+                "AccountId:",
+                accountId
+            );
+
+            // =================================================
+            // CATEGORY
+            // =================================================
+           const customerInfo =
+    await getCustomerInfo(
+        accountId
+    );
+
+const customerType =
+    customerInfo.type;
+
+            let category = "Regular";
+
+            if (
+                customerType === "D"
+            ) {
+                category = "Dealer";
+            }
+            else if (
+                customerType === "C"
+            ) {
+                category = "Caterers";
+            }
+
+            // =================================================
+            // CUSTOMER NAME
+            // =================================================
+           const accountName =
+    invoice?.AccountName ||
+    invoice?.CustomerName ||
+    customerInfo.name ||
+    "N/A";
+
+            // =================================================
+            // GET INVOICE DETAILS
+            // =================================================
+            if (!invoiceId) {
+                continue;
+            }
+
+            try {
+
+                const detailResponse =
+                    await fetch(
+                        `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=invoicedetail&Colname=InvoiceId&Colvalue=${invoiceId}`
+                    );
+
+                if (!detailResponse.ok) {
+                    continue;
+                }
+
+                const detailResult =
+                    await detailResponse.json();
+
+                const details =
+                    Array.isArray(detailResult)
+                        ? detailResult
+                        : Array.isArray(
+                            detailResult?.data
+                        )
+                            ? detailResult.data
+                            : [];
+
+                // =================================================
+                // IF NO DETAIL
+                // =================================================
+                if (details.length === 0) {
+
+                    finalReportData.push({
+
+                        InvoiceNo:
+                            invoice?.InvoiceNo,
+
+                       InvoiceDate:
+    normalizeApiDate(invoice?.InvoiceDate),
+
+                        AccountName:
+                            accountName,
+
+                        Category:
+                            category,
+
+                        OrderNo:
+                            invoice?.OrderNo || "",
+
+                        OrderDate:
+                            invoice?.OrderDate || "",
+
+                        ProductName:
+                            "",
+
+                        Rate:
+                            0,
+
+                        Quantity:
+                            0,
+
+                        Amount:
+                            Number(
+                                invoice?.Total ||
+                                invoice?.TotalAmount ||
+                                0
+                            ),
+
+                        Transport:
+                            Number(
+                                invoice?.Transport || 0
+                            ),
+
+                        "Product Subtotal":
+                            Number(
+                                invoice?.SubTotal ||
+                                invoice?.Subtotal ||
+                                0
+                            ),
+
+                        "Total amt":
+                            Number(
+                                invoice?.Total ||
+                                invoice?.TotalAmount ||
+                                0
+                            ),
+                    });
+
+                    continue;
+                }
+
+                // =================================================
+                // ADD EACH PRODUCT
+                // =================================================
+details.forEach((detail, index) => {
+    finalReportData.push({
+        InvoiceNo: invoice?.InvoiceNo,
+
+        InvoiceDate: normalizeApiDate(invoice?.InvoiceDate),
+
+        AccountName: accountName,
+
+        Category: category,
+
+        OrderNo: invoice?.OrderNo || "",
+
+        OrderDate: normalizeApiDate(invoice?.OrderDate),
+
+       ProductName:
+    detail?.ProductName ||
+    detail?.productName ||
+    productMap.get(
+        String(
+            detail?.ProductId ??
+            detail?.ProductCode ??
+            ""
+        )
+    ) ||
+    "Unknown Product",
+
+        Rate: Number(
+            detail?.Rate ??
+            detail?.rate ??
+            0
+        ),
+
+        Quantity: Number(
+            detail?.Quantity ??
+            detail?.quantity ??
+            0
+        ),
+
+        Amount: Number(
+            detail?.Amount ??
+            detail?.amount ??
+            0
+        ),
+
+        Transport:
+            index === 0
+                ? Number(invoice?.Transport ?? 0)
+                : 0,
+
+        "Product Subtotal": Number(
+            detail?.["Product Subtotal"] ??
+            detail?.ProductSubtotal ??
+            detail?.Amount ??
+            0
+        ),
+
+        "Total amt":
+            index === 0
+                ? Number(
+                    invoice?.Total ??
+                    invoice?.TotalAmount ??
+                    0
+                )
+                : 0
+    });
+});
+
+            } catch (detailError) {
+
+                console.error(
+                    "DETAIL API ERROR:",
+                    invoiceId,
+                    detailError
+                );
+            }
+        }
+
+        // =====================================================
+        // 6. FINAL RESULT
+        // =====================================================
+        console.log(
+            "FINAL SALES REPORT DATA:",
+            finalReportData
+        );
+
+        console.log(
+            "FINAL SALES REPORT COUNT:",
+            finalReportData.length
+        );
+
+        // =====================================================
+        // 7. SET DATA
+        // =====================================================
+        setSalesData(
+            finalReportData
+        );
+
+        setShowTable(true);
+        setPreviewOpen(true);
+
+    } catch (error) {
+
+        console.error(
+            "SALES REPORT ERROR:",
+            error
+        );
+
+        setSalesData([]);
+
+        setShowTable(true);
+        setPreviewOpen(true);
+
+        alert(
+            "Sales Report data load failed."
+        );
+    }
+};
 
     const handleGetSalesReport = () => {
         if (!fromDate || !toDate) {
@@ -858,203 +1525,239 @@ const [toDate, setToDate] = useState(today);
 
 
    
-    //     if (!salesData) return;
-
-    //     const pageWidth = doc.internal.pageSize.getWidth();
-    //     const pageHeight = doc.internal.pageSize.getHeight();
-    //     let y = 10;
 
 
-    //     doc.setLineWidth(0.5); // Set border thickness
-    //     doc.rect(5, 5, pageWidth - 10, pageHeight - 10); // Draw rectangle with 5mm margin on all sides
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-    //     // Convert logo image to data URL (you might need to adjust this based on your logo format)
-    //     const logoDataUrl = logonew;
-    //     // Header
-    //     // Size in jsPDF units (mm for default)
-    //     const width = 20; // about 70px
-    //     const height = 20;
-    //     const x = pageWidth / 2 - width / 2;
+    if (!Array.isArray(salesData) || salesData.length === 0) {
+        alert("No sales data available");
+        return;
+    }
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
+    let y = 25;
 
-    //     doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-    //     // Reset clipping so future drawing isn't affected
-    //     doc.discardPath();
-    //     y += height + 6;
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
 
-    //     doc.setFontSize(16);
-    //     doc.text("Arohan Agro", pageWidth / 2, y, { align: "center", margin: 2 });
-    //     y += 7;
-    //     doc.setFontSize(10)
-    //     doc.text(" Shop No.5 Atharva Vishwa,  Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-    //     y += 9;
+    doc.setLineWidth(0.5);
 
-    //     doc.setFontSize(16);
-    //     doc.text("Sales Report Preview", pageWidth / 2, y, { align: "center" });
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
+    // =====================================================
+    // HEADER
+    // =====================================================
 
-    //     y += 6;
-    //     doc.setLineWidth(0.5);
-    //     doc.line(10, y, 200, y);
-    //     y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
 
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        {
+            align: "center",
+        }
+    );
 
-    //     // Main table with all details
-    //     const tableHeaders = [
-    //         "Invoice No",
-    //         "Invoice Date",
-    //         "Account Name",
+    // =====================================================
+    // HEADER LINE
+    // =====================================================
 
-    //         "Product  Name",
-    //         "Rate",
-    //         "Quantity",
-    //         "Amount",
-    //         "CGST",
-    //         "IGST",
-    //         "SGST",
-    //         "Transport",
-    //         "Sub Total",
-    //         "Total amount",
+    y += 10;
 
-    //     ];
+    doc.setLineWidth(0.5);
 
-    //     const tableData = salesData.map((item) => {
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
 
+    y += 8;
 
-    //         return [
-    //             item.InvoiceNo,
-    //             item.InvoiceDate,
-    //             item.AccountName,
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
 
-    //             item.ProductName || 0,
-    //             item.Rate || 0,
-    //             item.Quantity || 0,
-    //             item.Amount || 0,
-    //             item["Product CGST AMT"] || 0,
-    //             item["Product IGST AMT"] || 0,
-    //             item["Product SGST AMT"] || 0,
-    //             item.Transport || 0,
-    //             item["Product Subtotal"],
-    //             item["Total amt"],
+    const tableHeaders = [
+        "Invoice No",
+        "Invoice Date",
+        "Account Name",
+        "Category",
+        "Product Name",
+        "Rate",
+        "Quantity",
+        "Amount",
+        "Transport",
+        "Sub Total",
+        "Total amount",
+    ];
 
-    //         ];
-    //     });
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
 
-    //     autoTable(doc, {
-    //         head: [tableHeaders],
-    //         body: tableData,
-    //         startY: y,
-    //         margin: 8,
-    //         theme: "grid",
-    //         styles: { fontSize: 8, cellPadding: 1.5 }, // Smaller font size to fit all columns
-    //         headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
-    //         // columnStyles: {
-    //         //     0: { cellWidth: 'auto' },
-    //         //     1: { cellWidth: 'auto' },
-    //         //     2: { cellWidth: 'auto' },
-    //         //     3: { cellWidth: 'auto' },
-    //         //     4: { cellWidth: 'auto' },
-    //         //     5: { cellWidth: 'auto' },
-    //         //     6: { cellWidth: 'auto' },
-    //         //     7: { cellWidth: 'auto' },
-    //         //     8: { cellWidth: 'auto' },
-    //         //     9: { cellWidth: 'auto' },
-    //         //      10: { cellWidth: 'auto' },
-    //         //     11: { cellWidth: 'auto' },
-    //         //     12: { cellWidth: 'auto' },
-    //         //     13: { cellWidth: 'auto' },
-    //         //     14: { cellWidth: 'auto' },
-    //         //     15: { cellWidth: 'auto' },
-    //         // }
-    //     });
+    const tableData = salesData.map((item) => [
+        item.InvoiceNo || "-",
+        item.InvoiceDate || "-",
+        item.AccountName || "-",
+        item.Category || "Regular",
+        item.ProductName || "-",
+        Number(item.Rate || 0).toFixed(2),
+        Number(item.Quantity || 0).toFixed(3),
+        Number(item.Amount || 0).toFixed(2),
+        Number(item.Transport || 0).toFixed(2),
+        Number(item["Product Subtotal"] || 0).toFixed(2),
+        Number(item["Total amt"] || 0).toFixed(2),
+    ]);
 
-    //     y = doc.lastAutoTable.finalY + 10;
+    // =====================================================
+    // GRAND TOTAL
+    // =====================================================
 
-    //     // Save
-    //     doc.save("Sales_Report_Preview.pdf");
-    // };
+    const grandTotal = salesData.reduce(
+        (acc, row) =>
+            acc + (Number(row["Total amt"]) || 0),
+        0
+    );
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!salesData) return;
+    // =====================================================
+    // TABLE
+    // =====================================================
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    autoTable(doc, {
+        head: [tableHeaders],
 
-        doc.setLineWidth(0.5);
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+        body: tableData,
 
-        const logoDataUrl = logonew;
-        const width = 20;
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+        startY: y,
 
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        doc.discardPath();
-        y += height + 6;
+        margin: {
+            left: 8,
+            right: 8,
+        },
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center" });
-        y += 7;
-        doc.setFontSize(10);
-        doc.text("Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+        theme: "grid",
 
-        doc.setFontSize(16);
-        doc.text("Sales Report Preview", pageWidth / 2, y, { align: "center" });
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+        styles: {
+            font: "helvetica",
+            fontSize: 7,
+            cellPadding: 1.5,
+            textColor: 0,
+            lineColor: [180, 180, 180],
+            lineWidth: 0.2,
+        },
 
-        // Table headers
-        const tableHeaders = [
-            "Invoice No", "Invoice Date", "Account Name",
-            "Product Name", "Rate", "Quantity", "Amount",
-            "CGST", "IGST", "SGST", "Transport",
-            "Sub Total", "Total amount",
-        ];
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+            fontSize: 7,
+        },
 
-        // Table data
-        const tableData = salesData.map((item) => [
-            item.InvoiceNo,
-            item.InvoiceDate,
-            item.AccountName,
-            item.ProductName || 0,
-            item.Rate || 0,
-            item.Quantity || 0,
-            item.Amount || 0,
-            item["Product CGST AMT"] || 0,
-            item["Product IGST AMT"] || 0,
-            item["Product SGST AMT"] || 0,
-            item.Transport || 0,
-            item["Product Subtotal"] || 0,
-            item["Total amt"] || 0,
-        ]);
+        // =================================================
+        // COLUMN ALIGNMENT
+        // =================================================
 
-        // Calculate grand total
-        const grandTotal = salesData?.reduce((acc, row) => acc + (Number(row["Product Subtotal"]) || 0), 0);
+        columnStyles: {
+            0: {
+                halign: "center",
+            },
 
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 8,
-            theme: "grid",
-            styles: { fontSize: 8, cellPadding: 1.5 },
-            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
-            foot: [
-                [
-                    { content: "Grand Total", colSpan: 11, styles: { halign: "right", fontStyle: "bold" } },
-                    { content: grandTotal.toFixed(2), colSpan: 2, styles: { halign: "right", fontStyle: "bold" } }
-                ]
-            ]
-        });
+            1: {
+                halign: "center",
+            },
 
-        doc.save("Sales_Report_Preview.pdf");
-    };
+            5: {
+                halign: "right",
+            },
+
+            6: {
+                halign: "right",
+            },
+
+            7: {
+                halign: "right",
+            },
+
+            8: {
+                halign: "right",
+            },
+
+            9: {
+                halign: "right",
+            },
+
+            10: {
+                halign: "right",
+            },
+        },
+
+        // =================================================
+        // GRAND TOTAL
+        // =================================================
+
+        foot: [
+            [
+                {
+                    content: "Grand Total",
+                    colSpan: 10,
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: grandTotal.toFixed(2),
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+            ],
+        ],
+
+        footStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+            fontSize: 8,
+        },
+
+        // =================================================
+        // PAGE BORDER ON EVERY PAGE
+        // =================================================
+
+        didDrawPage: () => {
+            doc.setLineWidth(0.5);
+
+            doc.rect(
+                5,
+                5,
+                pageWidth - 10,
+                pageHeight - 10
+            );
+        },
+    });
+
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("Sales_Report_Preview.pdf");
+};
 
 
     const exportToExcel = async (data) => {
@@ -1067,21 +1770,19 @@ const [toDate, setToDate] = useState(today);
         const worksheet = workbook.addWorksheet("SalesReport");
 
         // Define header row
-        const headers = [
-            "Invoice No",
-            "Invoice Date",
-            "Account Name",
-            "Product Name",
-            "Rate",
-            "Quantity (Nos)",
-            "Amount (Rs)",
-            "CGST",
-            "IGST",
-            "SGST",
-            "Transport",
-            "Sub Total",
-            "Total Amount",
-        ];
+       const headers = [
+    "Invoice No",
+    "Invoice Date",
+    "Account Name",
+    "Category",
+    "Product Name",
+    "Rate",
+    "Quantity (Nos)",
+    "Amount (Rs)",
+    "Transport",
+    "Sub Total",
+    "Total Amount",
+];
 
         worksheet.addRow(headers);
 
@@ -1097,23 +1798,35 @@ const [toDate, setToDate] = useState(today);
         });
 
         // Add data rows
-        data.forEach((item) => {
-            worksheet.addRow([
-                item.InvoiceNo,
-                item.InvoiceDate,
-                item.AccountName || "N/A",
-                item.ProductName || "N/A",
-                Number(item.Rate) || 0,
-                Number(item.Quantity) || 0,
-                Number(item.Amount) || 0,
-                Number(item["Product CGST AMT"]) || 0,
-                Number(item["Product IGST AMT"]) || 0,
-                Number(item["Product SGST AMT"]) || 0,
-                Number(item.Transport) || 0,
-                Number(item["Product Subtotal"]) || 0,
-                Number(item["Total amt"]) || 0,
-            ]);
-        });
+       data.forEach((item) => {
+
+    worksheet.addRow([
+
+        item.InvoiceNo,
+
+        item.InvoiceDate,
+
+        item.AccountName || "N/A",
+
+        item.Category || "Regular",
+
+        item.ProductName || "N/A",
+
+        Number(item.Rate) || 0,
+
+        Number(item.Quantity) || 0,
+
+        Number(item.Amount) || 0,
+
+        Number(item.Transport) || 0,
+
+        Number(item["Product Subtotal"]) || 0,
+
+        Number(item["Total amt"]) || 0,
+
+    ]);
+
+});
 
         // Auto-fit columns
         worksheet.columns.forEach((col) => {
@@ -1159,258 +1872,157 @@ const [toDate, setToDate] = useState(today);
     };
 
 
-    // const exportToExcel = async (data) => {
-    //     if (!data || data.length === 0) {
-    //         alert("No data available to export");
-    //         return;
-    //     }
+  
 
-    //     const workbook = new ExcelJS.Workbook();
-    //     const worksheet = workbook.addWorksheet("SalesReport");
+ const columns = useMemo(() => {
+    return [
 
-    //     // Define header row
-    //     const headers = [
-    //         "Invoice No",
-    //         "Invoice Date",
-    //         "Account Name",
-    //         "Product Name",
-    //         "Rate",
-    //         "Quantity (Nos)",
-    //         "Amount (Rs)",
-    //         "CGST",
-    //         "IGST",
-    //         "SGST",
-    //         "Transport",
-    //         "Sub Total",
-    //         "Total Amount",
-    //     ];
-
-    //     worksheet.addRow(headers);
-
-    //     // Apply header styling
-    //     worksheet.getRow(1).eachCell((cell) => {
-    //         cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // white bold
-    //         cell.fill = {
-    //             type: "pattern",
-    //             pattern: "solid",
-    //             fgColor: { argb: "FF4F81BD" }, // blue background
-    //         };
-    //         cell.alignment = { horizontal: "center", vertical: "middle" };
-    //     });
-
-    //     // Add data rows
-    //     data.forEach((item) => {
-    //         worksheet.addRow([
-    //             item.InvoiceNo,
-    //             item.InvoiceDate,
-    //             item.AccountName || "N/A",
-    //             item.ProductName || "N/A",
-    //             item.Rate || "N/A",
-    //             item.Quantity || 0,
-    //             item.Amount || 0,
-    //             item["Product CGST AMT"] || 0,
-    //             item["Product IGST AMT"] || 0,
-    //             item["Product SGST AMT"] || 0,
-    //             item.Transport || 0,
-    //             item["Product Subtotal"] || 0,
-    //             item["Total amt"] || 0,
-    //         ]);
-    //     });
-
-    //     // Auto-fit columns
-    //     worksheet.columns.forEach((col) => {
-    //         let maxLength = 10;
-    //         col.eachCell({ includeEmpty: true }, (cell) => {
-    //             const columnLength = cell.value ? cell.value.toString().length : 0;
-    //             if (columnLength > maxLength) maxLength = columnLength;
-    //         });
-    //         col.width = maxLength + 5;
-    //     });
-
-    //     // Write workbook
-    //     const buffer = await workbook.xlsx.writeBuffer();
-    //     const blob = new Blob([buffer], {
-    //         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    //     });
-    //     saveAs(blob, `SalesReport_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    // };
-
-
-    const columns = useMemo(() => {
-        return [
-
-            {
-                accessorKey: 'InvoiceNo',
-                header: 'Invoice No',
-                size: 100,
-            },
-
-            {
-                accessorKey: 'InvoiceDate',
-                header: 'Invoice Date',
-                size: 50,
-                Cell: ({ cell }) => <span>{moment(cell.getValue()).format('DD-MM-YYYY')}</span>,
-            },
-
-            {
-                accessorKey: 'AccountName',
-                header: 'Account Name',
-                size: 50,
-            },
-
-            {
-                accessorKey: 'OrderNo',
-                header: 'Order No',
-                size: 50,
-
-            },
-
-            {
-                accessorKey: 'OrderDate',
-                header: 'Order Date',
-                size: 50,
-                Cell: ({ cell }) => <span>{moment(cell.getValue()).format('DD-MM-YYYY')}</span>,
-            },
-
-
-            {
-                accessorKey: 'ProductName',
-                header: 'Product  Name',
-                size: 50,
-            },
-
-
-            {
-                accessorKey: 'Rate',
-                header: 'Rate',
-                size: 50,
-            },
-
-            {
-                accessorKey: 'Quantity',
-                header: 'Quantity',
-                size: 50,
-            },
-
-
-            {
-                accessorKey: 'Amount',
-                header: 'Amount',
-                size: 50,
-            },
-
-
-            {
-                accessorKey: 'CGSTPercentage',
-                header: 'CGST%',
-                size: 50,
-            },
-
-            {
-                accessorKey: ["Product CGST AMT"],
-                header: 'CGST Amount',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || 0,
-            },
-
-            {
-                accessorKey: 'IGSTPercentage',
-                header: 'IGST%',
-                size: 50,
-            },
-
-
-
-            {
-                accessorKey: ["Product IGST AMT"],
-                header: 'IGST Amount',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || 0,
-            },
-
-
-            {
-                accessorKey: 'SGSTPercentage',
-                header: 'SGST%',
-                size: 50,
-            },
-
-
-            {
-                accessorKey: ["Product SGST AMT"],
-                header: 'SGST Amount',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || 0,
-            },
-
-
-            {
-                accessorKey: 'Transport',
-                header: 'Transport',
-                size: 50,
-            },
-
-
-
-            {
-                accessorKey: ["Product Subtotal" || 0],
-                header: 'Total With Tax',
-                size: 50,
-            },
-
-            {
-                accessorKey: ["Total amt"],
-                header: 'Total Amount',
-                size: 50,
-                Cell: ({ cell }) => Number(cell.getValue() || 0).toFixed(2),
-            },
-        ];
-    }, []);
-
-    const table = useMaterialReactTable({
-        columns,
-        data: salesData,
-        enablePagination: true,
-
-        muiTableHeadCellProps: {
-            style: {
-                backgroundColor: "#E9ECEF",
-                color: "black",
-                fontSize: "16px",
-            },
+        {
+            accessorKey: 'InvoiceNo',
+            header: 'Invoice No',
+            size: 100,
         },
 
+        {
+            accessorKey: 'InvoiceDate',
+            header: 'Invoice Date',
+            size: 50,
 
-        renderBottomToolbar: ({ table }) => (
-            <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mr={4}
+            Cell: ({ cell }) => (
+                <span>
+                    {moment(cell.getValue()).format('DD-MM-YYYY')}
+                </span>
+            ),
+        },
 
-            >
-                {/* ⬅️ Pagination on Left */}
-                <MUITablePagination table={table} />
+        {
+            accessorKey: 'AccountName',
+            header: 'Account Name',
+            size: 100,
+        },
 
-                {/* ➡️ Grand Total on Right */}
-                <Box display="flex" alignItems="center">
-                    <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                        <b>Grand Total:</b>
-                    </Typography>
+        {
+            accessorKey: 'Category',
+            header: 'Category',
+            size: 80,
+        },
 
-                    <Typography variant="subtitle1" color="primary">
-                        <b>{grandTotal.toLocaleString("en-IN")}</b>
-                    </Typography>
-                </Box>
+      
+
+       
+
+        {
+            accessorKey: 'ProductName',
+            header: 'Product Name',
+            size: 100,
+        },
+
+        {
+            accessorKey: 'Rate',
+            header: 'Rate',
+            size: 70,
+        },
+
+        {
+            accessorKey: 'Quantity',
+            header: 'Quantity',
+            size: 70,
+        },
+
+        {
+            accessorKey: 'Amount',
+            header: 'Amount',
+            size: 80,
+        },
+
+        {
+            accessorKey: 'Transport',
+            header: 'Transport',
+            size: 80,
+        },
+
+        {
+            accessorKey: 'Product Subtotal',
+            header: 'Sub Total',
+            size: 100,
+
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        // {
+        //     accessorKey: 'Total amt',
+        //     header: 'Total Amount',
+        //     size: 100,
+
+        //     Cell: ({ cell }) =>
+        //         Number(cell.getValue() || 0).toFixed(2),
+        // },
+
+    ];
+}, []);
+
+ const table = useMaterialReactTable({
+    columns,
+    data: salesData,
+
+    // ❌ Pagination OFF
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
+        },
+    },
+
+    // =====================================================
+    // BOTTOM TOOLBAR
+    // Pagination काढले आहे
+    // फक्त Grand Total ठेवला आहे
+    // =====================================================
+    renderBottomToolbar: () => (
+        <Box
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+            mr={4}
+            py={1}
+        >
+            {/* ➡️ Grand Total on Right */}
+            <Box display="flex" alignItems="center">
+                <Typography
+                    variant="subtitle1"
+                    sx={{ mr: 2 }}
+                >
+                    <b>Grand Total:</b>
+                </Typography>
+
+                <Typography
+                    variant="subtitle1"
+                    color="primary"
+                >
+                    <b>
+                        {grandTotal.toLocaleString("en-IN")}
+                    </b>
+                </Typography>
             </Box>
-        ),
-    });
+        </Box>
+    ),
+});
 
 
     //grand Total
-    const grandTotal = useMemo(() => {
-        return salesData?.reduce((acc, row) => acc + (Number(row["Product Subtotal"]) || 0), 0);
-    }, [salesData]);
+ const grandTotal = useMemo(() => {
+    return salesData?.reduce(
+        (acc, row) =>
+            acc +
+            (Number(row["Total amt"]) || 0),
+        0
+    );
+}, [salesData]);
+
 
     return (
         <Box >
@@ -1561,15 +2173,18 @@ const [toDate, setToDate] = useState(today);
 <DialogContent dividers>
 
     {/* TABLE ALWAYS SHOW */}
-    <MaterialReactTable
-        table={table}
-        enableColumnResizing
-        muiTableHeadCellProps={{
-            sx: {
-                color: 'var(--primary-color)',
-            },
-        }}
-    />
+   {/* TABLE ALWAYS SHOW */}
+
+<MaterialReactTable
+    table={table}
+    enablePagination={false}
+    enableColumnResizing
+    muiTableHeadCellProps={{
+        sx: {
+            color: 'var(--primary-color)',
+        },
+    }}
+/>
 
     {/* NO DATA MESSAGE */}
     {salesData.length === 0 && (

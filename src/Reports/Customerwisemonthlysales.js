@@ -98,91 +98,126 @@ const [toDate, setToDate] = useState(new Date());
         getCustomerwisemonthlysalesReport();
     };
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!salesData) return;
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    if (!salesData || salesData.length === 0) return;
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        doc.setLineWidth(0.5); // Set border thickness
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10); // Draw rectangle with 5mm margin on all sides
+    let y = 20;
 
-        // Convert logo image to data URL (you might need to adjust this based on your logo format)
-        const logoDataUrl = logonew;
-        // Header
-        // Size in jsPDF units (mm for default)
-        const width = 20; // about 70px
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
 
+    doc.setLineWidth(0.5);
 
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        // Reset clipping so future drawing isn't affected
-        doc.discardPath();
-        y += height + 6;
+    // =====================================================
+    // HEADER
+    // =====================================================
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center", margin: 2 });
-        y += 7;
-        doc.setFontSize(10)
-        doc.text(" Shop No.5 Atharva Vishwa,  Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+    // ❌ Logo removed
+    // ❌ Aarohan Agro removed
+    // ❌ Address removed
+    // ❌ Account Receivable removed
 
-        doc.setFontSize(16);
-        doc.text("Account Receivable ", pageWidth / 2, y, { align: "center" });
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
 
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        {
+            align: "center",
+        }
+    );
 
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+    // Header line
+    y += 8;
 
+    doc.setLineWidth(0.5);
 
-        // Main table with all details
-        const tableHeaders = [
-            "Date",
-            "DocNo",
-            "Contact",
-            " Amount",
-            "Source",
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
 
+    y += 7;
 
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
+
+    const tableHeaders = [
+        "Date",
+        "DocNo",
+        "Contact",
+        "Amount",
+        "Source",
+    ];
+
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
+
+    const tableData = salesData.map((item) => {
+        return [
+            item.Date || "-",
+            item.DocNo || "-",
+            item.Contact || "-",
+            Number(item.Amount || 0).toFixed(2),
+            item.Source || "-",
         ];
+    });
 
-        const tableData = salesData.map((item) => {
+    // =====================================================
+    // TABLE
+    // =====================================================
 
+    autoTable(doc, {
+        head: [tableHeaders],
 
-            return [
-                item.Date,
-                item.DocNo || " - ",
-                item.Contact,
-                item.Amount,
+        body: tableData,
 
-                item.Source || 0,
+        startY: y,
 
-            ];
-        });
+        margin: {
+            left: 8,
+            right: 8,
+        },
 
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 8,
-            theme: "grid",
-            styles: { fontSize: 8, cellPadding: 1.5 }, // Smaller font size to fit all columns
-            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
+        theme: "grid",
 
-        });
+        styles: {
+            fontSize: 8,
+            cellPadding: 1.5,
+        },
 
-        y = doc.lastAutoTable.finalY + 10;
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+        },
+    });
 
-        // Save
-        doc.save("Account_receivable.pdf");
-    };
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("Account_receivable.pdf");
+};
 
 
 
@@ -330,57 +365,48 @@ const [toDate, setToDate] = useState(new Date());
         ];
     }, []);
 
-    // const table = useMaterialReactTable({
-    //     columns,
-    //     data: salesData,
-    //     enablePagination: true,
-    //     muiTableHeadCellProps: {
-    //         style: {
-    //             backgroundColor: "#E9ECEF",
-    //             color: "black",
-    //             fontSize: "16px",
-    //         },
-    //     },
-    // });
 
 
-
-    const table = useMaterialReactTable({
+const table = useMaterialReactTable({
     columns,
     data: salesData,
-    enablePagination: true,
 
-        muiTableHeadCellProps: {
-            style: {
-                backgroundColor: "#E9ECEF",
-                color: "black",
-                fontSize: "16px",
-            },
+    // ✅ Pagination OFF
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
         },
-        renderBottomToolbar: ({ table }) => (
-            <Box
-            
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-               mr={4}
+    },
 
-            >
-                {/* ⬅️ Pagination on Left */}
-                <MUITablePagination table={table} />
+    renderBottomToolbar: () => (
+        <Box
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+            mr={4}
+        >
+            {/* ➡️ Grand Total on Right */}
+            <Box display="flex" alignItems="center">
+                <Typography variant="subtitle1">
+                    <b>Grand Total:</b>
+                </Typography>
 
-                {/* ➡️ Grand Total on Right */}
-                <Box display="flex" alignItems="center">
-                    <Typography variant="subtitle1" >
-                        <b>Grand Total:</b>
-                    </Typography>
-
-                    <Typography variant="subtitle1" color="primary">
-                        <b>{grandTotal.toLocaleString("en-IN")}</b>
-                    </Typography>
-                </Box>
+                <Typography
+                    variant="subtitle1"
+                    color="primary"
+                    sx={{ ml: 1 }}
+                >
+                    <b>
+                        {grandTotal.toLocaleString("en-IN")}
+                    </b>
+                </Typography>
             </Box>
-        ),
+        </Box>
+    ),
 });
 
 

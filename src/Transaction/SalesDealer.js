@@ -16087,6 +16087,9 @@ import {
 } from "@mui/material";
 
 import CloseIcon from "@mui/icons-material/Close";
+
+import MinimizeIcon from "@mui/icons-material/Minimize";
+import Tooltip from "@mui/material/Tooltip";
 import { useTheme } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -16136,6 +16139,8 @@ const preventNumberInputScroll = (event) => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+const [minimizedBills, setMinimizedBills] = useState([]);
   const [invoiceheaders, setInvoiceheaders] = useState([]);
   const [invoicedetails, setInvoicedetails] = useState([]);
   const [rows, setRows] = useState([]);
@@ -16181,7 +16186,20 @@ const [userId, setUserId] = useState(
   () => sessionStorage.getItem("UserId") || ""
 );
 
+// ======================================================
+// USER ROLE
+// ADMIN  -> Can edit any date
+// SALE   -> Can edit only today's entry
+// SALE2  -> Can edit only today's entry
+// ======================================================
 
+const userRole = String(
+  sessionStorage.getItem("UserRole") || ""
+)
+  .trim()
+  .toUpperCase();
+
+const isAdmin = userRole === "ADMIN";
 
 const getDeviceForLoggedInUser = () => {
   const userRole = String(
@@ -16983,6 +17001,339 @@ const handleNewClick = () => {
 };
 
 
+
+// ======================================================
+// MINIMIZE CURRENT DEALER SALES BILL
+// ======================================================
+const handleMinimizeBill = () => {
+  try {
+    // Unique ID
+    const draftId =
+      isEditing && editId
+        ? `edit-${editId}`
+        : `new-${Date.now()}`;
+
+    // Save current Dealer bill
+    const draftBill = {
+      draftId,
+
+      // Edit information
+      isEditing,
+      editId: editId || null,
+
+      // Invoice information
+      invoiceNo,
+      invoiceDate,
+      device,
+      currentTime,
+
+      // Customer
+      customerName,
+      phone,
+      selectedAccount,
+
+      // Product rows
+      rows,
+
+      // Current product entry
+      selectedProductID,
+      productName,
+      selectedProductName,
+      quantity,
+      rate,
+      amount,
+
+      // Payment
+      paymentMode,
+      cashAmount,
+      onlineAmount,
+      receivedAmount,
+
+      // Amount details
+      discount,
+      transport,
+
+      // Other details
+      isGST,
+      billFor,
+      machineID,
+
+      // Current editing row
+      editingRow,
+
+      // Minimized time
+      minimizedAt: new Date().toISOString(),
+    };
+
+    console.log("======================================");
+    console.log("MINIMIZING DEALER BILL");
+    console.log("DRAFT BILL:", draftBill);
+    console.log("======================================");
+
+    // Add / update minimized bill
+    setMinimizedBills((prev) => {
+      const existingIndex = prev.findIndex(
+        (bill) => bill.draftId === draftId
+      );
+
+      // Already minimized -> update
+      if (existingIndex !== -1) {
+        const updated = [...prev];
+
+        updated[existingIndex] = draftBill;
+
+        return updated;
+      }
+
+      // New minimized bill
+      return [...prev, draftBill];
+    });
+
+    // Close drawer WITHOUT resetForm()
+    setIsDrawerOpen(false);
+    setShowDropdown(false);
+
+    toast.success("Dealer bill minimized successfully.");
+  } catch (error) {
+    console.error(
+      "Error minimizing Dealer bill:",
+      error
+    );
+
+    toast.error("Unable to minimize Dealer bill.");
+  }
+};
+
+
+
+
+// ======================================================
+// RESUME MINIMIZED DEALER BILL
+// ======================================================
+const handleResumeBill = (billId) => {
+  try {
+    const bill = minimizedBills.find(
+      (item) => item.draftId === billId
+    );
+
+    if (!bill) {
+      toast.error("Minimized Dealer bill not found.");
+      return;
+    }
+
+    // ==================================================
+    // INVOICE
+    // ==================================================
+    setInvoiceNo(bill.invoiceNo || "");
+
+    setInvoiceDate(
+      bill.invoiceDate || new Date()
+    );
+
+    // Restore Time
+    setCurrentTime(
+      bill.currentTime || ""
+    );
+
+    setDevice(
+      bill.device || ""
+    );
+
+    // ==================================================
+    // CUSTOMER
+    // ==================================================
+    setSelectedAccount(
+      bill.selectedAccount || ""
+    );
+
+    setCustomerName(
+      bill.customerName || ""
+    );
+
+    setSelectedCustomerName(
+      bill.selectedCustomerName ||
+      bill.customerName ||
+      ""
+    );
+
+    setPhone(
+      bill.phone || ""
+    );
+
+    // ==================================================
+    // PRODUCTS
+    // ==================================================
+    setRows(
+      Array.isArray(bill.rows)
+        ? bill.rows
+        : []
+    );
+
+    // ==================================================
+    // CURRENT PRODUCT ENTRY
+    // ==================================================
+    setSelectedProductId(
+      bill.selectedProductID || ""
+    );
+
+    setSelectedProductName(
+      bill.selectedProductName || ""
+    );
+
+    setProductName(
+      bill.productName || ""
+    );
+
+    setQuantity(
+      bill.quantity || ""
+    );
+
+    setRate(
+      bill.rate || ""
+    );
+
+    SetAmount(
+      bill.amount || ""
+    );
+
+    // ==================================================
+    // PAYMENT
+    // ==================================================
+    setPaymentMode(
+      bill.paymentMode || ""
+    );
+
+    setCashAmount(
+      bill.cashAmount || ""
+    );
+
+    setOnlineAmount(
+      bill.onlineAmount || ""
+    );
+
+    setReceivedAmount(
+      bill.receivedAmount || ""
+    );
+
+    // ==================================================
+    // DISCOUNT / TRANSPORT
+    // ==================================================
+    setDiscount(
+      bill.discount || ""
+    );
+
+    setTransport(
+      bill.transport || ""
+    );
+
+    // ==================================================
+    // GST
+    // ==================================================
+    setIsGST(
+      bill.isGST || false
+    );
+
+    setCGST(
+      bill.cgst || ""
+    );
+
+    setCGSTAmount(
+      bill.cgstAmount || ""
+    );
+
+    setSGST(
+      bill.sgst || ""
+    );
+
+    setSGSTAmount(
+      bill.sgstAmount || ""
+    );
+
+    setIGST(
+      bill.igst || ""
+    );
+
+    setIGSTAmount(
+      bill.igstAmount || ""
+    );
+
+    // ==================================================
+    // OTHER
+    // ==================================================
+    setBillFor(
+      bill.billFor || ""
+    );
+
+    setMachineID(
+      bill.machineID || ""
+    );
+
+    // ==================================================
+    // EDIT INFORMATION
+    // ==================================================
+    setIsEditing(
+      bill.isEditing || false
+    );
+
+    setEditId(
+      bill.editId || null
+    );
+
+    // ==================================================
+    // CURRENT EDITING ROW
+    // ==================================================
+    setEditingRow(
+      bill.editingRow ?? null
+    );
+
+    // ==================================================
+    // OPEN DRAWER
+    // ==================================================
+    setIsDrawerOpen(true);
+
+    // ==================================================
+    // REMOVE FROM MINIMIZED LIST
+    // ==================================================
+    setMinimizedBills((prev) =>
+      prev.filter(
+        (item) => item.draftId !== billId
+      )
+    );
+
+    toast.success(
+      "Minimized Dealer bill resumed successfully."
+    );
+
+  } catch (error) {
+    console.error(
+      "Error resuming Dealer bill:",
+      error
+    );
+
+    toast.error(
+      "Unable to resume Dealer bill."
+    );
+  }
+};
+
+
+
+
+// ======================================================
+// REMOVE MINIMIZED DEALER BILL
+// ======================================================
+const handleRemoveMinimizedBill = (billId) => {
+  setMinimizedBills((prev) =>
+    prev.filter(
+      (item) => item.draftId !== billId
+    )
+  );
+
+  toast.success(
+    "Minimized Dealer bill removed."
+  );
+};
+
 // ======================================================
 // OPEN DEALER FORM FROM NAVIGATION
 // ======================================================
@@ -17219,6 +17570,38 @@ const invheader = invoiceheaders.find(
     console.error("No invoice header found for the selected row.");
     return;
   }
+
+
+
+
+  // ======================================================
+// EDIT DATE RESTRICTION
+// ADMIN  -> Can edit any date
+// SALE   -> Can edit only today's invoice
+// SALE2  -> Can edit only today's invoice
+// ======================================================
+
+const loggedInUser = String(
+  sessionStorage.getItem("UserId") || ""
+).trim().toUpperCase();
+
+const invoiceDateValue = invheader.InvoiceDate?.date || invheader.InvoiceDate;
+
+const invoiceDateOnly = new Date(invoiceDateValue);
+const today = new Date();
+
+invoiceDateOnly.setHours(0, 0, 0, 0);
+today.setHours(0, 0, 0, 0);
+
+const isToday =
+  invoiceDateOnly.getTime() === today.getTime();
+
+if (loggedInUser !== "ADMIN" && !isToday) {
+  toast.error("You can edit only today's invoices.");
+  return;
+}
+
+
 
   // ==============================
   // FETCH SAVED INVOICE DETAILS
@@ -17502,6 +17885,7 @@ const [totalOutstanding, setTotalOutstanding] = useState(0);
 
 
 const isSubmittingRef = useRef(false);
+const [isSaving, setIsSaving] = useState(false);
 
 
 const savedPreviewReceived = parseFloat(
@@ -17783,7 +18167,9 @@ const previewInvoice = {
           >
             Preview
           </Button>
+          
         </Box>
+
       ),
     },
 
@@ -17898,6 +18284,8 @@ const previewInvoice = {
 
   const [device, setDevice] = useState("");
 
+  const [currentTime, setCurrentTime] = useState("");
+
   const [billFor, setBillFor] = useState("");
 
   const [machineID, setMachineID] = useState("");
@@ -17960,6 +18348,8 @@ const previewInvoice = {
 
   const [newCustomerAddress, setNewCustomerAddress] = useState("");
 
+  const [newCustomerContact, setNewCustomerContact] = useState("");
+
   const [acctGSTNo, setacctGSTNo] = useState("");
 
   useEffect(() => {
@@ -17975,6 +18365,29 @@ const previewInvoice = {
   }, []);
 
   //fetch customer from  account table
+
+
+
+  useEffect(() => {
+  const updateTime = () => {
+    const now = new Date();
+
+    setCurrentTime(
+      now.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      })
+    );
+  };
+
+  updateTime();
+
+  const timer = setInterval(updateTime, 1000);
+
+  return () => clearInterval(timer);
+}, []);
   
 
  const fetchProduct = async () => {
@@ -18161,6 +18574,100 @@ const productvalidation = (data) => {
   setTotalOutstanding(0);
 };
 
+
+// ======================================================
+// GET FINAL ROWS INCLUDING LAST PRODUCT
+// EVEN IF ENTER IS NOT PRESSED
+// ======================================================
+const getRowsWithPendingProduct = () => {
+  const finalRows = [...rows];
+
+  // Existing row edit करत असताना
+  // pending product automatically add करू नका
+  if (editingRow !== null) {
+    return finalRows;
+  }
+
+  const hasPendingProduct =
+    selectedProductID &&
+    quantity !== "" &&
+    rate !== "" &&
+    Number(quantity) > 0 &&
+    Number(rate) > 0;
+
+  if (!hasPendingProduct) {
+    return finalRows;
+  }
+
+  const selectedOption = productOptions.find(
+    (option) =>
+      String(option.value) === String(selectedProductID)
+  );
+
+  const pendingQuantity = parseFloat(quantity) || 0;
+  const pendingRate = parseFloat(rate) || 0;
+  const pendingAmount =
+    pendingQuantity * pendingRate;
+
+  const pendingCGSTPercentage =
+    parseFloat(cgst) || 0;
+
+  const pendingSGSTPercentage =
+    parseFloat(sgst) || 0;
+
+  const pendingIGSTPercentage =
+    parseFloat(igst) || 0;
+
+  const pendingCGSTAmount =
+    parseFloat(cgstAmount) ||
+    ((pendingCGSTPercentage * pendingAmount) / 100);
+
+  const pendingSGSTAmount =
+    parseFloat(sgstAmount) ||
+    ((pendingSGSTPercentage * pendingAmount) / 100);
+
+  const pendingIGSTAmount =
+    parseFloat(igstAmount) ||
+    ((pendingIGSTPercentage * pendingAmount) / 100);
+
+  const pendingRow = {
+    Id: null,
+    InvoiceId: null,
+
+    ProductId: selectedProductID,
+
+    ProductName:
+      productName ||
+      selectedProductName ||
+      selectedOption?.label ||
+      "",
+
+    Quantity: pendingQuantity,
+    Rate: pendingRate,
+    Amount: pendingAmount,
+
+    DiscountAmt: 0,
+
+    CGSTPercentage: pendingCGSTPercentage,
+    CGSTAmount: pendingCGSTAmount,
+
+    SGSTPercentage: pendingSGSTPercentage,
+    SGSTAmount: pendingSGSTAmount,
+
+    IGSTPercentage: pendingIGSTPercentage,
+    IGSTAmount: pendingIGSTAmount,
+  };
+
+  finalRows.push(pendingRow);
+
+  console.log(
+    "LAST PRODUCT AUTO INCLUDED:",
+    pendingRow
+  );
+
+  return finalRows;
+};
+
 const handleSubmit = async (e, shouldPrint = false) => {
   // ======================================================
   // 0. PREVENT DEFAULT FORM / BROWSER ACTION
@@ -18213,13 +18720,18 @@ const handleSubmit = async (e, shouldPrint = false) => {
     return;
   }
 
+  const finalRows = getRowsWithPendingProduct();
+
+console.log("FINAL ROWS TO SAVE:", finalRows);
+
   // ======================================================
   // 5. LOCK SUBMIT
   // ======================================================
 
   isSubmittingRef.current = true;
+setIsSaving(true);
 
-  let printWindow = null;
+let printWindow = null;
 
   try {
     // ======================================================
@@ -18478,7 +18990,7 @@ console.log("Saved Invoice No:", savedInvoiceNo);
     // 16. SAVE INVOICE DETAILS
     // ======================================================
 
-    for (const [index, row] of rows.entries()) {
+   for (const [index, row] of finalRows.entries()) {
       const rowData = {
         Id: row.Id
           ? parseInt(row.Id, 10)
@@ -18587,7 +19099,7 @@ const printData = {
 
   customerName: customerNameForPrint,
 
-  invdetail: rows.map((row) => ({
+  invdetail: finalRows.map((row) => ({
     ...row,
 
     ProductName:
@@ -18716,6 +19228,7 @@ const printData = {
     // ======================================================
 
     isSubmittingRef.current = false;
+     setIsSaving(false);
 
     console.log(
       "SUBMIT LOCK RELEASED"
@@ -19617,6 +20130,16 @@ useEffect(() => {
 
               GSTNo: address.GSTNo || "",
 
+
+                ContactNo:
+    address.ContactNo ||
+    address.contactNo ||
+    address.ContactNumber ||
+    address.contactNumber ||
+    address.MobileNo ||
+    address.MobileNumber ||
+    "",
+
               Address1:
                 address.Address1 ||
                 address.address1 ||
@@ -19742,6 +20265,8 @@ useEffect(() => {
 
       addressData.append("AccountId", result.Id);
 
+      
+
       // Dealer
       addressData.append("CustomerType", "D");
 
@@ -19752,6 +20277,11 @@ useEffect(() => {
       addressData.append("Address1", newAddress);
 
       addressData.append("Address", newAddress);
+
+
+      addressData.append("MobileNo", newCustomerContact.trim());
+
+     
 
       const addressResponse = await fetch(
         "https://amrutdairyapi.microtechsolutions.net.in/php/postaddress.php",
@@ -19771,19 +20301,19 @@ useEffect(() => {
       // 3. CREATE LOCAL DEALER OBJECT
       // ==========================================================
 
-      const newDealer = {
-        Id: result.Id,
 
-        AccountName: newCustomerName,
+const newDealer = {
+  Id: result.Id,
+  AccountName: newCustomerName,
+  CustomerType: "D",
+  GSTNo: "270000000000000",
 
-        CustomerType: "D",
+  Address1: newAddress,
+  Address: newAddress,
 
-        GSTNo: "270000000000000",
-
-        Address1: newAddress,
-
-        Address: newAddress,
-      };
+  ContactNo: newCustomerContact.trim(),
+  MobileNo: newCustomerContact.trim(),
+};
 
       // ==========================================================
       // 4. ADD DEALER TO CURRENT DROPDOWN
@@ -19813,6 +20343,8 @@ useEffect(() => {
 
       setPreviousBalanceDue(0);
 
+      setPhone(newCustomerContact);
+
       // ==========================================================
       // 6. SUCCESS MESSAGE
       // ==========================================================
@@ -19829,11 +20361,10 @@ useEffect(() => {
       // 8. CLEAR INPUTS
       // ==========================================================
 
-      setAccountName("");
-
-      setNewCustomerAddress("");
-
-      setText("");
+     setAccountName("");
+setNewCustomerAddress("");
+setNewCustomerContact("");
+setText("");
     } catch (error) {
       console.error("Error creating dealer:", error);
 
@@ -19866,53 +20397,50 @@ useEffect(() => {
   };
 
 
-  // ======================================================
-// FETCH SELECTED CUSTOMER CONTACT NUMBER
+// ======================================================
+// FETCH CUSTOMER SAVED CONTACT NUMBER
+// FROM LAST SAVED INVOICE
+// SAME LOGIC AS CATERERS
 // ======================================================
 const fetchCustomerContact = async (customerId) => {
-  try {
-    if (!customerId) {
-      setPhone("");
-      return;
-    }
+  if (!customerId) {
+    setPhone("");
+    return;
+  }
 
+  try {
     const response = await fetch(
-      `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Account&Colname=Id&Colvalue=${encodeURIComponent(
+      `https://amrutdairyapi.microtechsolutions.net.in/php/getbyid.php?Table=Address&Colname=AccountId&Colvalue=${encodeURIComponent(
         customerId
       )}`
     );
 
     if (!response.ok) {
-      throw new Error(`Account API failed with status ${response.status}`);
+      throw new Error(`Contact API failed: ${response.status}`);
     }
 
     const result = await response.json();
 
-    console.log("SELECTED CUSTOMER ACCOUNT RESPONSE:", result);
-
-    const accountData = Array.isArray(result)
+    const addressData = Array.isArray(result)
       ? result[0]
-      : result;
+      : result?.data || result;
 
-    if (!accountData) {
-      setPhone("");
-      return;
-    }
-
-    const contactNo =
-      accountData?.MobileNo ||
-      accountData?.MobileNumber ||
-      accountData?.ContactNo ||
-      accountData?.ContactNumber ||
-      accountData?.PhoneNo ||
-      accountData?.PhoneNumber ||
+    const savedMobile =
+      addressData?.MobileNo ||
+      addressData?.MobileNumber ||
+      addressData?.ContactNo ||
+      addressData?.ContactNumber ||
       "";
 
-    console.log("SELECTED CUSTOMER CONTACT NO:", contactNo);
+    console.log("DEALER SAVED MOBILE:", {
+      customerId,
+      addressData,
+      savedMobile,
+    });
 
-    setPhone(String(contactNo));
+    setPhone(String(savedMobile).trim());
   } catch (error) {
-    console.error("CUSTOMER CONTACT FETCH ERROR:", error);
+    console.error("Dealer customer mobile fetch error:", error);
     setPhone("");
   }
 };
@@ -21743,6 +22271,112 @@ autoTable(doc, {
   </Box>
 
 
+
+{/* ======================================================
+    MINIMIZED DEALER BILLS
+====================================================== */}
+
+{minimizedBills.length > 0 && (
+  <Box
+    sx={{
+      mt: 2,
+      p: 2,
+      width: "380px",
+      maxWidth: "100%",
+      borderRadius: "12px",
+      backgroundColor: "#f5f7fa",
+      border: "1px solid #e0e0e0",
+    }}
+  >
+    <Typography
+      variant="h6"
+      sx={{
+        fontWeight: 700,
+        mb: 1.5,
+      }}
+    >
+      Minimized Bills ({minimizedBills.length})
+    </Typography>
+
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+      }}
+    >
+      {minimizedBills.map((bill) => (
+        <Box
+          key={bill.draftId}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            p: 1,
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          {/* BILL INFORMATION */}
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 600,
+              }}
+            >
+              {bill.selectedCustomerName ||
+                bill.customerName ||
+                "Dealer Customer"}
+            </Typography>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Invoice: {bill.invoiceNo || "-"}
+            </Typography>
+          </Box>
+
+          {/* ACTIONS */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() =>
+                handleResumeBill(bill.draftId)
+              }
+            >
+              Resume
+            </Button>
+
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={() =>
+                handleRemoveMinimizedBill(
+                  bill.draftId
+                )
+              }
+            >
+              Remove
+            </Button>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+)}
+
+
   {/* ======================================================
       INVOICE FILTERS
   ====================================================== */}
@@ -21910,10 +22544,7 @@ autoTable(doc, {
                 Welcome To Amrut Dairy
               </Typography>
             </Box>
-            <Typography sx={{ mt: 1 }}>
-              Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park
-              Pitali, Ganpati Road, Kolhapur, Maharashtra 416003
-            </Typography>
+           
 
             <Typography
               variant="h6"
@@ -22438,13 +23069,56 @@ autoTable(doc, {
 
               {/* CLOSE */}
 
-              <CloseIcon
+           {/* MINIMIZE + CLOSE */}
+
+<Box
   sx={{
-    cursor: "pointer",
-    fontSize: 28,
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
   }}
-  onClick={handleDrawerCloseAndGoBack}
-/>
+>
+  {/* MINIMIZE */}
+
+  <Tooltip title="Minimize Bill">
+    <IconButton
+      onClick={handleMinimizeBill}
+      disabled={isSaving}
+      sx={{
+        color: "#1976d2",
+        width: 42,
+        height: 42,
+        borderRadius: "8px",
+
+        "&:hover": {
+          backgroundColor: "rgba(25, 118, 210, 0.08)",
+        },
+
+        "&:disabled": {
+          color: "#bdbdbd",
+        },
+      }}
+    >
+      <MinimizeIcon />
+    </IconButton>
+  </Tooltip>
+
+  {/* CLOSE */}
+
+  <CloseIcon
+    sx={{
+      cursor: isSaving ? "not-allowed" : "pointer",
+      fontSize: 28,
+
+      color: isSaving ? "#bdbdbd" : "inherit",
+    }}
+    onClick={
+      isSaving
+        ? undefined
+        : handleDrawerCloseAndGoBack
+    }
+  />
+</Box>
             </Box>
           </Box>
 
@@ -22532,6 +23206,26 @@ autoTable(doc, {
     mt: 0.5,
   }}
 />
+
+
+
+{/* TIME */}
+<Box flex={1}>
+  <Typography variant="body2">Time</Typography>
+
+  <TextField
+    variant="standard"
+    value={currentTime}
+    fullWidth
+    size="small"
+    InputProps={{
+      readOnly: true,
+    }}
+    sx={{
+      mt: 0.5,
+    }}
+  />
+</Box>
               </Box>
 
               {/* INVOICE DATE */}
@@ -22692,39 +23386,33 @@ autoTable(doc, {
 if (accountOptions.length > 0) {
   const option = accountOptions[0];
 
-  const customerId = option.Id?.toString() || "";
+ const customerId = option.Id?.toString() || "";
 
-  const customerName = option.AccountName || "";
+const customerName = option.AccountName || "";
 
-  const customerAddress =
-    option.Address1 ||
-    option.address1 ||
-    option.Address ||
-    option.address ||
-    option.AddressLine1 ||
-    option.addressLine1 ||
-    "";
+const customerAddress =
+  option.Address1 ||
+  option.address1 ||
+  option.Address ||
+  option.address ||
+  option.AddressLine1 ||
+  option.addressLine1 ||
+  "";
+setSelectedAccount(customerId);
 
-  setSelectedAccount(customerId);
+setSelectedCustomerName(customerName);
 
-  setSelectedCustomerName(customerName);
+setSelectedCustomerAddress(customerAddress);
 
-  setSelectedCustomerAddress(customerAddress);
-
-// Existing API logic
-fetchAccounts(customerId);
-
+// ⭐ SAME AS CATERERS
+// Fetch contact from last saved invoice
 fetchCustomerContact(customerId);
 
-// Fetch customer previous outstanding
+fetchAccounts(customerId);
+
 fetchPreviousBalance(customerId, null);
 
-// Close popup
 setShowDropdown(false);
-
-
-
-// Clear search
 setText("");
 }
                         }
@@ -22797,6 +23485,29 @@ setText("");
                       }}
                     />
 
+
+                 {/* NEW DEALER CONTACT NUMBER */}
+<Box sx={{ mt: 1 }}>
+  <PhoneInput
+    country={"in"}
+    value={newCustomerContact}
+    onChange={(phone) => setNewCustomerContact(phone)}
+    inputProps={{
+      name: "newCustomerContact",
+    }}
+    inputStyle={{
+      width: "100%",
+      height: "40px",
+      fontSize: "16px",
+      borderRadius: "5px",
+    }}
+    buttonStyle={{
+      borderRadius: "5px",
+    }}
+  />
+</Box>
+  
+
                     {/* CUSTOMER LIST */}
                     <Box mt={1}>
                       {accountOptions.length > 0 ? (
@@ -22813,35 +23524,44 @@ setText("");
                           return (
                             <MenuItem
                               key={option.Id}
-                              onClick={() => {
-                                const customerId = option.Id?.toString() || "";
+onClick={() => {
+  const customerId = option.Id?.toString() || "";
 
-                                const customerName = option.AccountName || "";
+  const customerName = option.AccountName || "";
 
-                                setSelectedAccount(customerId);
+  setSelectedAccount(customerId);
 
-                                setSelectedCustomerName(customerName);
+  setSelectedCustomerName(customerName);
 
-                                setSelectedCustomerAddress(customerAddress);
+  setSelectedCustomerAddress(customerAddress);
 
-                            
-                              // Existing API logic
-fetchAccounts(customerId);
+  // =====================================================
+  // ⭐ AUTOMATIC CONTACT NUMBER
+  // SAME LOGIC AS CATERERS
+  // FETCH FROM LAST SAVED INVOICE
+  // =====================================================
+  fetchCustomerContact(customerId);
 
-fetchCustomerContact(customerId);
+  // =====================================================
+  // GST / ACCOUNT DETAILS
+  // =====================================================
+  fetchAccounts(customerId);
 
-// Fetch customer previous outstanding
-fetchPreviousBalance(customerId, null);
+  // =====================================================
+  // PREVIOUS BALANCE
+  // =====================================================
+  fetchPreviousBalance(customerId, null);
 
+  // =====================================================
+  // CLOSE CUSTOMER SEARCH POPUP
+  // =====================================================
+  setShowDropdown(false);
 
-                              
-
-                                // Close popup
-                                setShowDropdown(false);
-
-                                // Clear search
-                                setText("");
-                              }}
+  // =====================================================
+  // CLEAR SEARCH TEXT
+  // =====================================================
+  setText("");
+}}
                               sx={{
                                 display: "flex",
                                 flexDirection: "column",
@@ -24015,11 +24735,21 @@ value={rate}
     "&:hover": {
       background: "var(--primary-color)",
     },
+
+    "&:disabled": {
+      background: "#bdbdbd",
+      color: "#ffffff",
+    },
   }}
   onClick={handleSubmit}
   variant="contained"
+  disabled={isSaving}
 >
-  {isEditing ? "Update" : "Save"}
+  {isSaving
+    ? "Saving..."
+    : isEditing
+      ? "Update"
+      : "Save"}
 </Button>
 
 {/* PRINT */}

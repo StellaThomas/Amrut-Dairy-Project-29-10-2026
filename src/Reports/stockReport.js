@@ -729,98 +729,245 @@ const [toDate, setToDate] = useState(today);
     };
 
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!Array.isArray(stockData) || stockData.length === 0) {
-    alert("No stock data available");
-    return;
-}
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    // =====================================================
+    // CHECK STOCK DATA
+    // =====================================================
 
+    if (!Array.isArray(stockData) || stockData.length === 0) {
+        alert("No stock data available");
+        return;
+    }
 
-        doc.setLineWidth(0.5); // Set border thickness
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10); // Draw rectangle with 5mm margin on all sides
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        // Convert logo image to data URL (you might need to adjust this based on your logo format)
-        const logoDataUrl = logonew;
-        // Header
-        // Size in jsPDF units (mm for default)
-        const width = 20; // about 70px
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+    let y = 20;
 
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
 
-        doc.setFillColor(255, 255, 255);
-        doc.circle(x + width / 2, y + height / 2, width / 2, 'F'); // White background circle
-        doc.setDrawColor(0);
-        doc.circle(x + width / 2, y + height / 2, width / 2); // Optional: draw border circle
-        doc.clip(); // Clip following drawing to circle
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        // Reset clipping so future drawing isn't affected
-        doc.discardPath();
-        y += height + 6;
+    doc.setLineWidth(0.5);
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center", margin: 2 });
-        y += 7;
-        doc.setFontSize(10)
-        doc.text(" Shop No.5 Atharva Vishwa,  Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
-        doc.setFontSize(16);
-        doc.text("Stock Report Preview", pageWidth / 2, y, { align: "center" });
+    // =====================================================
+    // MAIN HEADER
+    // Logo ❌
+    // Aarohan Agro ❌
+    // Address ❌
+    // =====================================================
 
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
 
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        {
+            align: "center",
+        }
+    );
 
+    // =====================================================
+    // HEADER LINE
+    // =====================================================
 
-        // Main table with all details
-       const tableHeaders = [
-    "Product Name",
-    "Sell Price",
-    "Opening Balance",
-    "Inward Total",
-    "Invoice Total",
-    "Balance",
-    "Closing Balance",
-];
+    y += 10;
 
-const tableData = stockData.map((item) => {
-    return [
-        item.ProductName || "",
-        Number(item.SellPrice || 0).toFixed(2),
-        Number(item.OpeningBalance || 0).toFixed(3),
-        Number(item.InwardTotal || 0).toFixed(3),
-        Number(item.InvoiceTotal || 0).toFixed(3),
-        Number(item.Balance || 0).toFixed(3),
-        Number(item.ClosingBalance || 0).toFixed(3),
+    doc.setLineWidth(0.5);
+
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
+
+    // =====================================================
+    // REPORT TITLE
+    // =====================================================
+
+    y += 9;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+
+    doc.text(
+        "Stock Report Preview",
+        pageWidth / 2,
+        y,
+        {
+            align: "center",
+        }
+    );
+
+    // =====================================================
+    // LINE BELOW REPORT TITLE
+    // =====================================================
+
+    y += 7;
+
+    doc.setLineWidth(0.5);
+
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
+
+    y += 7;
+
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
+
+    const tableHeaders = [
+        "Product Name",
+        "Sell Price",
+        "Opening Balance",
+        "Inward Total",
+        "Invoice Total",
+        "Balance",
+        "Closing Balance",
     ];
-});
 
-       
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
 
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 8,
-            theme: "grid",
-            styles: { fontSize: 8, cellPadding: 1.5 }, // Smaller font size to fit all columns
-            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
+    const tableData = stockData.map((item) => {
+        return [
+            item.ProductName || "",
 
-        });
+            Number(
+                item.SellPrice || 0
+            ).toFixed(2),
 
-        y = doc.lastAutoTable.finalY + 10;
+            Number(
+                item.OpeningBalance || 0
+            ).toFixed(3),
 
-        // Save
-        doc.save("Stock_Report_Preview.pdf");
-    };
+            Number(
+                item.InwardTotal || 0
+            ).toFixed(3),
+
+            Number(
+                item.InvoiceTotal || 0
+            ).toFixed(3),
+
+            Number(
+                item.Balance || 0
+            ).toFixed(3),
+
+            Number(
+                item.ClosingBalance || 0
+            ).toFixed(3),
+        ];
+    });
+
+    // =====================================================
+    // TABLE
+    // =====================================================
+
+    autoTable(doc, {
+        head: [tableHeaders],
+
+        body: tableData,
+
+        startY: y,
+
+        margin: {
+            left: 8,
+            right: 8,
+        },
+
+        theme: "grid",
+
+        styles: {
+            font: "helvetica",
+            fontSize: 8,
+            cellPadding: 1.5,
+            textColor: 0,
+            lineColor: [180, 180, 180],
+            lineWidth: 0.2,
+        },
+
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+            fontSize: 8,
+        },
+
+        columnStyles: {
+            0: {
+                cellWidth: 42,
+            },
+
+            1: {
+                cellWidth: 25,
+                halign: "right",
+            },
+
+            2: {
+                cellWidth: 30,
+                halign: "right",
+            },
+
+            3: {
+                cellWidth: 27,
+                halign: "right",
+            },
+
+            4: {
+                cellWidth: 27,
+                halign: "right",
+            },
+
+            5: {
+                cellWidth: 25,
+                halign: "right",
+            },
+
+            6: {
+                cellWidth: 28,
+                halign: "right",
+            },
+        },
+
+        // =================================================
+        // NEW PAGE BORDER
+        // =================================================
+
+        didDrawPage: function () {
+            doc.setLineWidth(0.5);
+
+            doc.rect(
+                5,
+                5,
+                pageWidth - 10,
+                pageHeight - 10
+            );
+        },
+    });
+
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("Stock_Report_Preview.pdf");
+};
 
 
 
@@ -994,64 +1141,80 @@ totalRow.getCell(7).value = {
     ];
 }, []);
 
-    const table = useMaterialReactTable({
-        columns,
-        data: stockData,
-        enablePagination: true,
-        muiTableHeadCellProps: {
-            style: {
-                backgroundColor: "#E9ECEF",
-                color: "black",
-                fontSize: "16px",
-            },
+  const table = useMaterialReactTable({
+    columns,
+    data: stockData,
+
+    // ❌ Pagination OFF
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
         },
+    },
 
-          renderBottomToolbar: ({ table }) => (
+    renderBottomToolbar: () => (
+        <Box
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+            width="100%"
+            sx={{
+                padding: "10px 16px",
+            }}
+        >
+            {/* Totals */}
+            <Box
+                display="flex"
+                alignItems="center"
+                gap={4}
+            >
+                {/* Inward Total */}
+                <Box display="flex" alignItems="center">
+                    <Typography variant="subtitle1">
+                        <b>Inward Total:</b>
+                    </Typography>
 
-           <Box
-    display="flex"
-    justifyContent="space-between"
-    alignItems="center"
-    width="100%"
->
-    <MUITablePagination table={table} />
+                    <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        sx={{ ml: 1 }}
+                    >
+                        <b>
+                            {InwardTotal.toLocaleString("en-IN", {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                            })}
+                        </b>
+                    </Typography>
+                </Box>
 
-    <Box display="flex" alignItems="center" gap={4}>
+                {/* Invoice Total */}
+                <Box display="flex" alignItems="center">
+                    <Typography variant="subtitle1">
+                        <b>Invoice Total:</b>
+                    </Typography>
 
-        <Box display="flex" alignItems="center">
-            <Typography variant="subtitle1">
-                <b>Inward Total:</b>
-            </Typography>
-
-            <Typography variant="subtitle1" color="primary" sx={{ ml: 1 }}>
-                <b>
-                    {InwardTotal.toLocaleString("en-IN", {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
-                    })}
-                </b>
-            </Typography>
+                    <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        sx={{ ml: 1 }}
+                    >
+                        <b>
+                            {InvoiceTotal.toLocaleString("en-IN", {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                            })}
+                        </b>
+                    </Typography>
+                </Box>
+            </Box>
         </Box>
-
-        <Box display="flex" alignItems="center">
-            <Typography variant="subtitle1">
-                <b>Invoice Total:</b>
-            </Typography>
-
-            <Typography variant="subtitle1" color="primary" sx={{ ml: 1 }}>
-                <b>
-                    {InvoiceTotal.toLocaleString("en-IN", {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
-                    })}
-                </b>
-            </Typography>
-        </Box>
-
-    </Box>
-</Box>
-        ),
-    });
+    ),
+});
 
    const InwardTotal = useMemo(() => {
     return stockData.reduce(
@@ -1135,7 +1298,9 @@ totalRow.getCell(7).value = {
                                 <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="xlg" fullWidth>
 
 
-       <DialogTitle sx={{ p: 0, pb: 2 }}>
+
+
+   <DialogTitle sx={{ p: 0, pb: 2 }}>
     <Box
         sx={{
             width: "100%",
@@ -1144,6 +1309,11 @@ totalRow.getCell(7).value = {
             borderBottom: "2px solid #222",
         }}
     >
+
+        {/* ============================= */}
+        {/* COMPANY NAME */}
+        {/* ============================= */}
+
         <Typography
             sx={{
                 fontSize: "26px",
@@ -1156,6 +1326,11 @@ totalRow.getCell(7).value = {
             AMRUT MILK PRODUCTS 2
         </Typography>
 
+
+        {/* ============================= */}
+        {/* ADDRESS */}
+        {/* ============================= */}
+
         <Typography
             sx={{
                 fontSize: "14px",
@@ -1167,6 +1342,11 @@ totalRow.getCell(7).value = {
             E-18 UDYAM CO-OP. SOCIETY, Y.P. POWAR NAGER, KOLHAPUR
         </Typography>
 
+
+        {/* ============================= */}
+        {/* PHONE + STATE */}
+        {/* ============================= */}
+
         <Typography
             sx={{
                 fontSize: "13px",
@@ -1174,10 +1354,37 @@ totalRow.getCell(7).value = {
                 mt: 0.5,
             }}
         >
-            Phone: 8830261523&nbsp;&nbsp; | &nbsp;&nbsp;State: 27-Maharashtra
+            Phone: 8830261523&nbsp;&nbsp; | &nbsp;&nbsp;
+            State: 27-Maharashtra
         </Typography>
+
+
+        {/* ============================= */}
+        {/* STOCK REPORT + SELECTED DATES */}
+        {/* ============================= */}
+
+        <Typography
+            sx={{
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#222",
+                mt: 1.5,
+            }}
+        >
+            Stock Report Preview for{" "}
+            {fromDate
+                ? new Date(fromDate).toLocaleDateString("en-GB")
+                : "-"}{" "}
+            to{" "}
+            {toDate
+                ? new Date(toDate).toLocaleDateString("en-GB")
+                : "-"}
+        </Typography>
+
     </Box>
 </DialogTitle>
+
+
                                     <DialogContent dividers>
                                         <Box>
                                             {stockData.length > 0 ? (

@@ -884,7 +884,7 @@ const exportToExcel = async (data) => {
     const table = useMaterialReactTable({
         columns,
         data: salesData,
-        enablePagination: true,
+        enablePagination: false,
         muiTableHeadCellProps: {
             style: {
                 backgroundColor: "#E9ECEF",
@@ -892,50 +892,70 @@ const exportToExcel = async (data) => {
                 fontSize: "16px",
             },
         },
-        renderBottomToolbar: ({ table }) => (
+      renderBottomToolbar: () => (
+    <Box
+        sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",   // Grand Total right side
+            width: "100%",
+            px: 2,
+            py: 1,
+        }}
+    >
+        {/* Totals on Right */}
+        <Box
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+                fontWeight: "bold",
+            }}
+        >
+            {/* Invoice Total */}
             <Box
                 sx={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    mr: 4
-
+                    gap: 0.5,
                 }}
             >
-                {/* ⬅️ Pagination on Left */}
-                <MUITablePagination table={table} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                    Grand Total Of Invoice:
+                </Typography>
 
-                {/* ➡️ Totals on Right */}
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        fontWeight: "bold",
-                    }}
+                <Typography
+                    variant="subtitle1"
+                    color="primary"
+                    fontWeight="bold"
                 >
-                    {/* Invoice Total */}
-                    <Box sx={{ display: "flex", alignItems: "center", }} >
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Grand Total Of Invoice:
-                        </Typography>
-                        <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                            {grandTotalOfInvoice.toLocaleString("en-IN")}
-                        </Typography>
-                    </Box>
-
-                    {/* Purchase Other Total */}
-                    <Box sx={{ display: "flex", alignItems: "center", }} >
-                        <Typography variant="subtitle1" fontWeight="bold">
-                            Grand Total Of PurchaseOther:
-                        </Typography>
-                        <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                            {grandTotalOfPurchaseOther.toLocaleString("en-IN")}
-                        </Typography>
-                    </Box>
-                </Box>
+                    {grandTotalOfInvoice.toLocaleString("en-IN")}
+                </Typography>
             </Box>
-        )
+
+            {/* Purchase Other Total */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                }}
+            >
+                <Typography variant="subtitle1" fontWeight="bold">
+                    Grand Total Of PurchaseOther:
+                </Typography>
+
+                <Typography
+                    variant="subtitle1"
+                    color="primary"
+                    fontWeight="bold"
+                >
+                    {grandTotalOfPurchaseOther.toLocaleString("en-IN")}
+                </Typography>
+            </Box>
+        </Box>
+    </Box>
+),
     });
     
         //grand Total

@@ -685,95 +685,215 @@ const [toDate, setToDate] = useState(new Date());
 
 
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!salesData) return;
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    if (!salesData || salesData.length === 0) return;
 
-        doc.setLineWidth(0.5);
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        const logoDataUrl = logonew;
-        const width = 20;
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+    let y = 20;
 
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        doc.discardPath();
-        y += height + 6;
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
+    doc.setLineWidth(0.5);
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center" });
-        y += 7;
-        doc.setFontSize(10);
-        doc.text("Shop No.5 Atharva Vishwa, Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+    // =====================================================
+    // HEADER
+    // ONLY AMRUT MILK PRODUCTS 2
+    // =====================================================
 
-        doc.setFontSize(16);
-        doc.text("Sales HSN Wise Report Preview", pageWidth / 2, y, { align: "center" });
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
 
-        // Table headers
-        const tableHeaders = [
-            "HSN Code", "CGST%", "CGST Amount",
-            "SGST%", "SGST Amount", "IGST%", "IGST Amount",
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        {
+            align: "center"
+        }
+    );
 
-        ];
+    y += 10;
 
-        // Table data
-        const tableData = salesData.map((item) => [
-            item.HSNCode,
-            Number(item.CGSTPercentage || 0).toFixed(2),
-            Number(item.TotalCGSTAmount || 0).toFixed(2),
-            // item.TotalCGSTAmount,
-            Number(item.SGSTPercentage || 0).toFixed(2),
-            Number(item.TotalSGSTAmount || 0).toFixed(2),
-            Number(item.IGSTPercentage || 0).toFixed(2),
-            Number(item.TotalIGSTAmount || 0).toFixed(2),
+    // Header line
+    doc.setLineWidth(0.5);
 
-        ]);
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
 
-        // Calculate grand total
-        const CGSTTotal = salesData?.reduce((acc, row) => acc + (Number(row.TotalCGSTAmount) || 0), 0);
-        const SGSTTotal = salesData?.reduce((acc, row) => acc + (Number(row.TotalSGSTAmount) || 0), 0);
-        const IGSTTotal = salesData?.reduce((acc, row) => acc + (Number(row.TotalIGSTAmount) || 0), 0);
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 7,
+    y += 7;
 
-            theme: "grid",
-            styles: { fontSize: 8, },
-            headStyles: {
-                fillColor: [245, 245, 245],
-                textColor: 0,
-                fontStyle: "bold"
-            },
-            foot: [
-                [
-                    { content: "Total CGST Amount", colSpan: 2, styles: { halign: "right", fontStyle: "bold" } },
-                    { content: CGSTTotal.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
 
-                    { content: "Total SGST Amount", colSpan: 1, styles: { halign: "right", fontStyle: "bold" } },
-                    { content: SGSTTotal.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+    const tableHeaders = [
+        "HSN Code",
+        "CGST%",
+        "CGST Amount",
+        "SGST%",
+        "SGST Amount",
+        "IGST%",
+        "IGST Amount",
+    ];
 
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
 
-                    { content: "Total IGST Amount", styles: { halign: "right", fontStyle: "bold" } },
-                    { content: IGSTTotal.toFixed(2), styles: { halign: "right", fontStyle: "bold" } }
-                ]
-            ]
-        });
+    const tableData = salesData.map((item) => [
+        item.HSNCode || "-",
 
+        Number(
+            item.CGSTPercentage || 0
+        ).toFixed(2),
 
-        doc.save("SalesHSN_Report_Preview.pdf");
-    };
+        Number(
+            item.TotalCGSTAmount || 0
+        ).toFixed(2),
+
+        Number(
+            item.SGSTPercentage || 0
+        ).toFixed(2),
+
+        Number(
+            item.TotalSGSTAmount || 0
+        ).toFixed(2),
+
+        Number(
+            item.IGSTPercentage || 0
+        ).toFixed(2),
+
+        Number(
+            item.TotalIGSTAmount || 0
+        ).toFixed(2),
+    ]);
+
+    // =====================================================
+    // GRAND TOTAL CALCULATION
+    // =====================================================
+
+    const CGSTTotal = salesData.reduce(
+        (acc, row) =>
+            acc + (Number(row.TotalCGSTAmount) || 0),
+        0
+    );
+
+    const SGSTTotal = salesData.reduce(
+        (acc, row) =>
+            acc + (Number(row.TotalSGSTAmount) || 0),
+        0
+    );
+
+    const IGSTTotal = salesData.reduce(
+        (acc, row) =>
+            acc + (Number(row.TotalIGSTAmount) || 0),
+        0
+    );
+
+    // =====================================================
+    // GENERATE TABLE
+    // =====================================================
+
+    autoTable(doc, {
+        head: [tableHeaders],
+
+        body: tableData,
+
+        startY: y,
+
+        margin: {
+            left: 7,
+            right: 7,
+        },
+
+        theme: "grid",
+
+        styles: {
+            fontSize: 8,
+            cellPadding: 1.5,
+        },
+
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+        },
+
+        foot: [
+            [
+                {
+                    content: "Total CGST Amount",
+                    colSpan: 2,
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: CGSTTotal.toFixed(2),
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: "Total SGST Amount",
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: SGSTTotal.toFixed(2),
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: "Total IGST Amount",
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+
+                {
+                    content: IGSTTotal.toFixed(2),
+                    styles: {
+                        halign: "right",
+                        fontStyle: "bold",
+                    },
+                },
+            ],
+        ],
+    });
+
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("SalesHSN_Report_Preview.pdf");
+};
 
 
     const exportToExcel = async (data) => {
@@ -988,73 +1108,117 @@ totalRow.eachCell((cell) => {
 
         ];
     }, []);
-    const table = useMaterialReactTable({
-        columns,
-        data: salesData,
-        enablePagination: true,
-        muiTableHeadCellProps: {
-            style: {
-                backgroundColor: "#E9ECEF",
-                color: "black",
-                fontSize: "16px",
-                
-            },
-        },
 
-     renderBottomToolbar: ({ table }) => (
+const table = useMaterialReactTable({
+    columns,
+    data: salesData,
+
+    // ❌ Pagination बंद
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
+        },
+    },
+
+    renderBottomToolbar: () => (
+        <Box
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                mr: 4,
+                py: 1,
+            }}
+        >
+            {/* Totals on Right */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    fontWeight: "bold",
+                }}
+            >
+
+                {/* CGST Total */}
                 <Box
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        mr:4
-
                     }}
                 >
-                    {/* ⬅️ Pagination on Left */}
-                    <MUITablePagination table={table} />
-
-                    {/* ➡️ Totals on Right */}
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 3,
-                            fontWeight: "bold",
-                        }}
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
                     >
-                        
-                        <Box sx={{display: "flex",alignItems: "center",}}>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                                CGST Total :
-                            </Typography>
-                            <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                                {CGSTTotal.toLocaleString("en-IN")}
-                            </Typography>
-                        </Box>
+                        CGST Total :
+                    </Typography>
 
-                       
-                        <Box sx={{display: "flex",alignItems: "center",}}>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                             SGST Total :
-                            </Typography>
-                            <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                               {SGSTTotal.toLocaleString("en-IN")}
-                            </Typography>
-                        </Box>
-
-                         <Box sx={{display: "flex",alignItems: "center",}}>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                             IGST Total :
-                            </Typography>
-                            <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                               {IGSTTotal.toLocaleString("en-IN")}
-                            </Typography>
-                        </Box>
-                    </Box>
+                    <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        fontWeight="bold"
+                    >
+                        {CGSTTotal.toLocaleString("en-IN")}
+                    </Typography>
                 </Box>
-            )
-    });
+
+
+                {/* SGST Total */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                    >
+                        SGST Total :
+                    </Typography>
+
+                    <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        fontWeight="bold"
+                    >
+                        {SGSTTotal.toLocaleString("en-IN")}
+                    </Typography>
+                </Box>
+
+
+                {/* IGST Total */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                    >
+                        IGST Total :
+                    </Typography>
+
+                    <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        fontWeight="bold"
+                    >
+                        {IGSTTotal.toLocaleString("en-IN")}
+                    </Typography>
+                </Box>
+
+            </Box>
+        </Box>
+    ),
+});
 
     //grand Total
     const CGSTTotal = useMemo(() => {

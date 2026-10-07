@@ -687,105 +687,135 @@ const [toDate, setToDate] = useState(new Date());
         getSalesReport();
     };
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!salesData) return;
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    if (!salesData) return;
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        doc.setLineWidth(0.5); // Set border thickness
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10); // Draw rectangle with 5mm margin on all sides
+    let y = 10;
 
-        // Convert logo image to data URL (you might need to adjust this based on your logo format)
-        const logoDataUrl = logonew;
-        // Header
-        // Size in jsPDF units (mm for default)
-        const width = 20; // about 70px
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
+    doc.setLineWidth(0.5);
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
+    // =====================================================
+    // HEADER
+    // ONLY AMRUT MILK PRODUCTS 2
+    // =====================================================
 
+    y = 20;
 
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        // Reset clipping so future drawing isn't affected
-        doc.discardPath();
-        y += height + 6;
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center", margin: 2 });
-        y += 7;
-        doc.setFontSize(10)
-        doc.text(" Shop No.5 Atharva Vishwa,  Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        { align: "center" }
+    );
 
-        doc.setFontSize(16);
-        doc.text("customerwise Sales Report ", pageWidth / 2, y, { align: "center" });
+    // Header bottom line
+    y += 8;
 
+    doc.setLineWidth(0.5);
 
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
 
+    y += 6;
 
-        // Main table with all details
-        const tableHeaders = [
-            "Customer Name",
-            "Contact No",
-            "Product Name",
-            " Rate",
-            "Quantity",
-            "Amount",
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
 
-            "CGST",
-            "IGST",
-            "SGST",
-            "Payment Mode",
-            "Transport",
-            "Sub Total",
-            "Total",
+    const tableHeaders = [
+        "Customer Name",
+        "Contact No",
+        "Product Name",
+        "Rate",
+        "Quantity",
+        "Amount",
+        "CGST",
+        "IGST",
+        "SGST",
+        "Payment Mode",
+        "Transport",
+        "Sub Total",
+        "Total",
+    ];
 
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
+
+    const tableData = salesData.map((item) => {
+        return [
+            item.AccountName || "N/A",
+            item.ContactNo || "-",
+            item.ProductName || "-",
+            item.Rate || 0,
+            item["Ttl qtd"] || 0,
+            item["Ttl Amt"] || 0,
+            item["Ttl CGST Amt"] || 0,
+            item["Ttl IGST Amt"] || 0,
+            item["Ttl SGST Amt"] || 0,
+            item.PaymentMode || "-",
+            item.Transport || 0,
+            item["Product Subtotal"] || 0,
+            item.Total || 0,
         ];
+    });
 
-        const tableData = salesData.map((item) => {
+    // =====================================================
+    // GENERATE TABLE
+    // =====================================================
 
+    autoTable(doc, {
+        head: [tableHeaders],
+        body: tableData,
 
-            return [
-                item.AccountName,
-                item.ContactNo || " - ",
-                item.ProductName,
-                item.Rate,
-                item["Ttl qtd"] || 0,
-                item["Ttl Amt"] || 0,
-                item["Ttl CGST Amt"] || 0,
-                item["Ttl IGST Amt"] || 0,
-                item["Ttl SGST Amt"] || 0,
-                item.PaymentMode || 0,
-                item.Transport || 0,
-                item["Product Subtotal"] || 0,
-                item.Total || 0,
-            ];
-        });
+        startY: y,
 
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 8,
-            theme: "grid",
-            styles: { fontSize: 8, cellPadding: 1.5 }, // Smaller font size to fit all columns
-            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
+        margin: {
+            left: 8,
+            right: 8,
+        },
 
-        });
+        theme: "grid",
 
-        y = doc.lastAutoTable.finalY + 10;
+        styles: {
+            fontSize: 8,
+            cellPadding: 1.5,
+        },
 
-        // Save
-        doc.save("customerwise Sales.pdf");
-    };
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+        },
+    });
+
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("customerwise Sales.pdf");
+};
 
 
     const exportToExcel = async (data) => {
@@ -898,153 +928,150 @@ const [toDate, setToDate] = useState(new Date());
     };
 
 
-    const columns = useMemo(() => {
-        return [
-
-            {
-                accessorKey: 'AccountName',
-                header: 'Customer Name',
-                size: 100,
-            },
-
-            {
-                accessorKey: 'ContactNo',
-                header: 'Contact No',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || "-",
-
-
-            },
-
-            {
-                accessorKey: 'ProductName',
-                header: 'Product Name',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || "-",
-            },
-
-            {
-                accessorKey: 'Rate',
-                header: 'Rate',
-                size: 50,
-                Cell: ({ cell }) =>Number( cell.getValue() || 0).toFixed(2),
-
-            },
-
-            {
-                accessorKey: ["Ttl qtd"],
-                header: 'Quantity',
-                size: 50,
-
-            },
-
-
-            {
-                accessorKey: ["Ttl Amt"],
-                header: 'Amount',
-                 Cell: ({ cell }) =>Number( cell.getValue() || 0).toFixed(2),
-                size: 50,
-            },
-
-
-            {
-                accessorKey: ["Ttl CGST Amt"],
-                header: 'CGST',
-                 
-                size: 50,
-              Cell: ({ cell }) =>Number( cell.getValue() || 0).toFixed(2),
-            },
-
-            {
-                accessorKey: ["Ttl SGST Amt"],
-                header: 'SGST',
-                size: 50,
-                Cell: ({ cell }) =>Number( cell.getValue() || 0).toFixed(2),
-            },
-
-
-            {
-                accessorKey: ["Ttl IGST Amt"],
-                header: 'IGST',
-                size: 50,
-               Cell: ({ cell }) =>Number( cell.getValue() || 0).toFixed(2),
-            },
-
-
-            {
-                accessorKey: 'PaymentMode',
-                header: 'PaymentMode',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || "-",
-            },
-
-
-            {
-                accessorKey: 'Transport',
-                header: 'Transport',
-                size: 50,
-                Cell: ({ cell }) => cell.getValue() || 0,
-            },
-
-
-
-            {
-                accessorKey: ["Product Subtotal"],
-                header: 'Total with Tax',
-                size: 50,
-                // Cell: ({ cell }) => cell.getValue() || 0,
-                Cell: ({ cell }) => Number(cell.getValue() || 0).toFixed(2),
-            },
-
-
-            {
-                accessorKey: 'Total',
-                header: 'Total',
-                size: 50,
-                Cell: ({ cell }) => Number(cell.getValue() || 0).toFixed(2),
-            },
-
-
-
-
-        ];
-    }, []);
-    const table = useMaterialReactTable({
-        columns,
-        data: salesData,
-        enablePagination: true,
-        muiTableHeadCellProps: {
-            style: {
-                backgroundColor: "#E9ECEF",
-                color: "black",
-                fontSize: "16px",
-            },
+  const columns = useMemo(() => {
+    return [
+        {
+            accessorKey: "AccountName",
+            header: "Customer Name",
+            size: 100,
         },
 
-         renderBottomToolbar: ({ table }) => (
+        {
+            accessorKey: "ContactNo",
+            header: "Contact No",
+            size: 50,
+            Cell: ({ cell }) => cell.getValue() || "-",
+        },
+
+        {
+            accessorKey: "ProductName",
+            header: "Product Name",
+            size: 50,
+            Cell: ({ cell }) => cell.getValue() || "-",
+        },
+
+        {
+            accessorKey: "Rate",
+            header: "Rate",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "Ttl qtd",
+            header: "Quantity",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0),
+        },
+
+        {
+            accessorKey: "Ttl Amt",
+            header: "Amount",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "Ttl CGST Amt",
+            header: "CGST",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "Ttl SGST Amt",
+            header: "SGST",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "Ttl IGST Amt",
+            header: "IGST",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "PaymentMode",
+            header: "PaymentMode",
+            size: 50,
+            Cell: ({ cell }) => cell.getValue() || "-",
+        },
+
+        {
+            accessorKey: "Transport",
+            header: "Transport",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        {
+            accessorKey: "Product Subtotal",
+            header: "Total ",
+            size: 50,
+            Cell: ({ cell }) =>
+                Number(cell.getValue() || 0).toFixed(2),
+        },
+
+        // {
+        //     accessorKey: "Total",
+        //     header: "Total",
+        //     size: 50,
+        //     Cell: ({ cell }) =>
+        //         Number(cell.getValue() || 0).toFixed(2),
+        // },
+    ];
+}, []);
+
+  const table = useMaterialReactTable({
+    columns,
+    data: salesData,
+
+    // ✅ Pagination completely disabled
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
+        },
+    },
+
+    // ✅ Bottom toolbar मध्ये फक्त Grand Total
+    renderBottomToolbar: () => (
         <Box
             display="flex"
-            justifyContent="space-between"
+            justifyContent="flex-end"
             alignItems="center"
-          mr={4}
-        
+            mr={4}
+            sx={{
+                padding: "10px 0",
+            }}
         >
-            {/* ⬅️ Pagination on Left */}
-            <MRTTablePagination table={table} />
-
-            {/* ➡️ Grand Total on Right */}
+            {/* Grand Total */}
             <Box display="flex" alignItems="center">
                 <Typography variant="subtitle1" sx={{ mr: 2 }}>
                     <b>Grand Total:</b>
                 </Typography>
 
                 <Typography variant="subtitle1" color="primary">
-                    <b>{grandTotal.toLocaleString("en-IN")}</b>
+                    <b>
+                        {grandTotal.toLocaleString("en-IN")}
+                    </b>
                 </Typography>
             </Box>
         </Box>
     ),
-    });
+});
 
     //grand Total
     const grandTotal = useMemo(() => {

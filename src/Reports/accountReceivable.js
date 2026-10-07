@@ -95,92 +95,176 @@ const getSalesReport = () => {
         getSalesReport();
     };
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        if (!salesData) return;
+  const generatePDF = () => {
+    // =====================================================
+    // CHECK DATA
+    // =====================================================
+    if (!Array.isArray(salesData) || salesData.length === 0) {
+        alert("No data available to generate PDF");
+        return;
+    }
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        let y = 10;
+    // =====================================================
+    // CREATE PDF
+    // =====================================================
+    const doc = new jsPDF("p", "mm", "a4");
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        doc.setLineWidth(0.5); // Set border thickness
-        doc.rect(5, 5, pageWidth - 10, pageHeight - 10); // Draw rectangle with 5mm margin on all sides
+    // =====================================================
+    // PAGE BORDER
+    // =====================================================
+    doc.setLineWidth(0.5);
 
-        // Convert logo image to data URL (you might need to adjust this based on your logo format)
-        const logoDataUrl = logonew;
-        // Header
-        // Size in jsPDF units (mm for default)
-        const width = 20; // about 70px
-        const height = 20;
-        const x = pageWidth / 2 - width / 2;
+    doc.rect(
+        5,
+        5,
+        pageWidth - 10,
+        pageHeight - 10
+    );
 
+    // =====================================================
+    // HEADER
+    // Only AMRUT MILK PRODUCTS 2
+    // =====================================================
 
-      
-        doc.addImage(logoDataUrl, 'JPEG', x, y, width, height, '', 'FAST');
-        // Reset clipping so future drawing isn't affected
-        doc.discardPath();
-        y += height + 6;
+    let y = 25;
 
-        doc.setFontSize(16);
-        doc.text("Aarohan Agro", pageWidth / 2, y, { align: "center", margin: 2 });
-        y += 7;
-        doc.setFontSize(10)
-        doc.text(" Shop No.5 Atharva Vishwa,  Near Reliance Digital Tarabai park Pitali, Ganpati Road, Kolhapur, Maharashtra 416003", pageWidth / 2, y, { align: "center" });
-        y += 9;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
 
-        doc.setFontSize(16);
-        doc.text("Account Receivable ", pageWidth / 2, y, { align: "center" });
+    doc.text(
+        "AMRUT MILK PRODUCTS 2",
+        pageWidth / 2,
+        y,
+        {
+            align: "center",
+        }
+    );
 
+    // =====================================================
+    // HEADER LINE
+    // =====================================================
 
-        y += 6;
-        doc.setLineWidth(0.5);
-        doc.line(10, y, 200, y);
-        y += 6;
+    y += 10;
 
+    doc.setLineWidth(0.5);
 
-        // Main table with all details
-        const tableHeaders = [
-            "Date",
-            "DocNo",
-            "Contact",
-            " Amount",
-            "Source",
-           
-            
+    doc.line(
+        10,
+        y,
+        pageWidth - 10,
+        y
+    );
+
+    y += 8;
+
+    // =====================================================
+    // TABLE HEADERS
+    // =====================================================
+
+    const tableHeaders = [
+        "Date",
+        "DocNo",
+        "Contact",
+        "Amount",
+        "Source",
+    ];
+
+    // =====================================================
+    // TABLE DATA
+    // =====================================================
+
+    const tableData = salesData.map((item) => {
+        return [
+            item.Date || "-",
+            item.DocNo || "-",
+            item.Contact || "-",
+            Number(item.Amount || 0).toFixed(2),
+            item.Source || "-",
         ];
+    });
 
-        const tableData = salesData.map((item) => {
-            
+    // =====================================================
+    // TABLE
+    // =====================================================
 
-            return [
-                item.Date,
-                item.DocNo||" - ",
-                item.Contact,
-                item.Amount,
-                
-                item.Source || 0,
-               
-            ];
-        });
+    autoTable(doc, {
+        head: [tableHeaders],
 
-        autoTable(doc, {
-            head: [tableHeaders],
-            body: tableData,
-            startY: y,
-            margin: 8,
-            theme: "grid",
-            styles: { fontSize: 8, cellPadding: 1.5 }, // Smaller font size to fit all columns
-            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: "bold" },
-          
-        });
+        body: tableData,
 
-        y = doc.lastAutoTable.finalY + 10;
-      
-        // Save
-        doc.save("Account_receivable.pdf");
-    };
+        startY: y,
 
+        margin: {
+            left: 8,
+            right: 8,
+        },
+
+        theme: "grid",
+
+        styles: {
+            font: "helvetica",
+            fontSize: 8,
+            cellPadding: 1.5,
+            textColor: 0,
+            lineColor: [180, 180, 180],
+            lineWidth: 0.2,
+        },
+
+        headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 0,
+            fontStyle: "bold",
+            fontSize: 8,
+        },
+
+        columnStyles: {
+            0: {
+                cellWidth: 35,
+            },
+
+            1: {
+                cellWidth: 35,
+            },
+
+            2: {
+                cellWidth: 45,
+            },
+
+            3: {
+                cellWidth: 35,
+                halign: "right",
+            },
+
+            4: {
+                cellWidth: 35,
+            },
+        },
+
+        // =================================================
+        // NEW PAGE BORDER
+        // =================================================
+
+        didDrawPage: () => {
+            doc.setLineWidth(0.5);
+
+            doc.rect(
+                5,
+                5,
+                pageWidth - 10,
+                pageHeight - 10
+            );
+        },
+    });
+
+    // =====================================================
+    // SAVE PDF
+    // =====================================================
+
+    doc.save("Account_receivable.pdf");
+};
 
 
 
@@ -363,64 +447,73 @@ const exportToExcel = async (data) => {
             ];
         }, []);
         
-        const table = useMaterialReactTable({
-            columns,
-            data: salesData,
-            enablePagination: true,
-            muiTableHeadCellProps: {
-                style: {
-                    backgroundColor: "#E9ECEF",
-                    color: "black",
-                    fontSize: "16px",
-                },
-            },
+      const table = useMaterialReactTable({
+    columns,
+    data: salesData,
 
-              renderBottomToolbar: ({ table }) => (
+    // ✅ Pagination OFF
+    enablePagination: false,
+
+    muiTableHeadCellProps: {
+        style: {
+            backgroundColor: "#E9ECEF",
+            color: "black",
+            fontSize: "16px",
+        },
+    },
+
+    renderBottomToolbar: () => (
         <Box
             display="flex"
-            justifyContent="space-between"
+            justifyContent="flex-end"
             alignItems="center"
             width="100%"
-        
+            gap={4}
+            sx={{
+                padding: "10px 16px",
+            }}
         >
-            {/* ⬅️ Pagination on Left */}
-            <MUITablePagination table={table} />
-
-            {/* ➡️ Grand Total on Right */}
+            {/* Credit Total */}
             <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1" sx={{ mr: 2 }}>
+                <Typography variant="subtitle1" sx={{ mr: 1 }}>
                     <b>Credit Total:</b>
                 </Typography>
 
                 <Typography variant="subtitle1" color="primary">
-                    <b>{grandTotal.toLocaleString("en-IN")}</b>
+                    <b>
+                        {grandTotal.toLocaleString("en-IN")}
+                    </b>
                 </Typography>
             </Box>
 
-
+            {/* Debit Total */}
             <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1" sx={{ mr: 2 }}>
+                <Typography variant="subtitle1" sx={{ mr: 1 }}>
                     <b>Debit Total:</b>
                 </Typography>
 
                 <Typography variant="subtitle1" color="primary">
-                    <b>{grandDebitTotal.toLocaleString("en-IN")}</b>
+                    <b>
+                        {grandDebitTotal.toLocaleString("en-IN")}
+                    </b>
                 </Typography>
             </Box>
 
-             <Box display="flex" alignItems="center">
-                <Typography variant="subtitle1" sx={{ mr: 2 }}>
+            {/* Closing Balance Total */}
+            <Box display="flex" alignItems="center">
+                <Typography variant="subtitle1" sx={{ mr: 1 }}>
                     <b>Closing Bal Total:</b>
                 </Typography>
 
                 <Typography variant="subtitle1" color="primary">
-                    <b>{grandClosingBalTotal.toLocaleString("en-IN")}</b>
+                    <b>
+                        {grandClosingBalTotal.toLocaleString("en-IN")}
+                    </b>
                 </Typography>
             </Box>
-
         </Box>
     ),
-        });
+});
 
     const grandTotal = useMemo(() => {
         return salesData?.reduce((acc, row) =>

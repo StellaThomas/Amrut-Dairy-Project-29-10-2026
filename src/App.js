@@ -244,7 +244,7 @@ function App() {
           <Route
             path="/denominationentry"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "SALE", "SALE2"]}>
                 <DenominationEntry />
               </ProtectedRoute>
             }
