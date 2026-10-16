@@ -1344,6 +1344,7 @@
 
 
 
+
 import React, { useMemo, useState, useEffect } from "react";
 import {
   Menu,
@@ -1496,18 +1497,19 @@ const CustomerMaster = () => {
     if (currentRow) {
       console.log("Editing item with ID:", currentRow.original);
       setIdwiseData(currentRow.original.Id);
+setAccountId(currentRow.original.AccountId);
       // console.log(currentRow.original.Id)
 
       // setAccountId(currentRow.original.AccountId)
       //  console.log('Accountidd',currentRow.original.AccountId)
 
-      setAccountId(currentRow.original.Id);
-      console.log("Accountidd", currentRow.original.Id);
+     setAccountId(currentRow.original.AccountId);
+console.log("Accountidd", currentRow.original.AccountId);
 
       setUpdatedAccountName(currentRow.original.AccountName);
       setSelectedGroupOption(currentRow.original.GroupId);
       setSelectedSubGroupOption(currentRow.original.SubGroupId);
-      setUpdatedCurrentBal(currentRow.original.OpeningBalance);
+      setUpdatedCurrentBal(currentRow.original.OpeningBalance || "0");
       setDebitCredit(currentRow.original.DrORCr);
       // setUpdatedAddress1(currentRow.original.Address1)
       // setUpdatedAddress2(currentRow.original.Address2)
@@ -1525,11 +1527,11 @@ const CustomerMaster = () => {
 
   // edit drawer
   const [isEditDrawerOpen, setEditIsDrawerOpen] = useState(false);
-  const handleEditDrawerOpen = () => {
-    handleEdit();
-    setEditIsDrawerOpen(true);
-    handleMenuOpen(false);
-  };
+ const handleEditDrawerOpen = () => {
+  handleEdit();
+  setEditIsDrawerOpen(true);
+  handleMenuClose();
+};
 
   const handleEditDrawerClose = () => {
     setEditIsDrawerOpen(false);
@@ -1647,28 +1649,39 @@ const fetchData = async () => {
     fetchData();
   }, []);
 
-  const deleteCustomerMaster = async () => {
-    try {
-      // Delete Address First
-      const addressUrl = `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=Address&Id=${currentRow.original.Id}`;
-      console.log("Deleting Address:", addressUrl);
+const deleteCustomerMaster = async () => {
+  // Delete confirmation
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this customer?"
+  );
 
-      const addressResponse = await axios.get(addressUrl);
-      console.log("Address Deleted:", addressResponse.data);
+  if (!confirmDelete) {
+    return;
+  }
 
-      // Delete Account After Address
-      const accountUrl = `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=Account&Id=${currentRow.original.AccountId}`;
-      console.log("Deleting Account:", accountUrl);
+  try {
+    // Delete Address First
+    const addressUrl = `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=Address&Id=${currentRow.original.Id}`;
+    console.log("Deleting Address:", addressUrl);
 
-      const accountResponse = await axios.get(accountUrl);
-      console.log("Account Deleted:", accountResponse.data);
+    const addressResponse = await axios.get(addressUrl);
+    console.log("Address Deleted:", addressResponse.data);
 
-      toast.success("Customer master deleted successfully");
-      fetchData();
-    } catch (error) {
-      console.error("Error deleting customer:", error);
-    }
-  };
+    // Delete Account After Address
+    const accountUrl = `https://amrutdairyapi.microtechsolutions.net.in/php/delete/deletetable.php?Table=Account&Id=${currentRow.original.AccountId}`;
+    console.log("Deleting Account:", accountUrl);
+
+    const accountResponse = await axios.get(accountUrl);
+    console.log("Account Deleted:", accountResponse.data);
+
+    toast.success("Customer master deleted successfully");
+
+    fetchData();
+  } catch (error) {
+    console.error("Error deleting customer:", error);
+    toast.error("Failed to delete customer");
+  }
+};
 
   const columns = useMemo(() => {
     return [
@@ -1725,17 +1738,17 @@ const fetchData = async () => {
         size: 150,
       },
 
-      {
-        accessorKey: "Address2",
-        header: "Address 2",
-        size: 150,
-      },
+      // {
+      //   accessorKey: "Address2",
+      //   header: "Address 2",
+      //   size: 150,
+      // },
 
-      {
-        accessorKey: "EmailId",
-        header: "Email",
-        size: 150,
-      },
+      // {
+      //   accessorKey: "EmailId",
+      //   header: "Email",
+      //   size: 150,
+      // },
 
       {
         accessorKey: "MobileNo",
@@ -1746,29 +1759,29 @@ const fetchData = async () => {
       // =========================
       // GST NUMBER
       // =========================
-      {
-        accessorKey: "GSTNo",
-        header: "GST No",
-        size: 150,
-        Cell: ({ cell }) => {
-          const gstNo = cell.getValue();
+      // {
+      //   accessorKey: "GSTNo",
+      //   header: "GST No",
+      //   size: 150,
+      //   Cell: ({ cell }) => {
+      //     const gstNo = cell.getValue();
 
-          const gstValue = String(gstNo ?? "").trim();
+      //     const gstValue = String(gstNo ?? "").trim();
 
-          // Default GST number hide
-          if (gstValue === "" || gstValue === "270000000000000") {
-            return "";
-          }
+      //     // Default GST number hide
+      //     if (gstValue === "" || gstValue === "270000000000000") {
+      //       return "";
+      //     }
 
-          return gstValue;
-        },
-      },
+      //     return gstValue;
+      //   },
+      // },
 
-      {
-        accessorKey: "OpeningBalance",
-        header: "Current Balance",
-        size: 150,
-      },
+      // {
+      //   accessorKey: "OpeningBalance",
+      //   header: "Current Balance",
+      //   size: 150,
+      // },
 
       // =========================
       // ACTIONS
@@ -1826,33 +1839,42 @@ const fetchData = async () => {
 
   const [updatedissystem, setupdatedIsSystem] = useState(false);
 
+
+
   const [gst, setGst] = useState(false);
 
   const [compliance, setCompliance] = useState(false);
 
   //fetch groupId
-  const [groupOption, setGroupOption] = useState("");
-  const [selectedGroupOption, setSelectedGroupOption] = useState("");
+ 
+const [groupOption, setGroupOption] = useState([]);
+const [selectedGroupOption, setSelectedGroupOption] = useState("");
 
-  const fetchGroup = async () => {
-    try {
-      const response = await fetch(
-        "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=accountgroup",
-      );
-      const result = await response.json();
+const fetchGroup = async () => {
+  try {
+    const response = await fetch(
+      "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=AccountGroup"
+    );
 
-      // console.log("grp info:", result);
-
-      const options = result.map((grp) => ({
-        value: grp.Id,
-        label: grp.GroupName,
-      }));
-
-      setGroupOption(options);
-    } catch (error) {
-      console.error("Error fetching accounts:", error);
+    if (!response.ok) {
+      throw new Error("Failed to fetch Account Groups");
     }
-  };
+
+    const result = await response.json();
+
+    const options = (Array.isArray(result) ? result : []).map((grp) => ({
+      value: String(grp.Id),
+      label: grp.GroupName,
+    }));
+
+    setGroupOption(options);
+    console.log("Account Group Options:", options);
+  } catch (error) {
+    console.error("Error fetching Account Groups:", error);
+    setGroupOption([]);
+  }
+};
+
 
   //fetch SubgroupId
   const [subGroupOption, setSubGroupOption] = useState("");
@@ -1941,102 +1963,207 @@ const fetchData = async () => {
       .finally(() => setLoadingState(false));
   };
 
-  useEffect(() => {
-    fetchGroup();
-    fetchSubGroup();
-    fetchCity();
-    fetchState();
-    // fetchDataById(idwiseData)
-  }, [idwiseData]);
-
+ useEffect(() => {
+  fetchGroup();
+  fetchSubGroup();
+  fetchCity();
+  fetchState();
+}, []);
   //create Customer Master
-  const CreateCustomerMaster = async () => {
-    try {
-      // Post Account Data
-      let accountData = qs.stringify({
-        AccountName: AccountName,
-        GroupId: selectedGroupOption,
-        SubGroupId: selectedSubGroupOption,
-        OpeningBalance: currentBal || "0",
-        DrORCr: debitCredit,
-        TypeCode: "C",
-        IsSystem: issystem,
-        Depriciation: "0",
-      });
 
-      let accountConfig = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: "https://amrutdairyapi.microtechsolutions.net.in/php/postaccount.php",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: accountData,
-      };
+  const [isSaving, setIsSaving] = useState(false);
+  
+const CreateCustomerMaster = async () => {
+  // ================================
+  // 1. ACCOUNT NAME VALIDATION
+  // ================================
+  if (!AccountName || AccountName.trim() === "") {
+    toast.error("Customer Name is required");
+    return;
+  }
 
-      const accountResponse = await axios.request(accountConfig);
-      console.log("Account Response:", accountResponse.data);
+  // ================================
+  // 2. MOBILE NUMBER VALIDATION
+  // ================================
+  if (!mobileno || mobileno.trim() === "") {
+    toast.error("Mobile Number is required");
+    return;
+  }
 
-      let accId = parseInt(accountResponse.data.Id);
-      setAccountId(accId);
-      console.log("accId", accId);
+  // ================================
+  // 3. CUSTOMER TYPE VALIDATION
+  // ================================
+  if (!customerType || customerType.trim() === "") {
+    toast.error("Customer Type is required");
+    return;
+  }
 
-      let addressData = qs.stringify({
-        AccountId: accId,
-        Address1: address1,
-        Address2: address2,
-        Address3: "",
-        AreaId: "0",
-        CityId: selectedCity,
-        StateId: selectedState,
-        Pincode: pincode,
-        CountryId: "0",
-        TelephoneNo: "0",
-        FaxNo: "0",
-        MobileNo: mobileno,
-        EmailId: email,
-        PANNo: "0",
-        GSTNo: gstNo,
-        CustomerType: customerType,
-      });
+  // ================================
+  // 4. NORMALIZE VALUES
+  // ================================
+  const newCustomerName = String(AccountName || "")
+    .trim()
+    .toLowerCase();
 
-      let addressConfig = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: "https://amrutdairyapi.microtechsolutions.net.in/php/postaddress.php",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: addressData,
-      };
+  const newCustomerMobile = String(mobileno || "")
+    .replace(/\D/g, "");
 
-      const addressResponse = await axios.request(addressConfig);
-      console.log("Address Response:", addressResponse.data);
-      handleDrawerClose();
-      handleClearTemplate();
-      toast.success("Customer Master created successfully");
-      fetchData();
-    } catch (error) {
-      console.error("Error:", error);
+  // ================================
+  // 5. DUPLICATE CUSTOMER CHECK
+  // ================================
+  const duplicateCustomer = data.find((customer) => {
+    const existingName = String(customer.AccountName || "")
+      .trim()
+      .toLowerCase();
+
+    const existingMobile = String(customer.MobileNo || "")
+      .replace(/\D/g, "");
+
+    return (
+      existingName === newCustomerName &&
+      existingMobile === newCustomerMobile
+    );
+  });
+
+  if (duplicateCustomer) {
+    toast.error(
+      "Customer with same Name and Mobile Number already exists"
+    );
+    return;
+  }
+
+  setIsSaving(true);
+
+  // ================================
+  // 6. CREATE CUSTOMER
+  // ================================
+  try {
+    // --------------------------------
+    // POST ACCOUNT DATA
+    // --------------------------------
+    const accountData = qs.stringify({
+      AccountName: AccountName.trim(),
+      GroupId: selectedGroupOption || "0",
+      SubGroupId: selectedSubGroupOption || "0",
+      OpeningBalance: currentBal || "0",
+      DrORCr: debitCredit || "",
+      TypeCode: "C",
+      IsSystem: issystem || false,
+      Depriciation: "0",
+    });
+
+    const accountConfig = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://amrutdairyapi.microtechsolutions.net.in/php/postaccount.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: accountData,
+    };
+
+    const accountResponse = await axios.request(accountConfig);
+
+    console.log("Account Response:", accountResponse.data);
+
+    // --------------------------------
+    // GET ACCOUNT ID
+    // --------------------------------
+    const accId = parseInt(accountResponse?.data?.Id, 10);
+
+    console.log("Account ID:", accId);
+
+    // --------------------------------
+    // ACCOUNT ID VALIDATION
+    // --------------------------------
+    if (!accId || Number.isNaN(accId)) {
+      toast.error("Account creation failed. Account ID not received.");
+      return;
     }
-  };
+
+    setAccountId(accId);
+
+    // --------------------------------
+    // POST ADDRESS DATA
+    // --------------------------------
+    const addressData = qs.stringify({
+      AccountId: accId,
+      Address1: address1 || "",
+      Address2: address2 || "",
+      Address3: "",
+      AreaId: "0",
+      CityId: selectedCity || "0",
+      StateId: selectedState || "0",
+      Pincode: pincode || "",
+      CountryId: "0",
+      TelephoneNo: "0",
+      FaxNo: "0",
+      MobileNo: mobileno || "",
+      EmailId: email || "",
+      PANNo: "0",
+      GSTNo: gstNo || "",
+      CustomerType: customerType || "",
+    });
+
+    const addressConfig = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://amrutdairyapi.microtechsolutions.net.in/php/postaddress.php",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: addressData,
+    };
+
+    const addressResponse = await axios.request(addressConfig);
+
+    console.log("Address Response:", addressResponse.data);
+
+    // --------------------------------
+    // SUCCESS
+    // --------------------------------
+    toast.success("Customer Master created successfully");
+
+    handleDrawerClose();
+
+    handleClearTemplate();
+
+    await fetchData();
+ } catch (error) {
+  console.error("Error creating customer:", error);
+
+  console.error(
+    "API Error Response:",
+    error?.response?.data
+  );
+
+  toast.error("Failed to create customer");
+} finally {
+  setIsSaving(false);
+}
+};
+
+
+
+
+  
 
   //clr all fields
 
   const handleClearTemplate = () => {
     setAccountCode("");
     setAccountName("");
-    setCurrentBal("");
+    setCurrentBal("0");
     setSelectedGroupOption("");
     setSelectedSubGroupOption("");
-    setDebitCredit(" ");
+    setDebitCredit("");
     setTypecode("");
     setAddress1("");
     setAddress2("");
     setSelectedCity("");
     setSelectedState("");
     setPincode("");
-    setEmail(" ");
+    setEmail("");
     setMobile("");
     setURLs("");
     SetGSTNo("");
@@ -2048,77 +2175,278 @@ const fetchData = async () => {
   };
 
   //for update
-  const UpdateCustomerMaster = async () => {
-    try {
-      //  Post Account Data
-      let accountData = qs.stringify({
-        AccountName: updatedAccountName,
-        GroupId: selectedGroupOption,
-        SubGroupId: selectedSubGroupOption,
-        OpeningBalance: updatedcurrentBal || "0",
-        DrORCr: debitCredit,
-        TypeCode: "C",
-        IsSystem: updatedissystem,
-        Depriciation: "0",
-        Id: accountId,
-      });
-      console.log("accountData", accountData);
-      let accountConfig = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: "https://amrutdairyapi.microtechsolutions.net.in/php/updateaccount.php",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: accountData,
-      };
 
-      const updateaccountResponse = await axios.request(accountConfig);
-      console.log("updateAccount Response:", updateaccountResponse.data);
-      //  let accId = parseInt(updateaccountResponse.data.Id)
-      //  setAccountId(accId)
-      // console.log('accId', accountId)
+const UpdateCustomerMaster = async () => {
+  // =====================================================
+  // 1. CUSTOMER NAME VALIDATION
+  // =====================================================
+  if (!updatedAccountName || updatedAccountName.trim() === "") {
+    toast.error("Customer Name is required");
+    return;
+  }
 
-      let addressData = qs.stringify({
-        AccountId: accountId,
-        Address1: updatedaddress1,
-        Address2: updatedaddress2,
-        Address3: "",
-        AreaId: "0",
-        CityId: selectedCity,
-        StateId: selectedState,
-        Pincode: updatedpincode,
-        CountryId: "0",
-        TelephoneNo: "0",
-        FaxNo: "0",
-        MobileNo: updatedmobileno,
-        EmailId: updatedemail,
-        PANNo: "0",
-        GSTNo: updatedgstNo,
-        Id: idwiseData,
-        CustomerType: updatedCustomerType,
-        Id: idwiseData,
-      });
+  // =====================================================
+  // 2. MOBILE NUMBER VALIDATION
+  // =====================================================
+  if (!updatedmobileno || String(updatedmobileno).trim() === "") {
+    toast.error("Mobile Number is required");
+    return;
+  }
 
-      let addressConfig = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: "https://amrutdairyapi.microtechsolutions.net.in/php/updateaddress.php",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: addressData,
-      };
+  // =====================================================
+  // 3. CUSTOMER TYPE VALIDATION
+  // =====================================================
+  if (!updatedCustomerType || updatedCustomerType.trim() === "") {
+    toast.error("Customer Type is required");
+    return;
+  }
 
-      const addressResponse = await axios.request(addressConfig);
-      console.log("Address Response:", addressResponse.data);
-      toast.success("Customer Master updated successfully");
-      handleEditDrawerClose();
-      fetchData();
-    } catch (error) {
-      console.error("Error:", error);
+  // =====================================================
+  // 4. NORMALIZE NEW CUSTOMER VALUES
+  // =====================================================
+  const newCustomerName = String(updatedAccountName || "")
+    .trim()
+    .toLowerCase();
+
+  const newCustomerMobile = String(updatedmobileno || "")
+    .replace(/\D/g, "");
+
+  // =====================================================
+  // 5. DUPLICATE CUSTOMER CHECK
+  //    Same Name + Same Mobile
+  //    Ignore current customer
+  // =====================================================
+  const duplicateCustomer = data.find((customer) => {
+    // -----------------------------------------------
+    // Ignore current customer
+    // -----------------------------------------------
+    const isCurrentCustomer =
+      String(customer.Id) === String(idwiseData) ||
+      String(customer.AccountId) === String(accountId);
+
+    if (isCurrentCustomer) {
+      return false;
     }
-  };
+
+    // -----------------------------------------------
+    // Existing customer name
+    // -----------------------------------------------
+    const existingName = String(customer.AccountName || "")
+      .trim()
+      .toLowerCase();
+
+    // -----------------------------------------------
+    // Existing customer mobile
+    // -----------------------------------------------
+    const existingMobile = String(customer.MobileNo || "")
+      .replace(/\D/g, "");
+
+    // -----------------------------------------------
+    // Compare
+    // -----------------------------------------------
+    return (
+      existingName === newCustomerName &&
+      existingMobile === newCustomerMobile
+    );
+  });
+
+  // =====================================================
+  // 6. DUPLICATE FOUND
+  // =====================================================
+  if (duplicateCustomer) {
+    toast.error(
+      "Customer with same Name and Mobile Number already exists"
+    );
+    return;
+  }
+
+  // =====================================================
+  // 7. ACCOUNT ID VALIDATION
+  // =====================================================
+  if (!accountId || Number.isNaN(Number(accountId))) {
+    console.error("Invalid Account ID:", accountId);
+    toast.error("Invalid Account ID. Cannot update customer.");
+    return;
+
+  }
+
+  setIsSaving(true);
+
+  // =====================================================
+  // 8. START UPDATE
+  // =====================================================
+  try {
+    // ===================================================
+    // ACCOUNT DATA
+    // ===================================================
+    const accountData = qs.stringify({
+      AccountName: String(updatedAccountName || "").trim(),
+
+      GroupId: selectedGroupOption || "0",
+
+      SubGroupId: selectedSubGroupOption || "0",
+
+      OpeningBalance: updatedcurrentBal || "0",
+
+      DrORCr: debitCredit || "",
+
+      TypeCode: "C",
+
+      IsSystem: updatedissystem || false,
+
+      Depriciation: "0",
+
+      Id: accountId,
+    });
+
+    console.log(
+      "ACCOUNT UPDATE DATA:",
+      accountData
+    );
+
+    // ===================================================
+    // ACCOUNT CONFIG
+    // ===================================================
+    const accountConfig = {
+      method: "post",
+
+      maxBodyLength: Infinity,
+
+      url:
+        "https://amrutdairyapi.microtechsolutions.net.in/php/updateaccount.php",
+
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+
+      data: accountData,
+    };
+
+    // ===================================================
+    // UPDATE ACCOUNT
+    // ===================================================
+    const updateaccountResponse =
+      await axios.request(accountConfig);
+
+    console.log(
+      "UPDATE ACCOUNT RESPONSE:",
+      updateaccountResponse.data
+    );
+
+    // ===================================================
+    // ADDRESS DATA
+    // ===================================================
+    const addressData = qs.stringify({
+      AccountId: accountId,
+
+      Address1: updatedaddress1 || "",
+
+      Address2: updatedaddress2 || "",
+
+      Address3: "",
+
+      AreaId: "0",
+
+      CityId: selectedCity || "0",
+
+      StateId: selectedState || "0",
+
+      Pincode: updatedpincode || "",
+
+      CountryId: "0",
+
+      TelephoneNo: "0",
+
+      FaxNo: "0",
+
+      MobileNo: updatedmobileno || "",
+
+      EmailId: updatedemail || "",
+
+      PANNo: "0",
+
+      GSTNo: updatedgstNo || "",
+
+      Id: idwiseData,
+
+      CustomerType: updatedCustomerType || "",
+    });
+
+    console.log(
+      "ADDRESS UPDATE DATA:",
+      addressData
+    );
+
+    // ===================================================
+    // ADDRESS CONFIG
+    // ===================================================
+    const addressConfig = {
+      method: "post",
+
+      maxBodyLength: Infinity,
+
+      url:
+        "https://amrutdairyapi.microtechsolutions.net.in/php/updateaddress.php",
+
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+
+      data: addressData,
+    };
+
+    // ===================================================
+    // UPDATE ADDRESS
+    // ===================================================
+    const addressResponse =
+      await axios.request(addressConfig);
+
+    console.log(
+      "UPDATE ADDRESS RESPONSE:",
+      addressResponse.data
+    );
+
+    // ===================================================
+    // SUCCESS
+    // ===================================================
+    toast.success(
+      "Customer Master updated successfully"
+    );
+
+    // Close edit drawer
+    handleEditDrawerClose();
+
+    // Refresh customer list
+    await fetchData();
+
+  } catch (error) {
+    // ===================================================
+    // ERROR LOG
+    // ===================================================
+    console.error(
+      "Error updating Customer Master:",
+      error
+    );
+
+    // API response error
+    console.error(
+      "API Error Response:",
+      error?.response?.data
+    );
+
+    // HTTP status
+    console.error(
+      "API Error Status:",
+      error?.response?.status
+    );
+
+    toast.error(
+      "Failed to update Customer Master"
+    );
+  }
+};
 
   //get Address
   const getAddress = () => {
@@ -2134,40 +2462,61 @@ const fetchData = async () => {
       .then((response) => response.json())
       // .then((result) => console.log(result))
       .then((result) => {
-        if (Array.isArray(result) && result.length > 0) {
-          const address = result[0];
+       if (Array.isArray(result) && result.length > 0) {
+  const address = result[0];
 
-          console.log("Address Details:");
-          setUpdatedAddress1(address.Address1);
-          console.log("Address1:", address.Address1);
+  console.log("Address Details:", address);
 
-          setUpdatedAddress2(address.Address2);
-          console.log("Address2:", address.Address2);
+  // Address 1
+  const address1 = address.Address1 || "";
+  setUpdatedAddress1(address1);
+  console.log("Address1:", address1);
 
-          setSelectedCity(address.CityId);
-          console.log("CityId:", address.CityId);
+  // Address 2
+  const address2 = address.Address2 || "";
+  setUpdatedAddress2(address2);
+  console.log("Address2:", address2);
 
-          setUpdatedEmail(address.EmailId);
-          console.log("EmailId:", address.EmailId.trim());
+  // City
+  const cityId = address.CityId || "";
+  setSelectedCity(cityId);
+  console.log("CityId:", cityId);
 
-          setupdatedMobile(address.MobileNo);
-          console.log("MobileNo:", address.MobileNo);
+  // Email
+  const email = address.EmailId || "";
+  setUpdatedEmail(email);
+  console.log("EmailId:", email);
 
-          setUpdatedPincode(address.Pincode);
-          console.log("Pincode:", address.Pincode);
+  // Mobile
+  const mobile = address.MobileNo || "";
+  setupdatedMobile(mobile);
+  console.log("MobileNo:", mobile);
 
-          setSelectedState(address.StateId);
-          console.log("StateId:", address.StateId);
+  // Pincode
+  const pincode = address.Pincode || "";
+  setUpdatedPincode(pincode);
+  console.log("Pincode:", pincode);
 
-          const gstValue = String(address.GSTNo || "").trim();
+  // State
+  const stateId = address.StateId || "";
+  setSelectedState(stateId);
+  console.log("StateId:", stateId);
 
-          SetupdatedGSTNo(gstValue === "270000000000000" ? "" : gstValue);
+  // GST
+  const gstValue = String(address.GSTNo || "").trim();
 
-          console.log("GST:", gstValue === "270000000000000" ? "" : gstValue);
+  const finalGST =
+    gstValue === "270000000000000" ? "" : gstValue;
 
-          setUpdatedCustomerType(address.CustomerType || "");
-          console.log("Customer Type:", address.CustomerType);
-        } else {
+  SetupdatedGSTNo(finalGST);
+
+  console.log("GST:", finalGST);
+
+  // Customer Type
+  const customerType = address.CustomerType || "";
+  setUpdatedCustomerType(customerType);
+  console.log("Customer Type:", customerType);
+} else {
           console.log("No address found.");
         }
       })
@@ -2626,15 +2975,13 @@ const fetchData = async () => {
             mt={3}
           >
             <Box>
-              <Button
-                sx={{
-                  background: "var(--primary-color)",
-                }}
-                onClick={CreateCustomerMaster}
-                variant="contained"
-              >
-                Save{" "}
-              </Button>
+             <Button
+  onClick={CreateCustomerMaster}
+  disabled={isSaving}
+  variant="contained"
+>
+  {isSaving ? "Saving..." : "Save"}
+</Button>
             </Box>
 
             <Box>
@@ -2803,13 +3150,13 @@ const fetchData = async () => {
               <Box flex={1}>
                 <Box m={1.5}>
                   <Typography>Opening Balance</Typography>
-                  <TextField
-                    value={updatedcurrentBal}
-                    onChange={(e) => setUpdatedCurrentBal(e.target.value)}
-                    size="small"
-                    placeholder="Enter Current Balance"
-                    fullWidth
-                  />
+                 <TextField
+  value={updatedcurrentBal}
+  onChange={(e) => setUpdatedCurrentBal(e.target.value)}
+  size="small"
+  placeholder="Enter Opening Balance"
+  fullWidth
+/>
                 </Box>
 
                 <Box m={1.5}>
@@ -2981,15 +3328,13 @@ const fetchData = async () => {
             mt={5}
           >
             <Box>
-              <Button
-                onClick={UpdateCustomerMaster}
-                sx={{
-                  background: "var(--primary-color)",
-                }}
-                variant="contained"
-              >
-                Save{" "}
-              </Button>
+             <Button
+  onClick={UpdateCustomerMaster}
+  disabled={isSaving}
+  variant="contained"
+>
+  {isSaving ? "Saving..." : "Save"}
+</Button>
             </Box>
 
             <Box>

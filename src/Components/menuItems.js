@@ -208,6 +208,13 @@ export const menuItems = [
         icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
       },
 
+
+      {
+  title: "Stock Outward",
+  path: "/stock-outward",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
        {
   title: "Denomination Entry",
   path: "/denominationentry",

@@ -68,6 +68,8 @@ import PurchaseHSN from "./Reports/PurchaseHSN";
 import Customerwisemonthlysales from "./Reports/Customerwisemonthlysales";
 import InvoiceHistory from "./Transaction/InvoiceHistory";
 
+import StockOutward from "./Transaction/StockOutward";
+
 // ============================================================
 // COMMON PAGE
 // ============================================================
@@ -226,6 +228,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
+          <Route
+  path="/stock-outward"
+  element={
+    <ProtectedRoute allowedRoles={["ADMIN", "SALE", "SALE2"]}>
+      <StockOutward />
+    </ProtectedRoute>
+  }
+/>
 
         {/* ==================================================
     INVOICE EDIT HISTORY

@@ -2305,6 +2305,18 @@ const Login = () => {
       );
 
 
+
+
+      
+// const response = await fetch(
+//   "https://amrutdairyapi.microtechsolutions.net.in/php/Usernameget.php",
+//   {
+//     ...requestOptions,
+//     credentials: "include",
+//   }
+// );
+
+
       // ======================================================
       // CHECK RESPONSE
       // ======================================================
@@ -2465,7 +2477,7 @@ const Login = () => {
           createdBy =
             "1";
 
-          // Admin ला Device नाही
+          
           device =
             "";
 
@@ -3615,3 +3627,46 @@ const Login = () => {
 
 
 export default Login;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
