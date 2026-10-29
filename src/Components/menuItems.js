@@ -215,6 +215,22 @@ export const menuItems = [
   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
 },
 
+
+
+{
+  title: "Stock Transfer Approval",
+  path: "/stock-transfer-approval",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+
+{
+  title: "Sales Return",
+  path: "/sales-return",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+
        {
   title: "Denomination Entry",
   path: "/denominationentry",
@@ -233,6 +249,14 @@ export const menuItems = [
       {
   title: "Sales Report",
   path: "/salesReport",
+  icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
+},
+
+
+
+{
+  title: "Discount Report",
+  path: "/discount-report",
   icon: <FiberManualRecordIcon sx={{ fontSize: 15 }} />,
 },
 

@@ -2146,6 +2146,1545 @@
 
 
 
+// import {
+//   Box,
+//   MenuItem,
+//   Typography,
+//   TextField,
+//   Button,
+//   useMediaQuery,
+//   InputAdornment,
+//   IconButton,
+// } from "@mui/material";
+
+// import { useNavigate } from "react-router-dom";
+
+// import BaggroundImg from "../imgs/bg7.2.jpg";
+// import logo from "../imgs/amrutlogo.png";
+
+// import { useState, useEffect } from "react";
+
+// import { toast } from "react-toastify";
+
+// import {
+//   Visibility,
+//   VisibilityOff,
+// } from "@mui/icons-material";
+
+// import dayjs from "dayjs";
+
+// import Cookies from "js-cookie";
+
+// import axios from "axios";
+
+
+// const Login = () => {
+
+//   const navigate = useNavigate();
+
+//   const isSmallScreen =
+//     useMediaQuery("(max-width:600px)");
+
+
+//   // ==========================================================
+//   // LOGIN STATES
+//   // ==========================================================
+
+//   const [userName, setUsername] =
+//     useState("");
+
+//   const [password, setPassword] =
+//     useState("");
+
+//   const [showPassword, setShowPassword] =
+//     useState(false);
+
+//   const [isLoggedIn, setIsLoggedIn] =
+//     useState(false);
+
+
+//   // ==========================================================
+//   // PASSWORD VISIBILITY
+//   // ==========================================================
+
+//   const handleClickShowPassword = () => {
+//     setShowPassword(
+//       (prev) => !prev
+//     );
+//   };
+
+
+//   const handleMouseDownPassword = (event) => {
+//     event.preventDefault();
+//   };
+
+
+//   // ==========================================================
+//   // LOGIN
+//   // ==========================================================
+
+//   const Login = async () => {
+
+//     // ========================================================
+//     // BASIC VALIDATION
+//     // ========================================================
+
+//     const enteredUserName =
+//       String(userName || "").trim();
+
+//     const enteredPassword =
+//       String(password || "");
+
+//     if (!enteredUserName) {
+//       toast.error(
+//         "Please enter username."
+//       );
+//       return;
+//     }
+
+//     if (!enteredPassword) {
+//       toast.error(
+//         "Please enter password."
+//       );
+//       return;
+//     }
+
+
+//     try {
+
+//       // ======================================================
+//       // BACKEND LOGIN API
+//       // ======================================================
+
+//       const myHeaders =
+//         new Headers();
+
+//       myHeaders.append(
+//         "Content-Type",
+//         "application/x-www-form-urlencoded"
+//       );
+
+
+//       // ======================================================
+//       // REQUEST DATA
+//       // ======================================================
+
+//       const urlencoded =
+//         new URLSearchParams();
+
+//       urlencoded.append(
+//         "UserId",
+//         enteredUserName
+//       );
+
+//       urlencoded.append(
+//         "Password",
+//         enteredPassword
+//       );
+
+
+//       // ======================================================
+//       // REQUEST OPTIONS
+//       // ======================================================
+
+//       const requestOptions = {
+//         method: "POST",
+//         headers: myHeaders,
+//         body: urlencoded,
+//         redirect: "follow",
+//       };
+
+
+//       // ======================================================
+//       // LOGIN API
+//       // ======================================================
+
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/Usernameget.php",
+//         requestOptions
+//       );
+
+
+
+
+      
+// // const response = await fetch(
+// //   "https://amrutdairyapi.microtechsolutions.net.in/php/Usernameget.php",
+// //   {
+// //     ...requestOptions,
+// //     credentials: "include",
+// //   }
+// // );
+
+
+//       // ======================================================
+//       // CHECK RESPONSE
+//       // ======================================================
+
+//       if (!response.ok) {
+//         throw new Error(
+//           `Login API failed with status ${response.status}`
+//         );
+//       }
+
+
+//       const result =
+//         await response.json();
+
+
+//       console.log(
+//         "================================="
+//       );
+
+//       console.log(
+//         "LOGIN API RESULT:",
+//         result
+//       );
+
+//       console.log(
+//         "================================="
+//       );
+
+
+//       // ======================================================
+//       // LOGIN SUCCESS
+//       // ======================================================
+
+//       if (
+//         result?.message ===
+//         "Login successful"
+//       ) {
+
+
+//         // ====================================================
+//         // CLEAR OLD SESSION
+//         // ====================================================
+
+//         sessionStorage.removeItem(
+//           "UserId"
+//         );
+
+
+//         const shopId =
+//   result.ShopId ??
+//   result.ShopID ??
+//   result.shopId ??
+//   "";
+
+// if (shopId !== "") {
+//   sessionStorage.setItem("ShopId", String(shopId));
+// }
+
+//         sessionStorage.removeItem(
+//           "LoginUserId"
+//         );
+
+//         sessionStorage.removeItem(
+//           "Name"
+//         );
+
+//         sessionStorage.removeItem(
+//           "UserRole"
+//         );
+
+//         sessionStorage.removeItem(
+//           "Device"
+//         );
+
+//         sessionStorage.removeItem(
+//           "CreatedBy"
+//         );
+
+//         sessionStorage.removeItem(
+//           "isLoggedIn"
+//         );
+
+
+//         // ====================================================
+//         // DATABASE USER ID
+//         //
+//         // IMPORTANT:
+//         // This is actual database Id.
+//         //
+//         // Example:
+//         // Sale  -> Id 6
+//         // Sale2 -> Id 7
+//         // Admin -> Id 8
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "UserId",
+//           String(
+//             result.Id ?? ""
+//           )
+//         );
+
+
+//         // ====================================================
+//         // LOGIN USER ID
+//         //
+//         // Example:
+//         //
+//         // admin -> ADMIN
+//         // Sale  -> SALE
+//         // Sale2 -> SALE2
+//         //
+//         // We are NOT using result.Id for mapping.
+//         // ====================================================
+
+//         const loginUserId =
+//           String(
+//             result.UserId ??
+//             enteredUserName
+//           )
+//             .trim()
+//             .toUpperCase();
+
+
+//         sessionStorage.setItem(
+//           "LoginUserId",
+//           loginUserId
+//         );
+
+
+//         // ====================================================
+//         // USER NAME
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "Name",
+//           String(
+//             result.Name ?? ""
+//           )
+//         );
+
+
+//         // ====================================================
+//         // ROLE
+//         // CREATED BY
+//         // DEVICE
+//         // ====================================================
+
+//         let userRole = "";
+
+//         let createdBy = "";
+
+//         let device = "";
+
+
+//         // ====================================================
+//         // ADMIN
+//         // ====================================================
+
+//         if (
+//           loginUserId ===
+//           "ADMIN"
+//         ) {
+
+//           userRole =
+//             "ADMIN";
+
+//           // Admin -> CreatedBy = 1
+//           createdBy =
+//             "1";
+
+          
+//           device =
+//             "";
+
+//         }
+
+
+//         // ====================================================
+//         // SALE
+//         // ====================================================
+
+//         else if (
+//           loginUserId ===
+//           "SALE"
+//         ) {
+
+//           userRole =
+//             "SALE";
+
+//           // Sale -> CreatedBy = 2
+//           createdBy =
+//             "2";
+
+//           // Sale -> Device1
+//           device =
+//             "Device1";
+
+//         }
+
+
+//         // ====================================================
+//         // SALE2
+//         // ====================================================
+
+//         else if (
+//           loginUserId ===
+//           "SALE2"
+//         ) {
+
+//           userRole =
+//             "SALE2";
+
+//           // Sale2 -> CreatedBy = 3
+//           createdBy =
+//             "3";
+
+//           // Sale2 -> Device2
+//           device =
+//             "Device2";
+
+//         }
+
+
+//         // ====================================================
+//         // OTHER USER
+//         // ====================================================
+
+//         else {
+
+//           userRole =
+//             String(
+//               result.SaleRole ??
+//               ""
+//             )
+//               .trim()
+//               .toUpperCase();
+
+//           createdBy =
+//             "";
+
+//           device =
+//             "";
+//         }
+
+
+//         // ====================================================
+//         // SAVE USER ROLE
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "UserRole",
+//           userRole
+//         );
+
+
+//         // ====================================================
+//         // SAVE CREATED BY
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "CreatedBy",
+//           createdBy
+//         );
+
+
+//         // ====================================================
+//         // SAVE DEVICE
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "Device",
+//           device
+//         );
+
+
+//         // ====================================================
+//         // LOGIN STATUS
+//         // ====================================================
+
+//         sessionStorage.setItem(
+//           "isLoggedIn",
+//           "true"
+//         );
+
+
+//         // ====================================================
+//         // DEBUG LOG
+//         // ====================================================
+
+//         console.log(
+//           "================================="
+//         );
+
+//         console.log(
+//           "LOGIN SUCCESS"
+//         );
+
+//         console.log(
+//           "Database UserId:",
+//           sessionStorage.getItem(
+//             "UserId"
+//           )
+//         );
+
+//         console.log(
+//           "LoginUserId:",
+//           sessionStorage.getItem(
+//             "LoginUserId"
+//           )
+//         );
+
+//         console.log(
+//           "Name:",
+//           sessionStorage.getItem(
+//             "Name"
+//           )
+//         );
+
+//         console.log(
+//           "UserRole:",
+//           sessionStorage.getItem(
+//             "UserRole"
+//           )
+//         );
+
+//         console.log(
+//           "CreatedBy:",
+//           sessionStorage.getItem(
+//             "CreatedBy"
+//           )
+//         );
+
+//         console.log(
+//           "Device:",
+//           sessionStorage.getItem(
+//             "Device"
+//           )
+//         );
+
+//         console.log(
+//           "================================="
+//         );
+
+
+//         // ====================================================
+//         // SUCCESS MESSAGE
+//         // ====================================================
+
+//         toast.success(
+//           "Log In created successfully"
+//         );
+
+
+//         // ====================================================
+//         // SHOW DATE RANGE SCREEN
+//         // ====================================================
+
+//         setIsLoggedIn(
+//           true
+//         );
+
+//       } else {
+
+//         // ====================================================
+//         // LOGIN FAILED
+//         // ====================================================
+
+//         toast.error(
+//           result?.error ||
+//           "Login failed! Please check your credentials."
+//         );
+
+//       }
+
+//     } catch (error) {
+
+//       // ======================================================
+//       // API ERROR
+//       // ======================================================
+
+//       console.error(
+//         "Login Error:",
+//         error
+//       );
+
+//       toast.error(
+//         "Something went wrong during login."
+//       );
+//     }
+//   };
+
+
+//   // ==========================================================
+//   // DATE RANGE STATES
+//   // ==========================================================
+
+//   const [
+//     FromDate,
+//     setFromDate
+//   ] = useState(
+//     dayjs()
+//   );
+
+
+//   const [
+//     ToDate,
+//     setToDate
+//   ] = useState(
+//     dayjs()
+//   );
+
+
+//   const [
+//     years,
+//     setYears
+//   ] = useState([]);
+
+
+//   const [
+//     selectedYearId,
+//     setSelectedYearId
+//   ] = useState("");
+
+
+//   // ==========================================================
+//   // FETCH DATE RANGE
+//   // ==========================================================
+
+//   const fetchDateRange =
+//     async () => {
+
+//       try {
+
+//         const response =
+//           await axios.get(
+//             "https://amrutdairyapi.microtechsolutions.net.in/php/getyears.php"
+//           );
+
+
+//         console.log(
+//           "GET YEARS STATUS:",
+//           response.status
+//         );
+
+
+//         console.log(
+//           "GET YEARS RESPONSE:",
+//           response.data
+//         );
+
+
+//         /*
+//          * Backend response can be:
+//          *
+//          * [
+//          *   {
+//          *      Id: 1,
+//          *      DateRange: "...",
+//          *      FromDate: "...",
+//          *      ToDate: "..."
+//          *   }
+//          * ]
+//          *
+//          * OR
+//          *
+//          * {
+//          *   data: [...]
+//          * }
+//          */
+
+
+//         setYears(
+//           Array.isArray(
+//             response.data
+//           )
+//             ? response.data
+//             : response.data?.data ||
+//               []
+//         );
+
+//       } catch (error) {
+
+//         console.error(
+//           "Error fetching years:",
+//           error
+//         );
+
+//         toast.error(
+//           "Error fetching Years"
+//         );
+//       }
+//     };
+
+
+//   // ==========================================================
+//   // FETCH YEARS
+//   // ==========================================================
+
+//   useEffect(() => {
+
+//     fetchDateRange();
+
+//   }, []);
+
+
+//   // ==========================================================
+//   // YEAR SELECT
+//   // ==========================================================
+
+//   const handleSelectChange =
+//     (event) => {
+
+//       const selectedId =
+//         String(
+//           event.target.value
+//         );
+
+
+//       setSelectedYearId(
+//         selectedId
+//       );
+
+
+//       console.log(
+//         "SELECTED YEAR ID:",
+//         selectedId
+//       );
+
+
+//       const selectedYear =
+//         years.find(
+//           (year) =>
+//             String(year.Id) ===
+//             String(selectedId)
+//         );
+
+
+//       console.log(
+//         "SELECTED YEAR:",
+//         selectedYear
+//       );
+
+
+//       if (selectedYear) {
+
+//         setFromDate(
+//           dayjs(
+//             selectedYear
+//               .FromDate?.date ||
+//             selectedYear.FromDate
+//           )
+//         );
+
+
+//         setToDate(
+//           dayjs(
+//             selectedYear
+//               .ToDate?.date ||
+//             selectedYear.ToDate
+//           )
+//         );
+
+
+//         Cookies.set(
+//           "SelectedYearId",
+//           selectedId,
+//           {
+//             expires: 7,
+//           }
+//         );
+//       }
+//     };
+
+
+//   // ==========================================================
+//   // CONTINUE
+//   // ==========================================================
+
+//   const handleOkClick =
+//     async (e) => {
+
+//       e.preventDefault();
+
+
+//       try {
+
+//         // ====================================================
+//         // DATE VALIDATION
+//         // ====================================================
+
+//         if (
+//           !FromDate ||
+//           !ToDate
+//         ) {
+
+//           toast.error(
+//             "Please select both From and To dates"
+//           );
+
+//           return;
+//         }
+
+
+//         // ====================================================
+//         // YEAR VALIDATION
+//         // ====================================================
+
+//         if (!selectedYearId) {
+
+//           toast.error(
+//             "Please select a year"
+//           );
+
+//           return;
+//         }
+
+
+//         // ====================================================
+//         // FORMAT DATE
+//         // ====================================================
+
+//         const fromDate =
+//           FromDate.format(
+//             "YYYY-MM-DD"
+//           );
+
+
+//         const toDate =
+//           ToDate.format(
+//             "YYYY-MM-DD"
+//           );
+
+
+//         // ====================================================
+//         // SELECTED YEAR
+//         // ====================================================
+
+//         const selectedYear =
+//           years.find(
+//             (year) =>
+//               String(year.Id) ===
+//               String(selectedYearId)
+//           );
+
+
+//         if (selectedYear) {
+
+//           Cookies.set(
+//             "FromDate",
+//             fromDate,
+//             {
+//               expires: 7,
+//             }
+//           );
+
+
+//           Cookies.set(
+//             "ToDate",
+//             toDate,
+//             {
+//               expires: 7,
+//             }
+//           );
+
+
+//           Cookies.set(
+//             "YearId",
+//             selectedYear.Id,
+//             {
+//               expires: 7,
+//             }
+//           );
+
+
+//           Cookies.set(
+//             "DateRange",
+//             selectedYear.DateRange,
+//             {
+//               expires: 7,
+//             }
+//           );
+//         }
+
+
+//         // ====================================================
+//         // SUCCESS
+//         // ====================================================
+
+//         toast.success(
+//           "Year selected successfully!"
+//         );
+
+
+//         // ====================================================
+//         // ROLE BASED NAVIGATION
+//         // ====================================================
+
+//         const currentRole =
+//           sessionStorage.getItem(
+//             "UserRole"
+//           );
+
+
+//         console.log(
+//           "CURRENT ROLE:",
+//           currentRole
+//         );
+
+
+//         // ====================================================
+//         // SALE USER
+//         // ====================================================
+
+//         if (
+//           currentRole ===
+//           "SALE"
+//         ) {
+
+//           navigate(
+//             "/salesentry"
+//           );
+
+//           return;
+//         }
+
+
+//         // ====================================================
+//         // SALE2 USER
+//         // ====================================================
+
+//         if (
+//           currentRole ===
+//           "SALE2"
+//         ) {
+
+//           navigate(
+//             "/salesentry"
+//           );
+
+//           return;
+//         }
+
+
+//         // ====================================================
+//         // OTHER USERS
+//         // ====================================================
+
+//         navigate(
+//           "/customermaster"
+//         );
+
+
+//       } catch (error) {
+
+//         console.error(
+//           "Error:",
+//           error
+//         );
+
+
+//         toast.error(
+//           "Error saving record! " +
+//           error.message
+//         );
+//       }
+//     };
+
+
+//   // ==========================================================
+//   // UI
+//   // ==========================================================
+
+//   return (
+
+//     <Box
+//       sx={{
+//         width: "100vw",
+
+//         height: "100vh",
+
+//         backgroundImage:
+//           `url(${BaggroundImg})`,
+
+//         backgroundSize:
+//           "cover",
+
+//         backgroundPosition:
+//           "center",
+
+//         display: "flex",
+
+//         alignItems:
+//           "center",
+
+//         justifyContent:
+//           "center",
+//       }}
+//     >
+
+//       <Box>
+
+//         <Box
+//           sx={{
+//             display: "flex",
+
+//             width:
+//               isSmallScreen
+//                 ? "90vw"
+//                 : "950px",
+
+//             height:
+//               isSmallScreen
+//                 ? "auto"
+//                 : "460px",
+
+//             borderRadius:
+//               "20px",
+
+//             overflow:
+//               "hidden",
+
+//             boxShadow:
+//               "0 4px 10px rgba(32, 30, 29, 0.22)",
+
+//             background:
+//               "rgba(255, 255, 255, 0.17)",
+
+//             flexDirection:
+//               isSmallScreen
+//                 ? "column"
+//                 : "row",
+//           }}
+//         >
+
+
+//           {/* ==================================================
+//               LEFT SIDE
+//           ================================================== */}
+
+//           <Box
+//             sx={{
+//               width:
+//                 "100%",
+
+//               justifyContent:
+//                 "center",
+
+//               alignContent:
+//                 "center",
+
+//               alignItems:
+//                 "center",
+
+//               display:
+//                 isSmallScreen
+//                   ? "none"
+//                   : "auto",
+//             }}
+//           >
+
+//             <Box
+//               className="login-logo"
+//             >
+
+//               <img
+//                 src={logo}
+//                 alt="Amrut Dairy Logo"
+//                 style={{
+//                   height:
+//                     "460px",
+
+//                   width:
+//                     "100%",
+//                 }}
+//               />
+
+//             </Box>
+
+//           </Box>
+
+
+//           {/* ==================================================
+//               RIGHT SIDE
+//           ================================================== */}
+
+//           <Box
+//             sx={{
+//               width:
+//                 "100%",
+
+//               padding:
+//                 "40px",
+
+//               display:
+//                 "flex",
+
+//               flexDirection:
+//                 "column",
+
+//               alignItems:
+//                 "center",
+//             }}
+//           >
+
+
+//             {/* =================================================
+//                 DATE RANGE SCREEN
+//             ================================================= */}
+
+//             {isLoggedIn ? (
+
+//               <>
+
+//                 <Typography
+//                   variant="h4"
+//                   sx={{
+//                     fontWeight:
+//                       "bold",
+
+//                     color:
+//                       "#3A3B3C",
+
+//                     marginBottom:
+//                       7,
+//                   }}
+//                 >
+//                   Select Date Range
+//                 </Typography>
+
+
+//                 <TextField
+//                   select
+
+//                   fullWidth
+
+//                   variant="outlined"
+
+//                   value={
+//                     selectedYearId
+//                   }
+
+//                   onChange={
+//                     handleSelectChange
+//                   }
+
+//                   SelectProps={{
+//                     MenuProps: {
+//                       PaperProps: {
+//                         sx: {
+//                           maxHeight:
+//                             200,
+//                         },
+//                       },
+//                     },
+//                   }}
+
+//                   InputProps={{
+//                     sx: {
+
+//                       borderRadius:
+//                         "30px",
+
+//                       background:
+//                         "linear-gradient(90deg, rgba(173,216,230,0.5), rgba(216,191,216,0.5))",
+
+//                       backdropFilter:
+//                         "blur(10px)",
+
+//                       WebkitBackdropFilter:
+//                         "blur(10px)",
+
+//                       paddingLeft:
+//                         2,
+
+//                       color:
+//                         "#000",
+
+//                       "& .MuiSelect-select": {
+//                         paddingY:
+//                           "12px",
+//                       },
+
+//                       "& .MuiOutlinedInput-notchedOutline": {
+//                         border:
+//                           "none",
+//                       },
+
+//                     },
+//                   }}
+
+//                   InputLabelProps={{
+//                     sx: {
+//                       color:
+//                         "#666",
+//                     },
+//                   }}
+//                 >
+
+//                   {/* =================================================
+//                       SHOW ALL DATE RANGES
+//                   ================================================= */}
+
+//                   {years.map(
+//                     (year) => (
+
+//                       <MenuItem
+//                         key={
+//                           year.Id
+//                         }
+
+//                         value={
+//                           String(
+//                             year.Id
+//                           )
+//                         }
+//                       >
+
+//                         {
+//                           year.DateRange
+//                         }
+
+//                       </MenuItem>
+//                     )
+//                   )}
+
+//                 </TextField>
+
+
+//                 <Button
+//                   sx={{
+
+//                     mt: 6,
+
+//                     fontSize:
+//                       "16px",
+
+//                     width:
+//                       "90%",
+
+//                     background:
+//                       "#074e2c",
+
+//                     borderRadius:
+//                       "20px",
+
+//                     "&:hover": {
+//                       backgroundColor:
+//                         "#08A04B",
+//                     },
+
+//                   }}
+
+//                   fullWidth
+
+//                   onClick={
+//                     handleOkClick
+//                   }
+
+//                   variant="contained"
+
+//                   disabled={
+//                     !FromDate ||
+//                     !ToDate ||
+//                     !selectedYearId
+//                   }
+//                 >
+//                   Continue
+//                 </Button>
+
+//               </>
+
+//             ) : (
+
+//               /* =================================================
+//                  LOGIN SCREEN
+//               ================================================= */
+
+//               <>
+
+//                 <Typography
+//                   variant="h4"
+//                   sx={{
+
+//                     fontWeight:
+//                       "bold",
+
+//                     color:
+//                       "#3A3B3C",
+
+//                     marginBottom:
+//                       7,
+
+//                   }}
+//                 >
+//                   Welcome ..
+//                 </Typography>
+
+
+//                 {/* =================================================
+//                     USERNAME
+//                 ================================================= */}
+
+//                 <TextField
+//                   variant="standard"
+
+//                   value={
+//                     userName
+//                   }
+
+//                   onChange={
+//                     (e) =>
+//                       setUsername(
+//                         e.target.value
+//                       )
+//                   }
+
+//                   InputProps={{
+//                     disableUnderline:
+//                       true,
+//                   }}
+
+//                   placeholder="Username"
+
+//                   sx={{
+
+//                     display:
+//                       "flex",
+
+//                     height:
+//                       "3.5vh",
+
+//                     width:
+//                       "90%",
+
+//                     justifyContent:
+//                       "center",
+
+//                     marginBottom:
+//                       3,
+
+//                     background:
+//                       "rgba(255, 255, 255, 0.3)",
+
+//                     borderRadius:
+//                       "20px",
+
+//                     p:
+//                       1,
+
+//                     paddingLeft:
+//                       3,
+//                   }}
+//                 />
+
+
+//                 {/* =================================================
+//                     PASSWORD
+//                 ================================================= */}
+
+//                 <TextField
+//                   variant="standard"
+
+//                   type={
+//                     showPassword
+//                       ? "text"
+//                       : "password"
+//                   }
+
+//                   value={
+//                     password
+//                   }
+
+//                   onChange={
+//                     (e) =>
+//                       setPassword(
+//                         e.target.value
+//                       )
+//                   }
+
+//                   InputProps={{
+
+//                     disableUnderline:
+//                       true,
+
+//                     endAdornment: (
+
+//                       <InputAdornment
+//                         position="end"
+//                       >
+
+//                         <IconButton
+//                           aria-label={
+//                             showPassword
+//                               ? "hide password"
+//                               : "show password"
+//                           }
+
+//                           onClick={
+//                             handleClickShowPassword
+//                           }
+
+//                           onMouseDown={
+//                             handleMouseDownPassword
+//                           }
+
+//                           edge="end"
+
+//                           sx={{
+//                             right:
+//                               20,
+//                           }}
+//                         >
+
+//                           {
+//                             showPassword
+//                               ? (
+//                                 <VisibilityOff />
+//                               )
+//                               : (
+//                                 <Visibility />
+//                               )
+//                           }
+
+//                         </IconButton>
+
+//                       </InputAdornment>
+
+//                     ),
+//                   }}
+
+//                   placeholder="Password"
+
+//                   sx={{
+
+//                     display:
+//                       "flex",
+
+//                     height:
+//                       "3.5vh",
+
+//                     width:
+//                       "90%",
+
+//                     justifyContent:
+//                       "center",
+
+//                     marginBottom:
+//                       2,
+
+//                     background:
+//                       "rgba(255, 255, 255, 0.3)",
+
+//                     borderRadius:
+//                       "20px",
+
+//                     p:
+//                       1,
+
+//                     paddingLeft:
+//                       3,
+
+//                   }}
+//                 />
+
+
+//                 {/* =================================================
+//                     LOGIN BUTTON
+//                 ================================================= */}
+
+//                 <Button
+//                   sx={{
+
+//                     mt: 6,
+
+//                     fontSize:
+//                       "16px",
+
+//                     width:
+//                       "90%",
+
+//                     background:
+//                       "#074e2c",
+
+//                     borderRadius:
+//                       "20px",
+
+//                     "&:hover": {
+//                       backgroundColor:
+//                         "#08A04B",
+//                     },
+
+//                   }}
+
+//                   fullWidth
+
+//                   onClick={
+//                     Login
+//                   }
+
+//                   variant="contained"
+//                 >
+//                   Login
+//                 </Button>
+
+//               </>
+
+//             )}
+
+//           </Box>
+
+//         </Box>
+
+//       </Box>
+
+//     </Box>
+//   );
+// };
+
+
+// export default Login;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import {
   Box,
   MenuItem,
@@ -2350,10 +3889,13 @@ const Login = () => {
       // LOGIN SUCCESS
       // ======================================================
 
-      if (
-        result?.message ===
-        "Login successful"
-      ) {
+     if (
+  result?.message ===
+  "Login successful"
+) {
+  const userData = result?.data ?? result;
+
+  // Existing login code continues here
 
 
         // ====================================================
@@ -2363,6 +3905,17 @@ const Login = () => {
         sessionStorage.removeItem(
           "UserId"
         );
+
+
+        const shopId =
+  result.ShopId ??
+  result.ShopID ??
+  result.shopId ??
+  "";
+
+if (shopId !== "") {
+  sessionStorage.setItem("ShopId", String(shopId));
+}
 
         sessionStorage.removeItem(
           "LoginUserId"

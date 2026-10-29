@@ -70,6 +70,17 @@ import InvoiceHistory from "./Transaction/InvoiceHistory";
 
 import StockOutward from "./Transaction/StockOutward";
 
+import StockTransferApproval from "./Transaction/StockTransferApproval";
+
+
+import Notifications from "./Transaction/Notifications";
+
+import DiscountReport from "./Reports/DiscountReport";
+
+
+
+import SalesReturn from "./Transaction/SalesReturn";
+
 // ============================================================
 // COMMON PAGE
 // ============================================================
@@ -99,6 +110,13 @@ function App() {
         ================================================== */}
 
         <Route path="/" element={<Sidebar />}>
+
+
+<Route
+  path="/notifications"
+  element={<Notifications />}
+/>
+        
           {/* ==================================================
               MASTERS
               ADMIN ONLY
@@ -237,6 +255,18 @@ function App() {
       <StockOutward />
     </ProtectedRoute>
   }
+/>
+
+
+
+<Route
+  path="/stock-transfer-approval"
+  element={<StockTransferApproval />}
+/>
+
+<Route
+  path="/sales-return"
+  element={<SalesReturn />}
 />
 
         {/* ==================================================
@@ -406,6 +436,10 @@ function App() {
             }
           />
 
+
+
+     
+
           {/* --------------------------------------------------
               PRODUCTWISE SALES
               ADMIN ONLY
@@ -419,6 +453,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
+
+
+          <Route
+  path="/discount-report"
+  element={
+    <ProtectedRoute allowedRoles={["ADMIN"]}>
+      <DiscountReport />
+    </ProtectedRoute>
+  }
+/>
 
           {/* --------------------------------------------------
               CUSTOMERWISE SALES

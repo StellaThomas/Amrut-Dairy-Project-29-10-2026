@@ -1557,7 +1557,2230 @@
 
 
 
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+
+// import {
+//   Button,
+//   Box,
+//   IconButton,
+//   List,
+//   ListItem,
+//   ListItemIcon,
+//   ListItemText,
+//   Collapse,
+//   Typography,
+//   Avatar,
+// } from "@mui/material";
+
+// import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+// import ExpandLess from "@mui/icons-material/ExpandLess";
+// import ExpandMore from "@mui/icons-material/ExpandMore";
+
+// import { Outlet, Link, useNavigate } from "react-router-dom";
+// import { FaBars } from "react-icons/fa6";
+// import LogoutIcon from "@mui/icons-material/Logout";
+
+// import "./sidebar.css";
+// import { menuItems as defaultMenuItems } from "./menuItems";
+
+// function Sidebar() {
+//   const navigate = useNavigate();
+
+//   // ============================================================
+//   // STATE
+//   // ============================================================
+
+//   const [isCollapsed, setIsCollapsed] = useState(false);
+
+//   const [openMenu, setOpenMenu] = useState(null);
+
+//   const [isSmallScreen, setIsSmallScreen] = useState(
+//     window.innerWidth <= 768
+//   );
+
+//   const [isSidebarVisible, setIsSidebarVisible] =
+//     useState(false);
+
+//   const [userMenuItems, setUserMenuItems] =
+//     useState(defaultMenuItems);
+
+//   const [isOnline, setIsOnline] =
+//     useState(navigator.onLine);
+
+//   // ============================================================
+//   // SESSION STORAGE
+//   // ============================================================
+
+//   const rawUserId = sessionStorage.getItem("UserId");
+
+//   const userIdNumber = rawUserId
+//     ? Number(rawUserId)
+//     : null;
+
+//   const Name = sessionStorage.getItem("Name");
+
+//   const UserRole = sessionStorage.getItem("UserRole");
+
+//   // userIdNumber is intentionally kept because your existing
+//   // application may use it elsewhere.
+//   void userIdNumber;
+
+//   // ============================================================
+//   // NORMALIZE
+//   // ============================================================
+
+//   const normalize = (value = "") =>
+//     String(value)
+//       .replace(/\s+/g, " ")
+//       .trim()
+//       .toLowerCase();
+
+//   // ============================================================
+//   // GET INITIALS
+//   // ============================================================
+
+//   const getInitials = (name) => {
+//     if (!name) {
+//       return "";
+//     }
+
+//     return (
+//       name
+//         .trim()
+//         .split(" ")
+//         .map((n) => n[0]?.toUpperCase())
+//         .join("") || "?"
+//     );
+//   };
+
+//   // ============================================================
+//   // SALE USER MENU
+//   //
+//   // SALE USER:
+//   //
+//   // Transaction:
+//   //   Sales
+//   //   Sales Dealer
+//   //   Sales Caterers
+//   //   Daily Stock Entry
+//   //   Denomination Entry
+//   //
+//   // Reports:
+//   //   Sales Report
+//   // ============================================================
+
+//   const filterForSale = (menu) => {
+//     if (!Array.isArray(menu)) {
+//       return [];
+//     }
+
+//     const transactionItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "transaction"
+//     );
+
+//     const reportsItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "reports"
+//     );
+
+//     const result = [];
+
+//     // ----------------------------------------------------------
+//     // TRANSACTION
+//     // ----------------------------------------------------------
+
+//     if (
+//       transactionItem &&
+//       Array.isArray(transactionItem.submenus)
+//     ) {
+//       const allowedTransactionTitles = [
+//         "sales",
+//         "sales dealer",
+//         "sales caterers",
+//         "daily stock entry-shop",
+//         "daily stock entry",
+//         "denomination entry",
+//       ];
+
+//       const filteredTransaction =
+//         transactionItem.submenus.filter((item) =>
+//           allowedTransactionTitles.includes(
+//             normalize(item.title)
+//           )
+//         );
+
+//       if (filteredTransaction.length > 0) {
+//         result.push({
+//           ...transactionItem,
+//           submenus: filteredTransaction,
+//         });
+//       }
+//     }
+
+//     // ----------------------------------------------------------
+//     // REPORTS
+//     // ----------------------------------------------------------
+
+//     if (
+//       reportsItem &&
+//       Array.isArray(reportsItem.submenus)
+//     ) {
+//       const filteredReports =
+//         reportsItem.submenus.filter(
+//           (item) =>
+//             normalize(item.title) ===
+//             "sales report"
+//         );
+
+//       if (filteredReports.length > 0) {
+//         result.push({
+//           ...reportsItem,
+//           submenus: filteredReports,
+//         });
+//       }
+//     }
+
+//     return result;
+//   };
+
+//   // ============================================================
+//   // SALE2 USER MENU
+//   //
+//   // SALE2:
+//   //
+//   // Transaction:
+//   //   Sales
+//   //   Sales Dealer
+//   //   Sales Caterers
+//   //   Denomination Entry
+//   //
+//   // Reports:
+//   //   Sales Report
+//   //
+//   // NO STOCK REPORT
+//   // NO DAILY STOCK
+//   // NO OTHER MENU
+//   // ============================================================
+
+//   const filterForSale2 = (menu) => {
+//     if (!Array.isArray(menu)) {
+//       return [];
+//     }
+
+//     const transactionItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "transaction"
+//     );
+
+//     const reportsItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "reports"
+//     );
+
+//     const result = [];
+
+//     // ----------------------------------------------------------
+//     // SALE2 TRANSACTION
+//     // ----------------------------------------------------------
+
+//     if (
+//       transactionItem &&
+//       Array.isArray(transactionItem.submenus)
+//     ) {
+//      const allowedTransactionPaths = [
+//   "/salesentry",
+//   "/salesdealer",
+//   "/salescaterers",
+//   "/denominationentry",
+
+//   // Daily Stock Entry
+//   "/dailystockentry",
+// ];
+
+//       const filteredTransaction =
+//         transactionItem.submenus.filter((item) =>
+//           allowedTransactionPaths.includes(
+//             String(item.path || "")
+//               .trim()
+//               .toLowerCase()
+//           )
+//         );
+
+//       if (filteredTransaction.length > 0) {
+//         result.push({
+//           ...transactionItem,
+//           submenus: filteredTransaction,
+//         });
+//       }
+//     }
+
+//     // ----------------------------------------------------------
+//     // SALE2 REPORTS
+//     //
+//     // ONLY SALES REPORT
+//     // ----------------------------------------------------------
+
+//     if (
+//       reportsItem &&
+//       Array.isArray(reportsItem.submenus)
+//     ) {
+//       const filteredReports =
+//         reportsItem.submenus.filter((item) =>
+//           normalize(item.title) ===
+//           "sales report"
+//         );
+
+//       if (filteredReports.length > 0) {
+//         result.push({
+//           ...reportsItem,
+//           submenus: filteredReports,
+//         });
+//       }
+//     }
+
+//     return result;
+//   };
+
+//   // ============================================================
+//   // APPLY MENU BASED ON USER ROLE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const role = String(UserRole || "")
+//       .trim()
+//       .toUpperCase();
+
+//     console.log(
+//       "================================="
+//     );
+
+//     console.log("USER NAME:", Name);
+
+//     console.log("USER ROLE:", role);
+
+//     console.log(
+//       "================================="
+//     );
+
+//     // ----------------------------------------------------------
+//     // SALE
+//     // ----------------------------------------------------------
+
+//     if (role === "SALE") {
+//       const filtered =
+//         filterForSale(defaultMenuItems);
+
+//       console.log(
+//         "SALE FINAL MENU:",
+//         filtered
+//       );
+
+//       setUserMenuItems(filtered);
+
+//       return;
+//     }
+
+//     // ----------------------------------------------------------
+//     // SALE2
+//     // ----------------------------------------------------------
+
+//     if (role === "SALE2") {
+//       const filtered =
+//         filterForSale2(defaultMenuItems);
+
+//       console.log(
+//         "SALE2 FINAL MENU:",
+//         filtered
+//       );
+
+//       setUserMenuItems(filtered);
+
+//       return;
+//     }
+
+//     // ----------------------------------------------------------
+//     // ADMIN / OTHER USERS
+//     // ----------------------------------------------------------
+
+//     setUserMenuItems(defaultMenuItems);
+//   }, [UserRole, Name]);
+
+//   // ============================================================
+//   // SIDEBAR TOGGLE
+//   // ============================================================
+
+//   const handleToggleSidebar = () => {
+//     if (isSmallScreen) {
+//       setIsSidebarVisible(
+//         !isSidebarVisible
+//       );
+//     } else {
+//       setIsCollapsed(
+//         !isCollapsed
+//       );
+//     }
+//   };
+
+//   // ============================================================
+//   // SUBMENU
+//   // ============================================================
+
+//   const handleToggleSubmenu = (path) => {
+//     setOpenMenu(
+//       openMenu === path
+//         ? null
+//         : path
+//     );
+//   };
+
+//   // ============================================================
+//   // WINDOW RESIZE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const handleResize = () => {
+//       setIsSmallScreen(
+//         window.innerWidth <= 768
+//       );
+
+//       if (window.innerWidth > 768) {
+//         setIsSidebarVisible(false);
+//       }
+//     };
+
+//     window.addEventListener(
+//       "resize",
+//       handleResize
+//     );
+
+//     return () =>
+//       window.removeEventListener(
+//         "resize",
+//         handleResize
+//       );
+//   }, []);
+
+//   // ============================================================
+//   // ONLINE / OFFLINE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const handleOnline = () => {
+//       setIsOnline(true);
+//     };
+
+//     const handleOffline = () => {
+//       setIsOnline(false);
+//     };
+
+//     window.addEventListener(
+//       "online",
+//       handleOnline
+//     );
+
+//     window.addEventListener(
+//       "offline",
+//       handleOffline
+//     );
+
+//     return () => {
+//       window.removeEventListener(
+//         "online",
+//         handleOnline
+//       );
+
+//       window.removeEventListener(
+//         "offline",
+//         handleOffline
+//       );
+//     };
+//   }, []);
+
+//   // ============================================================
+//   // LOGOUT
+//   // ============================================================
+
+//   const logoutUser = () => {
+//     sessionStorage.clear();
+
+//     navigate("/login");
+//   };
+
+//   // ============================================================
+//   // UI
+//   // ============================================================
+
+//   return (
+//     <div className="grid-container">
+
+//       {/* ======================================================
+//           HEADER
+//       ====================================================== */}
+
+//       <header className="header">
+
+//         <Box
+//           component="header"
+//           sx={{
+//             p: 2,
+//             display: "flex",
+//             gap: 3,
+//           }}
+//         >
+
+//           <Box className="bar-icon">
+
+//             <FaBars
+//               onClick={
+//                 handleToggleSidebar
+//               }
+//               style={{
+//                 fontSize: "1.8rem",
+//                 cursor: "pointer",
+//               }}
+//             />
+
+//           </Box>
+
+//           <Box
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent:
+//                 "space-between",
+//               width: "100%",
+//             }}
+//           >
+
+//             <Typography
+//               color="var(--primary-color)"
+//               variant="body"
+//             >
+
+//               <b>
+//                 Welcome To Amrut Dairy
+//               </b>
+
+//               {!isOnline && (
+//                 <Typography
+//                   color="error"
+//                   variant="body2"
+//                 >
+//                   ⚠️ No Internet Connection
+//                 </Typography>
+//               )}
+
+//             </Typography>
+
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 alignItems: "center",
+//                 gap: 1,
+//               }}
+//             >
+
+//               <Avatar
+//                 sx={{
+//                   bgcolor: "#054c2a",
+//                   fontSize: 12,
+//                   width: 31,
+//                   height: 31,
+//                 }}
+//               >
+//                 {getInitials(Name)}
+//               </Avatar>
+
+//               <span
+//                 style={{
+//                   fontSize: 13,
+//                 }}
+//                 className="hidden-text"
+//               >
+//                 <b>{Name}</b>
+//               </span>
+
+//             </Box>
+
+//           </Box>
+
+//         </Box>
+
+//       </header>
+
+//       {/* ======================================================
+//           SIDEBAR
+//       ====================================================== */}
+
+//       <aside
+//         className={`sidebar ${
+//           isCollapsed
+//             ? "collapsed"
+//             : ""
+//         } ${
+//           isSidebarVisible
+//             ? "show"
+//             : ""
+//         }`}
+//       >
+
+//         <IconButton
+//           onClick={
+//             handleToggleSidebar
+//           }
+//           className="toggle-button"
+//         >
+
+//           {isCollapsed ? (
+//             <ChevronRight
+//               className="toggle-icon"
+//             />
+//           ) : (
+//             <ChevronLeft
+//               className="toggle-icon"
+//             />
+//           )}
+
+//         </IconButton>
+
+//         <Box
+//           style={{
+//             width: isCollapsed
+//               ? "60px"
+//               : "250px",
+
+//             transition:
+//               "width 0.3s",
+//           }}
+//         >
+
+//           <div
+//             style={{
+//               display: "flex",
+//               justifyContent:
+//                 "center",
+//               alignItems:
+//                 "center",
+//               flexDirection:
+//                 "column",
+//               height: "180px",
+//               gap: "2px",
+//             }}
+//           >
+
+//             {/* Amrut Siddhi Logo */}
+
+//             <img
+//               src="/AmrutDairy.jpeg"
+//               alt="Amrut Siddhi"
+//               style={{
+//                 height:
+//                   isCollapsed
+//                     ? "60px"
+//                     : "100px",
+
+//                 width:
+//                   isCollapsed
+//                     ? "60px"
+//                     : "180px",
+
+//                 objectFit:
+//                   "contain",
+
+//                 display: "block",
+//               }}
+//             />
+
+//           </div>
+
+//           <Box
+//             className="sidebar-contents"
+//             sx={{
+//               height: "65vh",
+//               overflowY: "auto",
+//               p: 0.6,
+//             }}
+//           >
+
+//             <List
+//               sx={{
+//                 cursor: "pointer",
+//               }}
+//             >
+
+//               {userMenuItems &&
+//               userMenuItems.length ? (
+
+//                 userMenuItems.map(
+//                   (item, index) => (
+
+//                     <Box
+//                       key={index}
+//                     >
+
+//                       <ListItem
+//                         onClick={() =>
+//                           handleToggleSubmenu(
+//                             item.path
+//                           )
+//                         }
+//                         className="menu-item"
+//                         sx={{
+//                           mt: 1,
+//                           color: "#0d4a2b",
+//                           fontWeight:
+//                             "bold",
+
+//                           borderRadius:
+//                             "10px",
+
+//                           transition:
+//                             "background-color 0.3s, color 0.3s",
+
+//                           display:
+//                             "flex",
+
+//                           alignItems:
+//                             "center",
+
+//                           "&:hover": {
+//                             color: "#fff",
+
+//                             backgroundColor:
+//                               "var(--primary-color)",
+
+//                             ".MuiListItemIcon-root, .MuiListItemText-root":
+//                               {
+//                                 color:
+//                                   "#fff",
+//                               },
+
+//                             ".MuiSvgIcon-root":
+//                               {
+//                                 color:
+//                                   "#fff",
+//                               },
+//                           },
+//                         }}
+
+//                         component={
+//                           item.submenus &&
+//                           item.submenus
+//                             .length
+//                             ? "div"
+//                             : Link
+//                         }
+
+//                         to={
+//                           item.submenus &&
+//                           item.submenus
+//                             .length
+//                             ? undefined
+//                             : item.path
+//                         }
+//                       >
+
+//                         <ListItemIcon
+//                           sx={{
+//                             fontSize:
+//                               "1.5rem",
+
+//                             color:
+//                               "inherit",
+//                           }}
+//                         >
+//                           {item.icon}
+//                         </ListItemIcon>
+
+//                         {!isCollapsed && (
+//                           <ListItemText
+//                             primary={
+//                               item.title
+//                             }
+//                             sx={{
+//                               ml: -2,
+//                               color:
+//                                 "inherit",
+//                             }}
+//                           />
+//                         )}
+
+//                         {!isCollapsed &&
+//                           item.submenus &&
+//                           item.submenus
+//                             .length >
+//                             0 && (
+
+//                             <ListItemIcon
+//                               sx={{
+//                                 justifyContent:
+//                                   "end",
+
+//                                 color:
+//                                   "inherit",
+//                               }}
+//                             >
+
+//                               {openMenu ===
+//                               item.path ? (
+//                                 <ExpandLess />
+//                               ) : (
+//                                 <ExpandMore />
+//                               )}
+
+//                             </ListItemIcon>
+
+//                           )}
+
+//                       </ListItem>
+
+//                       {item.submenus &&
+//                         item.submenus
+//                           .length >
+//                           0 && (
+
+//                           <Collapse
+//                             in={
+//                               openMenu ===
+//                               item.path
+//                             }
+//                             timeout="auto"
+//                             unmountOnExit
+//                           >
+
+//                             <List
+//                               component="div"
+//                               disablePadding
+//                             >
+
+//                               {item.submenus.map(
+//                                 (
+//                                   subItem,
+//                                   subIndex
+//                                 ) => (
+
+//                                   <ListItem
+//                                     key={
+//                                       subIndex
+//                                     }
+//                                     component={
+//                                       Link
+//                                     }
+//                                     to={
+//                                       subItem.path
+//                                     }
+//                                     className="menu-item"
+//                                     sx={{
+//                                       mt: 1,
+
+//                                       borderRadius:
+//                                         "10px",
+
+//                                       color:
+//                                         "#407d5e",
+
+//                                       transition:
+//                                         "background-color 0.3s, color 0.3s",
+
+//                                       "&:hover":
+//                                         {
+//                                           color:
+//                                             "#fff",
+
+//                                           backgroundColor:
+//                                             "#588d72",
+//                                         },
+//                                     }}
+//                                   >
+
+//                                     <ListItemIcon
+//                                       sx={{
+//                                         fontSize:
+//                                           "1.2rem",
+
+//                                         color:
+//                                           "#407d5e",
+
+//                                         transition:
+//                                           "background-color 0.3s, color 0.3s",
+
+//                                         "&:hover":
+//                                           {
+//                                             color:
+//                                               "#fff",
+//                                           },
+//                                       }}
+//                                     >
+//                                       {
+//                                         subItem.icon
+//                                       }
+//                                     </ListItemIcon>
+
+//                                     {!isCollapsed && (
+//                                       <ListItemText
+//                                         primary={
+//                                           subItem.title
+//                                         }
+//                                         sx={{
+//                                           ml: -2,
+//                                         }}
+//                                       />
+//                                     )}
+
+//                                   </ListItem>
+
+//                                 )
+//                               )}
+
+//                             </List>
+
+//                           </Collapse>
+
+//                         )}
+
+//                     </Box>
+
+//                   )
+//                 )
+
+//               ) : (
+
+//                 <Box
+//                   sx={{
+//                     p: 2,
+//                   }}
+//                 >
+
+//                   {!isCollapsed && (
+//                     <Typography
+//                       variant="body2"
+//                       color="textSecondary"
+//                     >
+//                       No menu available
+//                     </Typography>
+//                   )}
+
+//                 </Box>
+
+//               )}
+
+//             </List>
+
+//             {!isCollapsed && (
+
+//               <Box
+//                 sx={{
+//                   mt: "auto",
+//                   p: 2,
+//                 }}
+//               >
+
+//                 <Button
+//                   variant="contained"
+//                   color="primary"
+//                   endIcon={
+//                     <LogoutIcon />
+//                   }
+//                   onClick={
+//                     logoutUser
+//                   }
+//                   sx={{
+//                     backgroundColor:
+//                       "#074e2c",
+
+//                     color: "white",
+
+//                     textTransform:
+//                       "none",
+
+//                     padding:
+//                       "6px 16px",
+
+//                     borderRadius:
+//                       "6px",
+
+//                     width: "100%",
+
+//                     textAlign:
+//                       "center",
+//                   }}
+//                 >
+//                   Logout
+//                 </Button>
+
+//               </Box>
+
+//             )}
+
+//           </Box>
+
+//         </Box>
+
+//       </aside>
+
+//       {/* ======================================================
+//           MAIN
+//       ====================================================== */}
+
+//       <main className="main">
+
+//         <Box component="main">
+//           <Outlet />
+//         </Box>
+
+//       </main>
+
+//     </div>
+//   );
+// }
+
+// export default Sidebar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import {
+//   Button,
+//   Box,
+//   IconButton,
+//   List,
+//   ListItem,
+//   ListItemIcon,
+//   ListItemText,
+//   Collapse,
+//   Typography,
+//   Avatar,
+//   Badge,
+//   Dialog,
+//   DialogTitle,
+//   DialogContent,
+//   DialogActions,
+//   Table,
+//   TableHead,
+//   TableBody,
+//   TableRow,
+//   TableCell,
+// } from "@mui/material";
+
+// import React, { useState, useEffect } from "react";
+
+// import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+
+// import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+// import ExpandLess from "@mui/icons-material/ExpandLess";
+// import ExpandMore from "@mui/icons-material/ExpandMore";
+
+// import { Outlet, Link, useNavigate } from "react-router-dom";
+// import { FaBars } from "react-icons/fa6";
+// import LogoutIcon from "@mui/icons-material/Logout";
+
+// import "./sidebar.css";
+// import { menuItems as defaultMenuItems } from "./menuItems";
+
+// function Sidebar() {
+//   const navigate = useNavigate();
+
+//   // ============================================================
+//   // STATE
+//   // ============================================================
+
+//   const [isCollapsed, setIsCollapsed] = useState(false);
+
+//   const [openMenu, setOpenMenu] = useState(null);
+
+//   const [isSmallScreen, setIsSmallScreen] = useState(
+//     window.innerWidth <= 768
+//   );
+
+//   const [isSidebarVisible, setIsSidebarVisible] =
+//     useState(false);
+
+//   const [userMenuItems, setUserMenuItems] =
+//     useState(defaultMenuItems);
+
+//   const [isOnline, setIsOnline] =useState(navigator.onLine);
+
+
+//   // Minimum Stock Notification
+// const [lowStockProducts, setLowStockProducts] = useState([]);
+// const [lowStockDialogOpen, setLowStockDialogOpen] = useState(false);
+// const [loadingLowStock, setLoadingLowStock] = useState(false);
+
+
+
+
+// // ============================================================
+// // MINIMUM STOCK NOTIFICATION
+// // ============================================================
+
+
+// const fetchLowStockProducts = async (fromDate, toDate) => {
+//   try {
+//     setLoadingLowStock(true);
+
+//     // Date validation
+//     if (!fromDate || !toDate) {
+//       throw new Error("Please select From Date and To Date");
+//     }
+
+//     if (fromDate > toDate) {
+//       throw new Error("From Date cannot be greater than To Date");
+//     }
+
+//     const [productResponse, stockResponse] = await Promise.all([
+//       fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster"
+//       ),
+//       fetch(
+//         `https://amrutdairyapi.microtechsolutions.net.in/php/getstockreport.php?fromdate=${encodeURIComponent(fromDate)}&todate=${encodeURIComponent(toDate)}`
+//       ),
+//     ]);
+
+//     if (!productResponse.ok) {
+//       throw new Error(
+//         `Product Master API failed: ${productResponse.status}`
+//       );
+//     }
+
+//     if (!stockResponse.ok) {
+//       throw new Error(
+//         `Stock Report API failed: ${stockResponse.status}`
+//       );
+//     }
+
+//     const productResult = await productResponse.json();
+//     const stockResult = await stockResponse.json();
+
+//     const products = Array.isArray(productResult)
+//       ? productResult
+//       : Array.isArray(productResult?.data)
+//       ? productResult.data
+//       : [];
+
+//     if (stockResult?.status !== true) {
+//       throw new Error(
+//         stockResult?.message || "Stock Report API returned unsuccessful response"
+//       );
+//     }
+
+//     const stockRecords = Array.isArray(stockResult?.data)
+//       ? stockResult.data
+//       : [];
+
+//     console.log("PRODUCT MASTER:", products);
+//     console.log("STOCK REPORT:", stockRecords);
+
+//     // Match stock using Product ID
+//     const stockMap = new Map();
+
+//     stockRecords.forEach((item) => {
+//       const productId = String(item?.ProductId ?? "").trim();
+
+//       if (productId) {
+//         stockMap.set(productId, Number(item?.Balance) || 0);
+//       }
+//     });
+
+//     // Find products below or equal to ReOrderLevel
+//     const filteredProducts = products
+//       .map((product) => {
+//         const productId = String(
+//           product?.Id ?? product?.ProductId ?? ""
+//         ).trim();
+
+//         const currentStock = stockMap.get(productId);
+//         const reorderLevel = Number(product?.ReOrderLevel) || 0;
+
+//         return {
+//           ...product,
+//           CurrentStock: currentStock,
+//           ReorderLevel: reorderLevel,
+//         };
+//       })
+//       .filter(
+//         (product) =>
+//           product.CurrentStock !== undefined &&
+//           product.ReorderLevel > 0 &&
+//           product.CurrentStock <= product.ReorderLevel
+//       );
+
+//     console.log("LOW STOCK PRODUCTS:", filteredProducts);
+
+//     setLowStockProducts(filteredProducts);
+//   } catch (error) {
+//     console.error("Minimum Stock Notification Error:", error);
+//     setLowStockProducts([]);
+//   } finally {
+//     setLoadingLowStock(false);
+//   }
+// };
+
+
+//   // ============================================================
+//   // SESSION STORAGE
+//   // ============================================================
+
+//   const rawUserId = sessionStorage.getItem("UserId");
+
+//   const userIdNumber = rawUserId
+//     ? Number(rawUserId)
+//     : null;
+
+//   const Name = sessionStorage.getItem("Name");
+
+//   const UserRole = sessionStorage.getItem("UserRole");
+
+//   // userIdNumber is intentionally kept because your existing
+//   // application may use it elsewhere.
+//   void userIdNumber;
+
+//   // ============================================================
+//   // NORMALIZE
+//   // ============================================================
+
+//   const normalize = (value = "") =>
+//     String(value)
+//       .replace(/\s+/g, " ")
+//       .trim()
+//       .toLowerCase();
+
+//   // ============================================================
+//   // GET INITIALS
+//   // ============================================================
+
+//   const getInitials = (name) => {
+//     if (!name) {
+//       return "";
+//     }
+
+//     return (
+//       name
+//         .trim()
+//         .split(" ")
+//         .map((n) => n[0]?.toUpperCase())
+//         .join("") || "?"
+//     );
+//   };
+
+//   // ============================================================
+//   // SALE USER MENU
+//   //
+//   // SALE USER:
+//   //
+//   // Transaction:
+//   //   Sales
+//   //   Sales Dealer
+//   //   Sales Caterers
+//   //   Daily Stock Entry
+//   //   Denomination Entry
+//   //
+//   // Reports:
+//   //   Sales Report
+//   // ============================================================
+
+//   const filterForSale = (menu) => {
+//     if (!Array.isArray(menu)) {
+//       return [];
+//     }
+
+//     const transactionItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "transaction"
+//     );
+
+//     const reportsItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "reports"
+//     );
+
+//     const result = [];
+
+//     // ----------------------------------------------------------
+//     // TRANSACTION
+//     // ----------------------------------------------------------
+
+//     if (
+//       transactionItem &&
+//       Array.isArray(transactionItem.submenus)
+//     ) {
+//       const allowedTransactionTitles = [
+//         "sales",
+//         "sales dealer",
+//         "sales caterers",
+//         "daily stock entry-shop",
+//         "daily stock entry",
+//         "denomination entry",
+//       ];
+
+//       const filteredTransaction =
+//         transactionItem.submenus.filter((item) =>
+//           allowedTransactionTitles.includes(
+//             normalize(item.title)
+//           )
+//         );
+
+//       if (filteredTransaction.length > 0) {
+//         result.push({
+//           ...transactionItem,
+//           submenus: filteredTransaction,
+//         });
+//       }
+//     }
+
+//     // ----------------------------------------------------------
+//     // REPORTS
+//     // ----------------------------------------------------------
+
+//     if (
+//       reportsItem &&
+//       Array.isArray(reportsItem.submenus)
+//     ) {
+//       const filteredReports =
+//         reportsItem.submenus.filter(
+//           (item) =>
+//             normalize(item.title) ===
+//             "sales report"
+//         );
+
+//       if (filteredReports.length > 0) {
+//         result.push({
+//           ...reportsItem,
+//           submenus: filteredReports,
+//         });
+//       }
+//     }
+
+//     return result;
+//   };
+
+//   // ============================================================
+//   // SALE2 USER MENU
+//   //
+//   // SALE2:
+//   //
+//   // Transaction:
+//   //   Sales
+//   //   Sales Dealer
+//   //   Sales Caterers
+//   //   Denomination Entry
+//   //
+//   // Reports:
+//   //   Sales Report
+//   //
+//   // NO STOCK REPORT
+//   // NO DAILY STOCK
+//   // NO OTHER MENU
+//   // ============================================================
+
+//   const filterForSale2 = (menu) => {
+//     if (!Array.isArray(menu)) {
+//       return [];
+//     }
+
+//     const transactionItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "transaction"
+//     );
+
+//     const reportsItem = menu.find(
+//       (item) =>
+//         normalize(item.title) === "reports"
+//     );
+
+//     const result = [];
+
+//     // ----------------------------------------------------------
+//     // SALE2 TRANSACTION
+//     // ----------------------------------------------------------
+
+//     if (
+//       transactionItem &&
+//       Array.isArray(transactionItem.submenus)
+//     ) {
+//      const allowedTransactionPaths = [
+//   "/salesentry",
+//   "/salesdealer",
+//   "/salescaterers",
+//   "/denominationentry",
+
+//   // Daily Stock Entry
+//   "/dailystockentry",
+// ];
+
+//       const filteredTransaction =
+//         transactionItem.submenus.filter((item) =>
+//           allowedTransactionPaths.includes(
+//             String(item.path || "")
+//               .trim()
+//               .toLowerCase()
+//           )
+//         );
+
+//       if (filteredTransaction.length > 0) {
+//         result.push({
+//           ...transactionItem,
+//           submenus: filteredTransaction,
+//         });
+//       }
+//     }
+
+//     // ----------------------------------------------------------
+//     // SALE2 REPORTS
+//     //
+//     // ONLY SALES REPORT
+//     // ----------------------------------------------------------
+
+//     if (
+//       reportsItem &&
+//       Array.isArray(reportsItem.submenus)
+//     ) {
+//       const filteredReports =
+//         reportsItem.submenus.filter((item) =>
+//           normalize(item.title) ===
+//           "sales report"
+//         );
+
+//       if (filteredReports.length > 0) {
+//         result.push({
+//           ...reportsItem,
+//           submenus: filteredReports,
+//         });
+//       }
+//     }
+
+//     return result;
+//   };
+
+//   // ============================================================
+//   // APPLY MENU BASED ON USER ROLE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const role = String(UserRole || "")
+//       .trim()
+//       .toUpperCase();
+
+//     console.log(
+//       "================================="
+//     );
+
+//     console.log("USER NAME:", Name);
+
+//     console.log("USER ROLE:", role);
+
+//     console.log(
+//       "================================="
+//     );
+
+//     // ----------------------------------------------------------
+//     // SALE
+//     // ----------------------------------------------------------
+
+//     if (role === "SALE") {
+//       const filtered =
+//         filterForSale(defaultMenuItems);
+
+//       console.log(
+//         "SALE FINAL MENU:",
+//         filtered
+//       );
+
+//       setUserMenuItems(filtered);
+
+//       return;
+//     }
+
+//     // ----------------------------------------------------------
+//     // SALE2
+//     // ----------------------------------------------------------
+
+//     if (role === "SALE2") {
+//       const filtered =
+//         filterForSale2(defaultMenuItems);
+
+//       console.log(
+//         "SALE2 FINAL MENU:",
+//         filtered
+//       );
+
+//       setUserMenuItems(filtered);
+
+//       return;
+//     }
+
+//     // ----------------------------------------------------------
+//     // ADMIN / OTHER USERS
+//     // ----------------------------------------------------------
+
+//     setUserMenuItems(defaultMenuItems);
+//   }, [UserRole, Name]);
+
+//   // ============================================================
+//   // SIDEBAR TOGGLE
+//   // ============================================================
+
+//   const handleToggleSidebar = () => {
+//     if (isSmallScreen) {
+//       setIsSidebarVisible(
+//         !isSidebarVisible
+//       );
+//     } else {
+//       setIsCollapsed(
+//         !isCollapsed
+//       );
+//     }
+//   };
+
+//   // ============================================================
+//   // SUBMENU
+//   // ============================================================
+
+//   const handleToggleSubmenu = (path) => {
+//     setOpenMenu(
+//       openMenu === path
+//         ? null
+//         : path
+//     );
+//   };
+
+//   // ============================================================
+//   // WINDOW RESIZE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const handleResize = () => {
+//       setIsSmallScreen(
+//         window.innerWidth <= 768
+//       );
+
+//       if (window.innerWidth > 768) {
+//         setIsSidebarVisible(false);
+//       }
+//     };
+
+//     window.addEventListener(
+//       "resize",
+//       handleResize
+//     );
+
+//     return () =>
+//       window.removeEventListener(
+//         "resize",
+//         handleResize
+//       );
+//   }, []);
+
+//   // ============================================================
+//   // ONLINE / OFFLINE
+//   // ============================================================
+
+//   useEffect(() => {
+//     const handleOnline = () => {
+//       setIsOnline(true);
+//     };
+
+//     const handleOffline = () => {
+//       setIsOnline(false);
+//     };
+
+//     window.addEventListener(
+//       "online",
+//       handleOnline
+//     );
+
+//     window.addEventListener(
+//       "offline",
+//       handleOffline
+//     );
+
+//     return () => {
+//       window.removeEventListener(
+//         "online",
+//         handleOnline
+//       );
+
+//       window.removeEventListener(
+//         "offline",
+//         handleOffline
+//       );
+//     };
+//   }, []);
+
+//   // ============================================================
+//   // LOGOUT
+//   // ============================================================
+
+//   const logoutUser = () => {
+//     sessionStorage.clear();
+
+//     navigate("/login");
+//   };
+
+//   // ============================================================
+//   // UI
+//   // ============================================================
+
+//   return (
+//     <div className="grid-container">
+
+//       {/* ======================================================
+//           HEADER
+//       ====================================================== */}
+
+//       <header className="header">
+
+//         <Box
+//           component="header"
+//           sx={{
+//             p: 2,
+//             display: "flex",
+//             gap: 3,
+//           }}
+//         >
+
+//           <Box className="bar-icon">
+
+//             <FaBars
+//               onClick={
+//                 handleToggleSidebar
+//               }
+//               style={{
+//                 fontSize: "1.8rem",
+//                 cursor: "pointer",
+//               }}
+//             />
+
+//           </Box>
+
+//           <Box
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent:
+//                 "space-between",
+//               width: "100%",
+//             }}
+//           >
+
+//             <Typography
+//               color="var(--primary-color)"
+//               variant="body"
+//             >
+
+//               <b>
+//                 Welcome To Amrut Dairy
+//               </b>
+
+//               {!isOnline && (
+//                 <Typography
+//                   color="error"
+//                   variant="body2"
+//                 >
+//                   ⚠️ No Internet Connection
+//                 </Typography>
+//               )}
+
+//             </Typography>
+
+//           <Box
+//   sx={{
+//     display: "flex",
+//     alignItems: "center",
+//     gap: 1,
+//   }}
+// >
+//   {/* Minimum Stock Notification Bell */}
+//   <IconButton
+//     onClick={async () => {
+//       await fetchLowStockProducts();
+//       setLowStockDialogOpen(true);
+//     }}
+//     title="Minimum Stock Notification"
+//   >
+//     <Badge
+//       badgeContent={lowStockProducts.length}
+//       color="error"
+//       max={99}
+//     >
+//       <NotificationsActiveIcon
+//         sx={{
+//           color: "#054c2a",
+//           fontSize: 26,
+//         }}
+//       />
+//     </Badge>
+//   </IconButton>
+
+//   {/* Existing User Avatar */}
+//   <Avatar
+//     sx={{
+//       bgcolor: "#054c2a",
+//       fontSize: 12,
+//       width: 31,
+//       height: 31,
+//     }}
+//   >
+//     {getInitials(Name)}
+//   </Avatar>
+
+//   {/* Existing User Name */}
+//   <span
+//     style={{
+//       fontSize: 13,
+//     }}
+//     className="hidden-text"
+//   >
+//     <b>{Name}</b>
+//   </span>
+// </Box>
+
+//           </Box>
+
+//         </Box>
+
+
+//         <Dialog
+//   open={lowStockDialogOpen}
+//   onClose={() => setLowStockDialogOpen(false)}
+//   fullWidth
+//   maxWidth="md"
+// >
+//   <DialogTitle>
+//     Minimum Stock Notification
+//   </DialogTitle>
+
+//   <DialogContent dividers>
+//     {loadingLowStock ? (
+//       <Typography>Loading stock details...</Typography>
+//     ) : lowStockProducts.length === 0 ? (
+//       <Typography color="success.main">
+//         No low-stock products found.
+//       </Typography>
+//     ) : (
+//       <Table size="small">
+//         <TableHead>
+//           <TableRow>
+//             <TableCell>Product Code</TableCell>
+//             <TableCell>Product Name</TableCell>
+//             <TableCell align="right">Current Balance</TableCell>
+//             <TableCell align="right">Reorder Level</TableCell>
+//           </TableRow>
+//         </TableHead>
+
+//         <TableBody>
+//           {lowStockProducts.map((product) => (
+//             <TableRow key={product.Id}>
+//               <TableCell>{product.ProductCode}</TableCell>
+//               <TableCell>{product.ProductName}</TableCell>
+//               <TableCell align="right">
+//                 {Number(product.CurrentStock).toFixed(3)}
+//               </TableCell>
+//               <TableCell align="right">
+//                 {Number(product.ReorderLevel).toFixed(3)}
+//               </TableCell>
+//             </TableRow>
+//           ))}
+//         </TableBody>
+//       </Table>
+//     )}
+//   </DialogContent>
+
+//   <DialogActions>
+//     <Button onClick={() => setLowStockDialogOpen(false)}>
+//       Close
+//     </Button>
+//   </DialogActions>
+// </Dialog>
+
+//       </header>
+
+//       {/* ======================================================
+//           SIDEBAR
+//       ====================================================== */}
+
+//       <aside
+//         className={`sidebar ${
+//           isCollapsed
+//             ? "collapsed"
+//             : ""
+//         } ${
+//           isSidebarVisible
+//             ? "show"
+//             : ""
+//         }`}
+//       >
+
+//         <IconButton
+//           onClick={
+//             handleToggleSidebar
+//           }
+//           className="toggle-button"
+//         >
+
+//           {isCollapsed ? (
+//             <ChevronRight
+//               className="toggle-icon"
+//             />
+//           ) : (
+//             <ChevronLeft
+//               className="toggle-icon"
+//             />
+//           )}
+
+//         </IconButton>
+
+//         <Box
+//           style={{
+//             width: isCollapsed
+//               ? "60px"
+//               : "250px",
+
+//             transition:
+//               "width 0.3s",
+//           }}
+//         >
+
+//           <div
+//             style={{
+//               display: "flex",
+//               justifyContent:
+//                 "center",
+//               alignItems:
+//                 "center",
+//               flexDirection:
+//                 "column",
+//               height: "180px",
+//               gap: "2px",
+//             }}
+//           >
+
+//             {/* Amrut Siddhi Logo */}
+
+//             <img
+//               src="/AmrutDairy.jpeg"
+//               alt="Amrut Siddhi"
+//               style={{
+//                 height:
+//                   isCollapsed
+//                     ? "60px"
+//                     : "100px",
+
+//                 width:
+//                   isCollapsed
+//                     ? "60px"
+//                     : "180px",
+
+//                 objectFit:
+//                   "contain",
+
+//                 display: "block",
+//               }}
+//             />
+
+//           </div>
+
+//           <Box
+//             className="sidebar-contents"
+//             sx={{
+//               height: "65vh",
+//               overflowY: "auto",
+//               p: 0.6,
+//             }}
+//           >
+
+//             <List
+//               sx={{
+//                 cursor: "pointer",
+//               }}
+//             >
+
+//               {userMenuItems &&
+//               userMenuItems.length ? (
+
+//                 userMenuItems.map(
+//                   (item, index) => (
+
+//                     <Box
+//                       key={index}
+//                     >
+
+//                       <ListItem
+//                         onClick={() =>
+//                           handleToggleSubmenu(
+//                             item.path
+//                           )
+//                         }
+//                         className="menu-item"
+//                         sx={{
+//                           mt: 1,
+//                           color: "#0d4a2b",
+//                           fontWeight:
+//                             "bold",
+
+//                           borderRadius:
+//                             "10px",
+
+//                           transition:
+//                             "background-color 0.3s, color 0.3s",
+
+//                           display:
+//                             "flex",
+
+//                           alignItems:
+//                             "center",
+
+//                           "&:hover": {
+//                             color: "#fff",
+
+//                             backgroundColor:
+//                               "var(--primary-color)",
+
+//                             ".MuiListItemIcon-root, .MuiListItemText-root":
+//                               {
+//                                 color:
+//                                   "#fff",
+//                               },
+
+//                             ".MuiSvgIcon-root":
+//                               {
+//                                 color:
+//                                   "#fff",
+//                               },
+//                           },
+//                         }}
+
+//                         component={
+//                           item.submenus &&
+//                           item.submenus
+//                             .length
+//                             ? "div"
+//                             : Link
+//                         }
+
+//                         to={
+//                           item.submenus &&
+//                           item.submenus
+//                             .length
+//                             ? undefined
+//                             : item.path
+//                         }
+//                       >
+
+//                         <ListItemIcon
+//                           sx={{
+//                             fontSize:
+//                               "1.5rem",
+
+//                             color:
+//                               "inherit",
+//                           }}
+//                         >
+//                           {item.icon}
+//                         </ListItemIcon>
+
+//                         {!isCollapsed && (
+//                           <ListItemText
+//                             primary={
+//                               item.title
+//                             }
+//                             sx={{
+//                               ml: -2,
+//                               color:
+//                                 "inherit",
+//                             }}
+//                           />
+//                         )}
+
+//                         {!isCollapsed &&
+//                           item.submenus &&
+//                           item.submenus
+//                             .length >
+//                             0 && (
+
+//                             <ListItemIcon
+//                               sx={{
+//                                 justifyContent:
+//                                   "end",
+
+//                                 color:
+//                                   "inherit",
+//                               }}
+//                             >
+
+//                               {openMenu ===
+//                               item.path ? (
+//                                 <ExpandLess />
+//                               ) : (
+//                                 <ExpandMore />
+//                               )}
+
+//                             </ListItemIcon>
+
+//                           )}
+
+//                       </ListItem>
+
+//                       {item.submenus &&
+//                         item.submenus
+//                           .length >
+//                           0 && (
+
+//                           <Collapse
+//                             in={
+//                               openMenu ===
+//                               item.path
+//                             }
+//                             timeout="auto"
+//                             unmountOnExit
+//                           >
+
+//                             <List
+//                               component="div"
+//                               disablePadding
+//                             >
+
+//                               {item.submenus.map(
+//                                 (
+//                                   subItem,
+//                                   subIndex
+//                                 ) => (
+
+//                                   <ListItem
+//                                     key={
+//                                       subIndex
+//                                     }
+//                                     component={
+//                                       Link
+//                                     }
+//                                     to={
+//                                       subItem.path
+//                                     }
+//                                     className="menu-item"
+//                                     sx={{
+//                                       mt: 1,
+
+//                                       borderRadius:
+//                                         "10px",
+
+//                                       color:
+//                                         "#407d5e",
+
+//                                       transition:
+//                                         "background-color 0.3s, color 0.3s",
+
+//                                       "&:hover":
+//                                         {
+//                                           color:
+//                                             "#fff",
+
+//                                           backgroundColor:
+//                                             "#588d72",
+//                                         },
+//                                     }}
+//                                   >
+
+//                                     <ListItemIcon
+//                                       sx={{
+//                                         fontSize:
+//                                           "1.2rem",
+
+//                                         color:
+//                                           "#407d5e",
+
+//                                         transition:
+//                                           "background-color 0.3s, color 0.3s",
+
+//                                         "&:hover":
+//                                           {
+//                                             color:
+//                                               "#fff",
+//                                           },
+//                                       }}
+//                                     >
+//                                       {
+//                                         subItem.icon
+//                                       }
+//                                     </ListItemIcon>
+
+//                                     {!isCollapsed && (
+//                                       <ListItemText
+//                                         primary={
+//                                           subItem.title
+//                                         }
+//                                         sx={{
+//                                           ml: -2,
+//                                         }}
+//                                       />
+//                                     )}
+
+//                                   </ListItem>
+
+//                                 )
+//                               )}
+
+//                             </List>
+
+//                           </Collapse>
+
+//                         )}
+
+//                     </Box>
+
+//                   )
+//                 )
+
+//               ) : (
+
+//                 <Box
+//                   sx={{
+//                     p: 2,
+//                   }}
+//                 >
+
+//                   {!isCollapsed && (
+//                     <Typography
+//                       variant="body2"
+//                       color="textSecondary"
+//                     >
+//                       No menu available
+//                     </Typography>
+//                   )}
+
+//                 </Box>
+
+//               )}
+
+//             </List>
+
+//             {!isCollapsed && (
+
+//               <Box
+//                 sx={{
+//                   mt: "auto",
+//                   p: 2,
+//                 }}
+//               >
+
+//                 <Button
+//                   variant="contained"
+//                   color="primary"
+//                   endIcon={
+//                     <LogoutIcon />
+//                   }
+//                   onClick={
+//                     logoutUser
+//                   }
+//                   sx={{
+//                     backgroundColor:
+//                       "#074e2c",
+
+//                     color: "white",
+
+//                     textTransform:
+//                       "none",
+
+//                     padding:
+//                       "6px 16px",
+
+//                     borderRadius:
+//                       "6px",
+
+//                     width: "100%",
+
+//                     textAlign:
+//                       "center",
+//                   }}
+//                 >
+//                   Logout
+//                 </Button>
+
+//               </Box>
+
+//             )}
+
+//           </Box>
+
+//         </Box>
+
+//       </aside>
+
+//       {/* ======================================================
+//           MAIN
+//       ====================================================== */}
+
+//       <main className="main">
+
+//         <Box component="main">
+//           <Outlet />
+//         </Box>
+
+//       </main>
+
+//     </div>
+//   );
+// }
+
+// export default Sidebar;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from "react";
 
 import {
   Button,
@@ -1572,11 +3795,21 @@ import {
   Avatar,
 } from "@mui/material";
 
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import {
+  ChevronLeft,
+  ChevronRight,
+} from "@mui/icons-material";
+
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import {
+  Outlet,
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
 import { FaBars } from "react-icons/fa6";
 import LogoutIcon from "@mui/icons-material/Logout";
 
@@ -1586,129 +3819,72 @@ import { menuItems as defaultMenuItems } from "./menuItems";
 function Sidebar() {
   const navigate = useNavigate();
 
-  // ============================================================
-  // STATE
-  // ============================================================
-
+  // SIDEBAR STATE
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   const [openMenu, setOpenMenu] = useState(null);
 
   const [isSmallScreen, setIsSmallScreen] = useState(
     window.innerWidth <= 768
   );
 
-  const [isSidebarVisible, setIsSidebarVisible] =
-    useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [userMenuItems, setUserMenuItems] = useState(defaultMenuItems);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  const [userMenuItems, setUserMenuItems] =
-    useState(defaultMenuItems);
-
-  const [isOnline, setIsOnline] =
-    useState(navigator.onLine);
-
-  // ============================================================
   // SESSION STORAGE
-  // ============================================================
-
   const rawUserId = sessionStorage.getItem("UserId");
-
-  const userIdNumber = rawUserId
-    ? Number(rawUserId)
-    : null;
-
+  const userIdNumber = rawUserId ? Number(rawUserId) : null;
   const Name = sessionStorage.getItem("Name");
-
   const UserRole = sessionStorage.getItem("UserRole");
 
-  // userIdNumber is intentionally kept because your existing
-  // application may use it elsewhere.
+  // Preserve existing user ID availability.
   void userIdNumber;
 
-  // ============================================================
-  // NORMALIZE
-  // ============================================================
-
+  // COMMON HELPERS
   const normalize = (value = "") =>
-    String(value)
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
-
-  // ============================================================
-  // GET INITIALS
-  // ============================================================
+    String(value).replace(/\s+/g, " ").trim().toLowerCase();
 
   const getInitials = (name) => {
-    if (!name) {
-      return "";
-    }
+    if (!name) return "";
 
     return (
-      name
+      String(name)
         .trim()
-        .split(" ")
-        .map((n) => n[0]?.toUpperCase())
+        .split(/\s+/)
+        .map((part) => part[0]?.toUpperCase())
         .join("") || "?"
     );
   };
 
-  // ============================================================
   // SALE USER MENU
-  //
-  // SALE USER:
-  //
-  // Transaction:
-  //   Sales
-  //   Sales Dealer
-  //   Sales Caterers
-  //   Daily Stock Entry
-  //   Denomination Entry
-  //
-  // Reports:
-  //   Sales Report
-  // ============================================================
-
   const filterForSale = (menu) => {
-    if (!Array.isArray(menu)) {
-      return [];
-    }
+    if (!Array.isArray(menu)) return [];
 
     const transactionItem = menu.find(
-      (item) =>
-        normalize(item.title) === "transaction"
+      (item) => normalize(item.title) === "transaction"
     );
 
     const reportsItem = menu.find(
-      (item) =>
-        normalize(item.title) === "reports"
+      (item) => normalize(item.title) === "reports"
     );
 
     const result = [];
 
-    // ----------------------------------------------------------
-    // TRANSACTION
-    // ----------------------------------------------------------
-
-    if (
-      transactionItem &&
-      Array.isArray(transactionItem.submenus)
-    ) {
+    if (transactionItem && Array.isArray(transactionItem.submenus)) {
       const allowedTransactionTitles = [
-        "sales",
-        "sales dealer",
-        "sales caterers",
-        "daily stock entry-shop",
-        "daily stock entry",
-        "denomination entry",
-      ];
+  "sales",
+  "sales dealer",
+  "sales caterers",
+  "daily stock entry-shop",
+  "daily stock entry",
+  "denomination entry",
+  "stock outward",
+];
 
-      const filteredTransaction =
-        transactionItem.submenus.filter((item) =>
-          allowedTransactionTitles.includes(
-            normalize(item.title)
-          )
-        );
+      const filteredTransaction = transactionItem.submenus.filter(
+        (item) =>
+          allowedTransactionTitles.includes(normalize(item.title))
+      );
 
       if (filteredTransaction.length > 0) {
         result.push({
@@ -1718,20 +3894,10 @@ function Sidebar() {
       }
     }
 
-    // ----------------------------------------------------------
-    // REPORTS
-    // ----------------------------------------------------------
-
-    if (
-      reportsItem &&
-      Array.isArray(reportsItem.submenus)
-    ) {
-      const filteredReports =
-        reportsItem.submenus.filter(
-          (item) =>
-            normalize(item.title) ===
-            "sales report"
-        );
+    if (reportsItem && Array.isArray(reportsItem.submenus)) {
+      const filteredReports = reportsItem.submenus.filter(
+        (item) => normalize(item.title) === "sales report"
+      );
 
       if (filteredReports.length > 0) {
         result.push({
@@ -1744,68 +3910,36 @@ function Sidebar() {
     return result;
   };
 
-  // ============================================================
   // SALE2 USER MENU
-  //
-  // SALE2:
-  //
-  // Transaction:
-  //   Sales
-  //   Sales Dealer
-  //   Sales Caterers
-  //   Denomination Entry
-  //
-  // Reports:
-  //   Sales Report
-  //
-  // NO STOCK REPORT
-  // NO DAILY STOCK
-  // NO OTHER MENU
-  // ============================================================
-
   const filterForSale2 = (menu) => {
-    if (!Array.isArray(menu)) {
-      return [];
-    }
+    if (!Array.isArray(menu)) return [];
 
     const transactionItem = menu.find(
-      (item) =>
-        normalize(item.title) === "transaction"
+      (item) => normalize(item.title) === "transaction"
     );
 
     const reportsItem = menu.find(
-      (item) =>
-        normalize(item.title) === "reports"
+      (item) => normalize(item.title) === "reports"
     );
 
     const result = [];
 
-    // ----------------------------------------------------------
-    // SALE2 TRANSACTION
-    // ----------------------------------------------------------
-
-    if (
-      transactionItem &&
-      Array.isArray(transactionItem.submenus)
-    ) {
+    if (transactionItem && Array.isArray(transactionItem.submenus)) {
      const allowedTransactionPaths = [
   "/salesentry",
   "/salesdealer",
   "/salescaterers",
   "/denominationentry",
-
-  // Daily Stock Entry
   "/dailystockentry",
+  "/stock-outward",
 ];
 
-      const filteredTransaction =
-        transactionItem.submenus.filter((item) =>
+      const filteredTransaction = transactionItem.submenus.filter(
+        (item) =>
           allowedTransactionPaths.includes(
-            String(item.path || "")
-              .trim()
-              .toLowerCase()
+            String(item.path || "").trim().toLowerCase()
           )
-        );
+      );
 
       if (filteredTransaction.length > 0) {
         result.push({
@@ -1815,21 +3949,10 @@ function Sidebar() {
       }
     }
 
-    // ----------------------------------------------------------
-    // SALE2 REPORTS
-    //
-    // ONLY SALES REPORT
-    // ----------------------------------------------------------
-
-    if (
-      reportsItem &&
-      Array.isArray(reportsItem.submenus)
-    ) {
-      const filteredReports =
-        reportsItem.submenus.filter((item) =>
-          normalize(item.title) ===
-          "sales report"
-        );
+    if (reportsItem && Array.isArray(reportsItem.submenus)) {
+      const filteredReports = reportsItem.submenus.filter(
+        (item) => normalize(item.title) === "sales report"
+      );
 
       if (filteredReports.length > 0) {
         result.push({
@@ -1842,184 +3965,82 @@ function Sidebar() {
     return result;
   };
 
-  // ============================================================
   // APPLY MENU BASED ON USER ROLE
-  // ============================================================
-
   useEffect(() => {
-    const role = String(UserRole || "")
-      .trim()
-      .toUpperCase();
-
-    console.log(
-      "================================="
-    );
+    const role = String(UserRole || "").trim().toUpperCase();
 
     console.log("USER NAME:", Name);
-
     console.log("USER ROLE:", role);
 
-    console.log(
-      "================================="
-    );
-
-    // ----------------------------------------------------------
-    // SALE
-    // ----------------------------------------------------------
-
     if (role === "SALE") {
-      const filtered =
-        filterForSale(defaultMenuItems);
-
-      console.log(
-        "SALE FINAL MENU:",
-        filtered
-      );
-
-      setUserMenuItems(filtered);
-
+      setUserMenuItems(filterForSale(defaultMenuItems));
       return;
     }
-
-    // ----------------------------------------------------------
-    // SALE2
-    // ----------------------------------------------------------
 
     if (role === "SALE2") {
-      const filtered =
-        filterForSale2(defaultMenuItems);
-
-      console.log(
-        "SALE2 FINAL MENU:",
-        filtered
-      );
-
-      setUserMenuItems(filtered);
-
+      setUserMenuItems(filterForSale2(defaultMenuItems));
       return;
     }
-
-    // ----------------------------------------------------------
-    // ADMIN / OTHER USERS
-    // ----------------------------------------------------------
 
     setUserMenuItems(defaultMenuItems);
   }, [UserRole, Name]);
 
-  // ============================================================
   // SIDEBAR TOGGLE
-  // ============================================================
-
   const handleToggleSidebar = () => {
     if (isSmallScreen) {
-      setIsSidebarVisible(
-        !isSidebarVisible
-      );
+      setIsSidebarVisible((previous) => !previous);
     } else {
-      setIsCollapsed(
-        !isCollapsed
-      );
+      setIsCollapsed((previous) => !previous);
     }
   };
 
-  // ============================================================
   // SUBMENU
-  // ============================================================
-
   const handleToggleSubmenu = (path) => {
-    setOpenMenu(
-      openMenu === path
-        ? null
-        : path
-    );
+    setOpenMenu((previous) => (previous === path ? null : path));
   };
 
-  // ============================================================
   // WINDOW RESIZE
-  // ============================================================
-
   useEffect(() => {
     const handleResize = () => {
-      setIsSmallScreen(
-        window.innerWidth <= 768
-      );
+      setIsSmallScreen(window.innerWidth <= 768);
 
       if (window.innerWidth > 768) {
         setIsSidebarVisible(false);
       }
     };
 
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
-  }, []);
-
-  // ============================================================
-  // ONLINE / OFFLINE
-  // ============================================================
-
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener(
-      "online",
-      handleOnline
-    );
-
-    window.addEventListener(
-      "offline",
-      handleOffline
-    );
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener(
-        "online",
-        handleOnline
-      );
-
-      window.removeEventListener(
-        "offline",
-        handleOffline
-      );
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
+  // ONLINE / OFFLINE
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // LOGOUT
   const logoutUser = () => {
     sessionStorage.clear();
-
     navigate("/login");
   };
 
-  // ============================================================
   // UI
-  // ============================================================
-
   return (
     <div className="grid-container">
-
-      {/* ======================================================
-          HEADER
-      ====================================================== */}
-
+      {/* HEADER */}
       <header className="header">
-
         <Box
           component="header"
           sx={{
@@ -2028,49 +4049,32 @@ function Sidebar() {
             gap: 3,
           }}
         >
-
           <Box className="bar-icon">
-
             <FaBars
-              onClick={
-                handleToggleSidebar
-              }
+              onClick={handleToggleSidebar}
               style={{
                 fontSize: "1.8rem",
                 cursor: "pointer",
               }}
             />
-
           </Box>
 
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              justifyContent:
-                "space-between",
+              justifyContent: "space-between",
               width: "100%",
             }}
           >
-
-            <Typography
-              color="var(--primary-color)"
-              variant="body"
-            >
-
-              <b>
-                Welcome To Amrut Dairy
-              </b>
+            <Typography color="var(--primary-color)" variant="body1">
+              <b>Welcome To Amrut Dairy</b>
 
               {!isOnline && (
-                <Typography
-                  color="error"
-                  variant="body2"
-                >
+                <Typography color="error" variant="body2">
                   ⚠️ No Internet Connection
                 </Typography>
               )}
-
             </Typography>
 
             <Box
@@ -2080,7 +4084,22 @@ function Sidebar() {
                 gap: 1,
               }}
             >
+              {/* NOTIFICATION BELL */}
+              <IconButton
+                onClick={() => navigate("/notifications")}
+                title="Notifications"
+                aria-label="Notifications"
+                sx={{ color: "#054c2a" }}
+              >
+                <NotificationsActiveIcon
+                  sx={{
+                    color: "#054c2a",
+                    fontSize: 26,
+                  }}
+                />
+              </IconButton>
 
+              {/* USER AVATAR */}
               <Avatar
                 sx={{
                   bgcolor: "#054c2a",
@@ -2092,106 +4111,61 @@ function Sidebar() {
                 {getInitials(Name)}
               </Avatar>
 
+              {/* USER NAME */}
               <span
-                style={{
-                  fontSize: 13,
-                }}
+                style={{ fontSize: 13 }}
                 className="hidden-text"
               >
                 <b>{Name}</b>
               </span>
-
             </Box>
-
           </Box>
-
         </Box>
-
       </header>
 
-      {/* ======================================================
-          SIDEBAR
-      ====================================================== */}
-
+      {/* SIDEBAR */}
       <aside
         className={`sidebar ${
-          isCollapsed
-            ? "collapsed"
-            : ""
-        } ${
-          isSidebarVisible
-            ? "show"
-            : ""
-        }`}
+          isCollapsed ? "collapsed" : ""
+        } ${isSidebarVisible ? "show" : ""}`}
       >
-
         <IconButton
-          onClick={
-            handleToggleSidebar
-          }
+          onClick={handleToggleSidebar}
           className="toggle-button"
         >
-
           {isCollapsed ? (
-            <ChevronRight
-              className="toggle-icon"
-            />
+            <ChevronRight className="toggle-icon" />
           ) : (
-            <ChevronLeft
-              className="toggle-icon"
-            />
+            <ChevronLeft className="toggle-icon" />
           )}
-
         </IconButton>
 
         <Box
           style={{
-            width: isCollapsed
-              ? "60px"
-              : "250px",
-
-            transition:
-              "width 0.3s",
+            width: isCollapsed ? "60px" : "250px",
+            transition: "width 0.3s",
           }}
         >
-
           <div
             style={{
               display: "flex",
-              justifyContent:
-                "center",
-              alignItems:
-                "center",
-              flexDirection:
-                "column",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
               height: "180px",
               gap: "2px",
             }}
           >
-
-            {/* Amrut Siddhi Logo */}
-
             <img
               src="/AmrutDairy.jpeg"
               alt="Amrut Siddhi"
               style={{
-                height:
-                  isCollapsed
-                    ? "60px"
-                    : "100px",
-
-                width:
-                  isCollapsed
-                    ? "60px"
-                    : "180px",
-
-                objectFit:
-                  "contain",
-
+                height: isCollapsed ? "60px" : "100px",
+                width: isCollapsed ? "60px" : "180px",
+                objectFit: "contain",
                 display: "block",
               }}
             />
-
           </div>
 
           <Box
@@ -2202,335 +4176,187 @@ function Sidebar() {
               p: 0.6,
             }}
           >
-
-            <List
-              sx={{
-                cursor: "pointer",
-              }}
-            >
-
-              {userMenuItems &&
-              userMenuItems.length ? (
-
-                userMenuItems.map(
-                  (item, index) => (
-
-                    <Box
-                      key={index}
-                    >
-
-                      <ListItem
-                        onClick={() =>
-                          handleToggleSubmenu(
-                            item.path
-                          )
-                        }
-                        className="menu-item"
-                        sx={{
-                          mt: 1,
-                          color: "#0d4a2b",
-                          fontWeight:
-                            "bold",
-
-                          borderRadius:
-                            "10px",
-
-                          transition:
-                            "background-color 0.3s, color 0.3s",
-
-                          display:
-                            "flex",
-
-                          alignItems:
-                            "center",
-
-                          "&:hover": {
+            <List sx={{ cursor: "pointer" }}>
+              {userMenuItems && userMenuItems.length ? (
+                userMenuItems.map((item, index) => (
+                  <Box key={item.path || item.title || index}>
+                    <ListItem
+                      onClick={() => handleToggleSubmenu(item.path)}
+                      className="menu-item"
+                      sx={{
+                        mt: 1,
+                        color: "#0d4a2b",
+                        fontWeight: "bold",
+                        borderRadius: "10px",
+                        transition:
+                          "background-color 0.3s, color 0.3s",
+                        display: "flex",
+                        alignItems: "center",
+                        "&:hover": {
+                          color: "#fff",
+                          backgroundColor: "var(--primary-color)",
+                          ".MuiListItemIcon-root, .MuiListItemText-root": {
                             color: "#fff",
-
-                            backgroundColor:
-                              "var(--primary-color)",
-
-                            ".MuiListItemIcon-root, .MuiListItemText-root":
-                              {
-                                color:
-                                  "#fff",
-                              },
-
-                            ".MuiSvgIcon-root":
-                              {
-                                color:
-                                  "#fff",
-                              },
                           },
+                          ".MuiSvgIcon-root": {
+                            color: "#fff",
+                          },
+                        },
+                      }}
+                      component={
+                        item.submenus && item.submenus.length
+                          ? "div"
+                          : Link
+                      }
+                      to={
+                        item.submenus && item.submenus.length
+                          ? undefined
+                          : item.path
+                      }
+                    >
+                      <ListItemIcon
+                        sx={{
+                          fontSize: "1.5rem",
+                          color: "inherit",
                         }}
-
-                        component={
-                          item.submenus &&
-                          item.submenus
-                            .length
-                            ? "div"
-                            : Link
-                        }
-
-                        to={
-                          item.submenus &&
-                          item.submenus
-                            .length
-                            ? undefined
-                            : item.path
-                        }
                       >
+                        {item.icon}
+                      </ListItemIcon>
 
-                        <ListItemIcon
+                      {!isCollapsed && (
+                        <ListItemText
+                          primary={item.title}
                           sx={{
-                            fontSize:
-                              "1.5rem",
-
-                            color:
-                              "inherit",
+                            ml: -2,
+                            color: "inherit",
                           }}
-                        >
-                          {item.icon}
-                        </ListItemIcon>
+                        />
+                      )}
 
-                        {!isCollapsed && (
-                          <ListItemText
-                            primary={
-                              item.title
-                            }
+                      {!isCollapsed &&
+                        item.submenus &&
+                        item.submenus.length > 0 && (
+                          <ListItemIcon
                             sx={{
-                              ml: -2,
-                              color:
-                                "inherit",
+                              justifyContent: "end",
+                              color: "inherit",
                             }}
-                          />
+                          >
+                            {openMenu === item.path ? (
+                              <ExpandLess />
+                            ) : (
+                              <ExpandMore />
+                            )}
+                          </ListItemIcon>
                         )}
+                    </ListItem>
 
-                        {!isCollapsed &&
-                          item.submenus &&
-                          item.submenus
-                            .length >
-                            0 && (
-
-                            <ListItemIcon
+                    {item.submenus && item.submenus.length > 0 && (
+                      <Collapse
+                        in={openMenu === item.path}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <List component="div" disablePadding>
+                          {item.submenus.map((subItem, subIndex) => (
+                            <ListItem
+                              key={
+                                subItem.path ||
+                                subItem.title ||
+                                subIndex
+                              }
+                              component={Link}
+                              to={subItem.path}
+                              className="menu-item"
                               sx={{
-                                justifyContent:
-                                  "end",
-
-                                color:
-                                  "inherit",
+                                mt: 1,
+                                borderRadius: "10px",
+                                color: "#407d5e",
+                                transition:
+                                  "background-color 0.3s, color 0.3s",
+                                "&:hover": {
+                                  color: "#fff",
+                                  backgroundColor: "#588d72",
+                                  ".MuiListItemIcon-root": {
+                                    color: "#fff",
+                                  },
+                                },
                               }}
                             >
+                              <ListItemIcon
+                                sx={{
+                                  fontSize: "1.2rem",
+                                  color: "#407d5e",
+                                  transition:
+                                    "background-color 0.3s, color 0.3s",
+                                }}
+                              >
+                                {subItem.icon}
+                              </ListItemIcon>
 
-                              {openMenu ===
-                              item.path ? (
-                                <ExpandLess />
-                              ) : (
-                                <ExpandMore />
+                              {!isCollapsed && (
+                                <ListItemText
+                                  primary={subItem.title}
+                                  sx={{ ml: -2 }}
+                                />
                               )}
-
-                            </ListItemIcon>
-
-                          )}
-
-                      </ListItem>
-
-                      {item.submenus &&
-                        item.submenus
-                          .length >
-                          0 && (
-
-                          <Collapse
-                            in={
-                              openMenu ===
-                              item.path
-                            }
-                            timeout="auto"
-                            unmountOnExit
-                          >
-
-                            <List
-                              component="div"
-                              disablePadding
-                            >
-
-                              {item.submenus.map(
-                                (
-                                  subItem,
-                                  subIndex
-                                ) => (
-
-                                  <ListItem
-                                    key={
-                                      subIndex
-                                    }
-                                    component={
-                                      Link
-                                    }
-                                    to={
-                                      subItem.path
-                                    }
-                                    className="menu-item"
-                                    sx={{
-                                      mt: 1,
-
-                                      borderRadius:
-                                        "10px",
-
-                                      color:
-                                        "#407d5e",
-
-                                      transition:
-                                        "background-color 0.3s, color 0.3s",
-
-                                      "&:hover":
-                                        {
-                                          color:
-                                            "#fff",
-
-                                          backgroundColor:
-                                            "#588d72",
-                                        },
-                                    }}
-                                  >
-
-                                    <ListItemIcon
-                                      sx={{
-                                        fontSize:
-                                          "1.2rem",
-
-                                        color:
-                                          "#407d5e",
-
-                                        transition:
-                                          "background-color 0.3s, color 0.3s",
-
-                                        "&:hover":
-                                          {
-                                            color:
-                                              "#fff",
-                                          },
-                                      }}
-                                    >
-                                      {
-                                        subItem.icon
-                                      }
-                                    </ListItemIcon>
-
-                                    {!isCollapsed && (
-                                      <ListItemText
-                                        primary={
-                                          subItem.title
-                                        }
-                                        sx={{
-                                          ml: -2,
-                                        }}
-                                      />
-                                    )}
-
-                                  </ListItem>
-
-                                )
-                              )}
-
-                            </List>
-
-                          </Collapse>
-
-                        )}
-
-                    </Box>
-
-                  )
-                )
-
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Collapse>
+                    )}
+                  </Box>
+                ))
               ) : (
-
-                <Box
-                  sx={{
-                    p: 2,
-                  }}
-                >
-
+                <Box sx={{ p: 2 }}>
                   {!isCollapsed && (
                     <Typography
                       variant="body2"
-                      color="textSecondary"
+                      color="text.secondary"
                     >
                       No menu available
                     </Typography>
                   )}
-
                 </Box>
-
               )}
-
             </List>
 
             {!isCollapsed && (
-
               <Box
                 sx={{
                   mt: "auto",
                   p: 2,
                 }}
               >
-
                 <Button
                   variant="contained"
                   color="primary"
-                  endIcon={
-                    <LogoutIcon />
-                  }
-                  onClick={
-                    logoutUser
-                  }
+                  endIcon={<LogoutIcon />}
+                  onClick={logoutUser}
                   sx={{
-                    backgroundColor:
-                      "#074e2c",
-
+                    backgroundColor: "#074e2c",
                     color: "white",
-
-                    textTransform:
-                      "none",
-
-                    padding:
-                      "6px 16px",
-
-                    borderRadius:
-                      "6px",
-
+                    textTransform: "none",
+                    padding: "6px 16px",
+                    borderRadius: "6px",
                     width: "100%",
-
-                    textAlign:
-                      "center",
+                    textAlign: "center",
                   }}
                 >
                   Logout
                 </Button>
-
               </Box>
-
             )}
-
           </Box>
-
         </Box>
-
       </aside>
 
-      {/* ======================================================
-          MAIN
-      ====================================================== */}
-
+      {/* MAIN CONTENT */}
       <main className="main">
-
         <Box component="main">
           <Outlet />
         </Box>
-
       </main>
-
     </div>
   );
 }

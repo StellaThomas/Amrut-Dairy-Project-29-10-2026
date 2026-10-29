@@ -35,16 +35,28 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const PRODUCT_API =
-  "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster";
 
-const StockOutward = () => {
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+
+
+  const StockOutward = () => {
+
+    
+const STOCK_OUTWARD_SHOP_ID = 1;
+const STOCK_OUTWARD_OFFICE_ID = 2;
+  
+
   const [productOptions, setProductOptions] = useState([]);
+ 
   const [loadingProducts, setLoadingProducts] = useState(false);
 
   const [entries, setEntries] = useState([]);
   const [openForm, setOpenForm] = useState(false);
   const [saving, setSaving] = useState(false);
+
+
+  const [loadingRequests, setLoadingRequests] = useState(false);
 
   const [date, setDate] = useState(new Date());
   const [productSearch, setProductSearch] = useState("");
@@ -56,12 +68,36 @@ const StockOutward = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+
+
+
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+const [selectedEntry, setSelectedEntry] = useState(null);
+
+const handleView = (entry) => {
+  setSelectedEntry(entry);
+  setViewDialogOpen(true);
+};
+
+const handleCloseView = () => {
+  setViewDialogOpen(false);
+  setSelectedEntry(null);
+};
+
   // Fetch ProductMaster data
   const fetchProduct = useCallback(async () => {
     try {
       setLoadingProducts(true);
 
-      const response = await fetch(PRODUCT_API);
+      const response = await fetch(
+  "https://amrutdairyapi.microtechsolutions.net.in/php/get/gettable.php?Table=ProductMaster",
+  {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  }
+);
 
       if (!response.ok) {
         throw new Error(`Product API failed: ${response.status}`);
@@ -116,9 +152,109 @@ const StockOutward = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [fetchProduct]);
+
+const fetchStockTransferRequests = useCallback(async () => {
+  try {
+    setLoadingRequests(true);
+
+    const shopId = STOCK_OUTWARD_SHOP_ID;
+
+    if (!Number.isInteger(Number(shopId)) || Number(shopId) <= 0) {
+      throw new Error("Invalid Shop ID.");
+    }
+
+    const apiUrl =
+      `https://amrutdairyapi.microtechsolutions.net.in/php/get/getStockTransferRequest.php` +
+      `?Status=Pending&ShopId=${encodeURIComponent(shopId)}`;
+
+    console.log("Stock Transfer GET API URL:", apiUrl);
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    const responseText = await response.text();
+
+    console.log("Stock Transfer GET Raw Response:", responseText);
+
+    let result;
+
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      throw new Error("Invalid JSON response from Stock Transfer API.");
+    }
+
+    if (!response.ok || result?.success === false) {
+      throw new Error(
+        result?.message || `Failed to fetch requests. Status: ${response.status}`
+      );
+    }
+
+    console.log("Stock Transfer GET Response:", result);
+
+    const requests = Array.isArray(result?.data)
+      ? result.data
+      : Array.isArray(result)
+      ? result
+      : Array.isArray(result?.requests)
+      ? result.requests
+      : [];
+
+    const mappedEntries = requests.map((request) => {
+      const items = Array.isArray(request.Items)
+        ? request.Items
+        : request.ProductId != null
+        ? [
+            {
+              ProductId: request.ProductId,
+              ProductName: request.ProductName,
+              Quantity: request.Quantity,
+              Rate: request.Rate,
+            },
+          ]
+        : [];
+
+      return {
+        id: request.RequestId,
+        date: request.RequestDate,
+        totalQuantity: items.reduce(
+          (sum, item) => sum + Number(item.Quantity || 0),
+          0
+        ),
+        status:
+          request.RequestStatus ||
+          request.Status ||
+          "Pending",
+        details: items.map((item) => ({
+          ProductId: item.ProductId,
+          ProductName: item.ProductName || "Product",
+          Quantity: Number(item.Quantity || 0),
+          Rate: Number(item.Rate || 0),
+        })),
+      };
+    });
+
+    setEntries(mappedEntries);
+  } catch (error) {
+    console.error("Stock Transfer GET API Error:", error);
+    toast.error(
+      error.message || "Failed to load stock transfer requests."
+    );
+  } finally {
+    setLoadingRequests(false);
+  }
+}, []);
+
+
+
+ useEffect(() => {
+  fetchProduct();
+  fetchStockTransferRequests();
+}, [fetchProduct, fetchStockTransferRequests]);
 
   // Search products by Product Code or Product Name
   const filteredProducts = useMemo(() => {
@@ -164,10 +300,12 @@ const StockOutward = () => {
     setEditingId(null);
   };
 
-  const handleOpenForm = () => {
-    resetForm();
-    setOpenForm(true);
-  };
+ const handleOpenForm = () => {
+  console.log("Create Stock Outward button clicked");
+
+  resetForm();
+  setOpenForm(true);
+};
 
   const handleCloseForm = () => {
     if (saving) return;
@@ -202,82 +340,359 @@ const StockOutward = () => {
     updateProductValue(productId, "Quantity", 0);
   };
 
-  // Save frontend preview only
-  const handleSave = () => {
-    if (!date || Number.isNaN(new Date(date).getTime())) {
-      toast.error("Please select a valid date.");
-      return;
-    }
+  // Save stock transfer requests to the backend
 
-    // Include only products with Quantity > 0
-    const selectedProducts = productOptions
-      .map((product) => {
-        const values = productValues[String(product.value)] || {};
 
-        return {
-          ProductId: product.value,
-          ProductCode: product.productCode,
-          ProductName: product.label,
-          Quantity: Number(values.Quantity || 0),
-          Rate: Number(values.Rate ?? product.rate),
-        };
-      })
-      .filter((product) => product.Quantity > 0);
 
-    if (selectedProducts.length === 0) {
-      toast.error("Please enter Quantity for at least one product.");
-      return;
-    }
+// const handleSave = async () => {
+//   if (saving) {
+//     return;
+//   }
 
-    const invalidRow = selectedProducts.find(
-      (product) =>
-        !Number.isFinite(product.Quantity) ||
-        !Number.isFinite(product.Rate) ||
-        product.Quantity <= 0 ||
-        product.Rate < 0
+//   if (!date || Number.isNaN(new Date(date).getTime())) {
+//     toast.error("Please select a valid date.");
+//     return;
+//   }
+
+//   const selectedProducts = productOptions
+//     .map((product) => {
+//       const values = productValues[String(product.value)] || {};
+
+//       return {
+//         ProductId: product.value,
+//         ProductCode: product.productCode,
+//         ProductName: product.label,
+//         Quantity:
+//           values.Quantity === "" || values.Quantity == null
+//             ? 0
+//             : Number(values.Quantity),
+//         Rate:
+//           values.Rate === "" || values.Rate == null
+//             ? Number(product.rate ?? 0)
+//             : Number(values.Rate),
+//       };
+//     })
+//     .filter((product) => product.Quantity > 0);
+
+//   if (selectedProducts.length === 0) {
+//     toast.error("Please enter Quantity for at least one product.");
+//     return;
+//   }
+
+//   const invalidRow = selectedProducts.find(
+//     (product) =>
+//       product.ProductId === "" ||
+//       product.ProductId == null ||
+//       !Number.isFinite(product.Quantity) ||
+//       !Number.isFinite(product.Rate) ||
+//       product.Quantity <= 0 ||
+//       product.Rate < 0
+//   );
+
+//   if (invalidRow) {
+//     toast.error(
+//       `Please enter valid Quantity and Rate for ${
+//         invalidRow.ProductName || "the selected product"
+//       }.`
+//     );
+//     return;
+//   }
+
+//  const shopId = STOCK_OUTWARD_SHOP_ID;
+// const officeId = STOCK_OUTWARD_OFFICE_ID;
+// const requestedBy = 1;
+
+//   if (!shopId) {
+//     toast.error("Shop ID not found. Please check login configuration.");
+//     return;
+//   }
+
+//   if (!requestedBy) {
+//     toast.error("User ID not found. Please log in again.");
+//     return;
+//   }
+
+//   setSaving(true);
+
+//   let savedCount = 0;
+
+//   try {
+//     for (const product of selectedProducts) {
+//       const formData = new URLSearchParams();
+
+//       formData.append("ShopId", String(shopId));
+//       formData.append("OfficeId", String(officeId));
+//       formData.append("RequestedBy", String(requestedBy));
+//       formData.append("ProductId", String(product.ProductId));
+//       formData.append("Quantity", String(product.Quantity));
+
+//       const response = await fetch(
+//         "https://amrutdairyapi.microtechsolutions.net.in/php/postStockTransferRequest.php",
+//         {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/x-www-form-urlencoded",
+//             Accept: "application/json",
+//           },
+//           body: formData.toString(),
+//         }
+//       );
+
+//       const responseText = await response.text();
+
+//       let result;
+
+//       try {
+//         result = JSON.parse(responseText);
+//       } catch {
+//         throw new Error(
+//           `Invalid API response for ${product.ProductName}.`
+//         );
+//       }
+
+//       if (
+//         !response.ok ||
+//         result?.success === false ||
+//         result?.Success === false
+//       ) {
+//         throw new Error(
+//           result?.message ||
+//             result?.Message ||
+//             `Failed to save request for ${product.ProductName}.`
+//         );
+//       }
+
+//       savedCount += 1;
+//     }
+
+//     toast.success(
+//       `${savedCount} stock transfer request(s) saved successfully.`
+//     );
+
+//     setOpenForm(false);
+//     setProductSearch("");
+//     setEditingId(null);
+//     setDate(new Date());
+
+//     setProductValues(() => {
+//       const initialValues = {};
+
+//       productOptions.forEach((product) => {
+//         initialValues[String(product.value)] = {
+//           Quantity: 0,
+//           Rate: product.rate,
+//         };
+//       });
+
+//       return initialValues;
+//     });
+
+//     await fetchStockTransferRequests();
+//   } catch (error) {
+//     console.error("Stock Transfer Save API Error:", error);
+
+//     if (savedCount > 0) {
+//       toast.warning(
+//         `${savedCount} request(s) saved. Some remaining requests failed. ${error.message}`
+//       );
+//     } else {
+//       toast.error(
+//         error.message || "Failed to save stock transfer requests."
+//       );
+//     }
+
+//     try {
+//       await fetchStockTransferRequests();
+//     } catch (refreshError) {
+//       console.error(
+//         "Failed to refresh stock transfer requests:",
+//         refreshError
+//       );
+//     }
+//   } finally {
+//     setSaving(false);
+//   }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const handleSave = async () => {
+  if (saving) return;
+
+  if (!date || Number.isNaN(new Date(date).getTime())) {
+    toast.error("Please select a valid date.");
+    return;
+  }
+
+  // Collect all products with a quantity greater than zero.
+  const selectedProducts = productOptions
+    .map((product) => {
+      const values = productValues[String(product.value)] || {};
+
+      return {
+        ProductId: Number(product.value),
+        Quantity:
+          values.Quantity === "" || values.Quantity == null
+            ? 0
+            : Number(values.Quantity),
+        Rate:
+          values.Rate === "" || values.Rate == null
+            ? Number(product.rate ?? 0)
+            : Number(values.Rate),
+        ProductName: product.label,
+      };
+    })
+    .filter((product) => product.Quantity > 0);
+
+  if (selectedProducts.length === 0) {
+    toast.error("Please enter Quantity for at least one product.");
+    return;
+  }
+
+  // Validate each selected product.
+  const invalidProduct = selectedProducts.find(
+    (product) =>
+      !Number.isInteger(product.ProductId) ||
+      product.ProductId <= 0 ||
+      !Number.isFinite(product.Quantity) ||
+      product.Quantity <= 0 ||
+      !Number.isFinite(product.Rate) ||
+      product.Rate < 0
+  );
+
+  if (invalidProduct) {
+    toast.error(
+      `Please check Quantity and Rate for ${invalidProduct.ProductName}.`
+    );
+    return;
+  }
+
+  const shopId = Number(STOCK_OUTWARD_SHOP_ID);
+  const officeId = Number(STOCK_OUTWARD_OFFICE_ID);
+
+  // Replace with the logged-in user's numeric ID when available.
+  const requestedBy = 1;
+
+  if (
+    !Number.isInteger(shopId) ||
+    shopId <= 0 ||
+    !Number.isInteger(officeId) ||
+    officeId <= 0 ||
+    !Number.isInteger(requestedBy) ||
+    requestedBy <= 0
+  ) {
+    toast.error("Invalid Shop ID, Office ID, or User ID.");
+    return;
+  }
+
+  // Build one request containing all selected products.
+  const items = selectedProducts.map((product) => ({
+    ProductId: product.ProductId,
+    Quantity: product.Quantity,
+  }));
+
+  const formData = new URLSearchParams();
+  formData.append("ShopId", String(shopId));
+  formData.append("OfficeId", String(officeId));
+  formData.append("RequestedBy", String(requestedBy));
+  formData.append("Items", JSON.stringify(items));
+
+  setSaving(true);
+
+  try {
+    console.log("Stock Outward Items:", items);
+    console.log("Stock Outward Form Payload:", formData.toString());
+
+    const response = await fetch(
+      "https://amrutdairyapi.microtechsolutions.net.in/php/postStockTransferRequest.php",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: formData.toString(),
+      }
     );
 
-    if (invalidRow) {
-      toast.error("Please enter valid Quantity and Rate.");
-      return;
-    }
-
-    setSaving(true);
+    const responseText = await response.text();
+    let result;
 
     try {
-      const entry = {
-        id: editingId || Date.now(),
-        date: new Date(date).toISOString(),
-        total: selectedProducts.reduce(
-          (sum, product) =>
-            sum + product.Quantity * product.Rate,
-          0
-        ),
-        status: "Pending (Preview)",
-        details: selectedProducts,
-      };
-
-      if (editingId) {
-        setEntries((previous) =>
-          previous.map((item) =>
-            item.id === editingId ? entry : item
-          )
-        );
-      } else {
-        setEntries((previous) => [entry, ...previous]);
-      }
-
-      setOpenForm(false);
-      setProductSearch("");
-      setEditingId(null);
-
-      toast.success(
-        "Entry frontend preview मध्ये save झाली. Backend मध्ये save केलेली नाही."
+      result = JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        `Invalid API response. HTTP status: ${response.status}.`
       );
-    } finally {
-      setSaving(false);
     }
-  };
+
+    console.log("Stock Outward API Response:", result);
+
+    if (
+      !response.ok ||
+      result?.success === false ||
+      result?.Success === false
+    ) {
+      throw new Error(
+        result?.message ||
+          result?.Message ||
+          `Failed to save entry. HTTP status: ${response.status}.`
+      );
+    }
+
+    toast.success(
+      `Stock Outward entry saved with ${selectedProducts.length} product(s).`
+    );
+
+    setOpenForm(false);
+    setProductSearch("");
+    setEditingId(null);
+    setDate(new Date());
+
+    const initialValues = {};
+    productOptions.forEach((product) => {
+      initialValues[String(product.value)] = {
+        Quantity: 0,
+        Rate: product.rate,
+      };
+    });
+
+    setProductValues(initialValues);
+
+    await fetchStockTransferRequests();
+  } catch (error) {
+    console.error("Stock Outward Save API Error:", error);
+    toast.error(error.message || "Failed to save Stock Outward entry.");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Edit an existing preview entry
   const handleEdit = (entry) => {
@@ -332,12 +747,11 @@ const StockOutward = () => {
         Cell: ({ cell }) =>
           new Date(cell.getValue()).toLocaleDateString("en-GB"),
       },
-      {
-        accessorKey: "total",
-        header: "Total",
-        Cell: ({ cell }) =>
-          `₹ ${Number(cell.getValue() || 0).toFixed(2)}`,
-      },
+     {
+  accessorKey: "totalQuantity",
+  header: "Total Quantity",
+  Cell: ({ cell }) => Number(cell.getValue() || 0),
+},
       {
         accessorKey: "status",
         header: "Status",
@@ -349,51 +763,34 @@ const StockOutward = () => {
           />
         ),
       },
-      {
-        header: "Actions",
-        enableSorting: false,
-        Cell: ({ row }) => (
-          <Box display="flex" justifyContent="center" gap={1}>
-            <Button
-              size="small"
-              onClick={() => {
-                const details = row.original.details
-                  .map(
-                    (item) =>
-                      `${item.ProductName} - Qty: ${item.Quantity}`
-                  )
-                  .join("\n");
 
-                window.alert(details);
-              }}
-            >
-              View
-            </Button>
 
-            <Tooltip title="Edit">
-              <IconButton
-                size="small"
-                onClick={() => handleEdit(row.original)}
-              >
-                <span style={{ fontSize: 16 }}>✏️</span>
-              </IconButton>
-            </Tooltip>
+ 
+{
+  header: "Actions",
+  enableSorting: false,
+  Cell: ({ row }) => (
+    <Button
+      variant="contained"
+      size="small"
+      startIcon={<VisibilityIcon />}
+      onClick={() => handleView(row.original)}
+      sx={{
+        backgroundColor: "#0B5E20",
+        color: "#fff",
+        textTransform: "none",
+        borderRadius: 2,
+        px: 2,
+        "&:hover": {
+          backgroundColor: "#084719",
+        },
+      }}
+    >
+      View Details
+    </Button>
+  ),
+},
 
-            <Tooltip title="Delete">
-              <IconButton
-                color="error"
-                size="small"
-                onClick={() => {
-                  setDeleteId(row.original.id);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
     ],
     [productOptions]
   );
@@ -419,468 +816,565 @@ const StockOutward = () => {
         </Box>
 
         <Box mb={0}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenForm}
-            sx={{
-              background: "var(--complementary-color)",
-              "&:hover": {
-                background: "var(--complementary-color)",
-              },
-              borderRadius: "5px 5px 0 0",
-              textTransform: "uppercase",
-              fontSize: "15px",
-              fontWeight: 600,
-              px: 2.5,
-              py: 1.5,
-            }}
-          >
-            Create Stock Outward Entry
-          </Button>
+
+        <Button
+  variant="contained"
+  startIcon={<AddIcon />}
+  onClick={handleOpenForm}
+  sx={{
+    background: "var(--complementary-color)",
+    "&:hover": {
+      background: "var(--complementary-color)",
+    },
+    borderRadius: "5px 5px 0 0",
+    textTransform: "uppercase",
+    fontSize: "15px",
+    fontWeight: 600,
+    px: 2.5,
+    py: 1.5,
+  }}
+>
+  Create Stock Outward Entry
+</Button>
+
+
         </Box>
 
-        <MaterialReactTable
-          columns={columns}
-          data={entries}
-          enablePagination
-          initialState={{ density: "comfortable" }}
-          muiTableHeadCellProps={{
-            sx: {
-              backgroundColor: "#E9ECEF",
-              color: "black",
-              fontSize: "15px",
-              fontWeight: "bold",
+     <MaterialReactTable
+  columns={columns}
+  data={entries}
+  enablePagination
+  initialState={{ density: "comfortable" }}
+  state={{ isLoading: loadingRequests }}
+  muiTableHeadCellProps={{
+    sx: {
+      backgroundColor: "#E9ECEF",
+      color: "black",
+      fontSize: "15px",
+      fontWeight: "bold",
+    },
+  }}
+/>
+
+
+
+
+
+
+{/* CREATE STOCK OUTWARD FORM */}
+<Dialog
+  open={openForm}
+  onClose={handleCloseForm}
+  fullWidth
+  maxWidth="xl"
+  PaperProps={{
+    sx: {
+      borderRadius: 2,
+      width: "96vw",
+      maxWidth: "1400px",
+      height: "92vh",
+      maxHeight: "92vh",
+      m: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+    },
+  }}
+>
+  <DialogTitle
+    sx={{
+      backgroundColor: "rgb(236, 253, 230)",
+      color: "#0B5E20",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      fontWeight: 700,
+      fontSize: 22,
+      borderBottom: "1px solid #ddd",
+    }}
+  >
+    Stock Outward
+
+    <IconButton
+      onClick={handleCloseForm}
+      disabled={saving}
+      aria-label="Close"
+    >
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+
+  <DialogContent
+    dividers
+    sx={{
+      p: { xs: 1.5, sm: 2.5 },
+      overflow: "auto",
+      flex: 1,
+      minHeight: 0,
+    }}
+  >
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "1fr 1fr",
+        },
+        gap: 2.5,
+        mb: 2,
+        pb: 2,
+        borderBottom: "1px solid #ddd",
+      }}
+    >
+      <Box>
+        <Typography fontWeight={600} mb={0.7}>
+          Stock Outward:
+        </Typography>
+
+        <TextField
+          size="small"
+          fullWidth
+          value="Stock Outward"
+          InputProps={{ readOnly: true }}
+        />
+      </Box>
+
+      <Box>
+        <Typography fontWeight={600} mb={0.7}>
+          Date:
+        </Typography>
+
+        <DatePicker
+          value={date}
+          onChange={setDate}
+          format="dd-MM-yyyy"
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              size: "small",
             },
           }}
         />
+      </Box>
+    </Box>
 
-        <Dialog
-          open={openForm}
-          onClose={handleCloseForm}
+    <Typography fontWeight={600} mb={0.7}>
+      Product:
+    </Typography>
+
+    <Autocomplete
+      freeSolo
+      options={filteredProducts}
+      getOptionLabel={(option) =>
+        typeof option === "string"
+          ? option
+          : option.label || ""
+      }
+      inputValue={productSearch}
+      onInputChange={(event, newValue) => {
+        setProductSearch(newValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          placeholder="Search Product / Code"
+          size="small"
           fullWidth
-          maxWidth="xl"
-          PaperProps={{
-            sx: {
-              borderRadius: "6px",
-              width: "96vw",
-              maxWidth: "1400px",
-              height: "92vh",
-              maxHeight: "92vh",
-              m: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            },
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {loadingProducts && (
+                  <CircularProgress size={18} />
+                )}
+                {params.InputProps.endAdornment}
+              </>
+            ),
           }}
-        >
-          <DialogTitle
-            sx={{
-              backgroundColor: "rgb(236, 253, 230)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderBottom: "1px solid #ddd",
-              py: 1.5,
-              px: 2.5,
-              color: "#0B5E20",
-              fontWeight: 700,
-              fontSize: "22px",
-              flexShrink: 0,
-            }}
-          >
-            Stock Outward
+        />
+      )}
+      sx={{ mb: 2 }}
+    />
 
-            <IconButton
-              onClick={handleCloseForm}
-              disabled={saving}
-              size="small"
-              aria-label="Close"
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-
-          <DialogContent
-            dividers
-            sx={{
-              backgroundColor: "#fff",
-              p: { xs: 1.5, sm: 2.5 },
-              overflow: "auto",
-              flex: 1,
-              minHeight: 0,
-            }}
-          >
-            {/* Office and Date */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "1fr 1fr",
-                },
-                gap: 2.5,
-                mb: 2,
-                pb: 2,
-                borderBottom: "1px solid #ddd",
-              }}
-            >
-              <Box>
-                <Typography fontWeight={600} mb={0.7} fontSize="15px">
-  Stock Outward:
-</Typography>
-
-<TextField
-  size="small"
-  fullWidth
-  value="Stock Outward"
-  InputProps={{ readOnly: true }}
-/>
-              </Box>
-
-              <Box>
-                <Typography fontWeight={600} mb={0.7} fontSize="15px">
-                  Date:
-                </Typography>
-
-                <DatePicker
-                  value={date}
-                  onChange={(newDate) => setDate(newDate)}
-                  format="dd-MM-yyyy"
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      size: "small",
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-
-            {/* Search */}
-            <Typography fontWeight={600} mb={0.7} fontSize="15px">
-              Product:
-            </Typography>
-
-            <Autocomplete
-              freeSolo
-              options={[]}
-              inputValue={productSearch}
-              onInputChange={(event, newValue) => {
-                setProductSearch(newValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Search Product / Code"
-                  size="small"
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {loadingProducts && (
-                          <CircularProgress size={18} color="inherit" />
-                        )}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              sx={{ mb: 1.8 }}
-            />
-
-            {/* All products are displayed here */}
-            <TableContainer
-              component={Paper}
-              variant="outlined"
-              sx={{
-                maxHeight: {
-                  xs: 300,
-                  sm: "min(48vh, 500px)",
-                },
-                overflow: "auto",
-                borderRadius: "4px",
-                "&::-webkit-scrollbar": {
-                  width: "10px",
-                  height: "10px",
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "#999",
-                  borderRadius: "10px",
-                },
-              }}
-            >
-              <Table
-                stickyHeader
-                size="medium"
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={{
+        maxHeight: "48vh",
+        overflow: "auto",
+      }}
+    >
+      <Table stickyHeader size="small" sx={{ minWidth: 800 }}>
+        <TableHead>
+          <TableRow>
+            {[
+              "Product Code",
+              "Product Name",
+              "Quantity",
+              "Rate",
+              "Amount",
+              "Action",
+            ].map((heading) => (
+              <TableCell
+                key={heading}
                 sx={{
-                  minWidth: 850,
-                  "& .MuiTableCell-root": {
-                    borderRight: "1px solid #dedede",
-                    py: 1.1,
-                    px: 1.5,
-                  },
+                  backgroundColor: "#E9ECEF",
+                  fontWeight: 700,
                 }}
+                align={
+                  ["Quantity", "Rate"].includes(heading)
+                    ? "center"
+                    : heading === "Amount"
+                    ? "right"
+                    : "left"
+                }
               >
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 150,
+                {heading}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {loadingProducts && productOptions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} align="center">
+                <CircularProgress size={24} />
+              </TableCell>
+            </TableRow>
+          ) : filteredProducts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} align="center">
+                No products found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredProducts.map((product) => {
+              const key = String(product.value);
+              const values = productValues[key] || {
+                Quantity: 0,
+                Rate: product.rate,
+              };
+
+              const amount =
+                Number(values.Quantity || 0) *
+                Number(values.Rate || 0);
+
+              return (
+                <TableRow key={key} hover>
+                  <TableCell>
+                    {product.productCode || "-"}
+                  </TableCell>
+
+                  <TableCell>{product.label}</TableCell>
+
+                  <TableCell sx={{ minWidth: 130 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={values.Quantity}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        if (
+                          value === "" ||
+                          /^\d*\.?\d*$/.test(value)
+                        ) {
+                          updateProductValue(
+                            product.value,
+                            "Quantity",
+                            value
+                          );
+                        }
                       }}
-                    >
-                      Product Code
-                    </TableCell>
+                      inputProps={{ inputMode: "decimal" }}
+                    />
+                  </TableCell>
 
-                    <TableCell
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 300,
+                  <TableCell sx={{ minWidth: 130 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={values.Rate}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        if (
+                          value === "" ||
+                          /^\d*\.?\d*$/.test(value)
+                        ) {
+                          updateProductValue(
+                            product.value,
+                            "Rate",
+                            value
+                          );
+                        }
                       }}
-                    >
-                      Product Name
-                    </TableCell>
+                      inputProps={{ inputMode: "decimal" }}
+                    />
+                  </TableCell>
 
-                    <TableCell
-                      align="center"
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 190,
-                      }}
-                    >
-                      Quantity
-                    </TableCell>
+                  <TableCell align="right">
+                    ₹ {amount.toFixed(2)}
+                  </TableCell>
 
-                    <TableCell
-                      align="center"
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 170,
-                      }}
-                    >
-                      Rate
-                    </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Reset Quantity">
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={() =>
+                          clearProductQuantity(product.value)
+                        }
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
 
-                    <TableCell
-                      align="right"
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 150,
-                      }}
-                    >
-                      Amount
-                    </TableCell>
+    <Box
+      display="flex"
+      justifyContent="flex-end"
+      mt={2}
+      p={2}
+      sx={{
+        backgroundColor: "#f7f7f7",
+        border: "1px solid #e0e0e0",
+        borderRadius: 1,
+      }}
+    >
+      <Typography fontWeight={700} fontSize={19}>
+        Total: ₹{" "}
+        {totalAmount.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </Typography>
+    </Box>
 
-                    <TableCell
-                      align="center"
-                      sx={{
-                        backgroundColor: "#E9ECEF",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        minWidth: 90,
-                      }}
-                    >
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
+    <Box mt={1.5}>
+      <Chip
+        label="Approval Status: Pending"
+        color="warning"
+        size="small"
+      />
+    </Box>
+  </DialogContent>
 
-                <TableBody>
-                  {loadingProducts && productOptions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">
-                        <CircularProgress size={24} />
-                        <Typography mt={1}>Loading products...</Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                        No products found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredProducts.map((product) => {
-                      const key = String(product.value);
-                      const values = productValues[key] || {
-                        Quantity: 0,
-                        Rate: product.rate,
-                      };
+  <DialogActions
+    sx={{
+      px: 2.5,
+      py: 1.5,
+      justifyContent: "flex-start",
+      gap: 1,
+    }}
+  >
+    <Button
+      variant="contained"
+      onClick={handleSave}
+      disabled={saving || loadingProducts}
+      sx={{
+        backgroundColor: "#0B5E20",
+        "&:hover": { backgroundColor: "#084719" },
+        textTransform: "none",
+      }}
+    >
+      {saving ? "Saving..." : "Save"}
+    </Button>
 
-                      const quantity = Number(values.Quantity || 0);
-                      const rate = Number(values.Rate || 0);
-                      const amount = quantity * rate;
+    <Button
+      variant="outlined"
+      onClick={handleCloseForm}
+      disabled={saving}
+      sx={{ textTransform: "none" }}
+    >
+      Cancel
+    </Button>
+  </DialogActions>
+</Dialog>
 
-                      return (
-                        <TableRow key={key} hover>
-                          <TableCell>
-                            {product.productCode || "-"}
-                          </TableCell>
 
-                          <TableCell>{product.label}</TableCell>
 
-                          <TableCell sx={{ minWidth: 170 }}>
 
-  <TextField
-  size="small"
+     <Dialog
+  open={viewDialogOpen}
+  onClose={handleCloseView}
   fullWidth
-  type="text"
-  value={values.Quantity}
-  onChange={(event) => {
-    const value = event.target.value;
-
-    // Allow only non-negative numbers and decimals
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      updateProductValue(
-        product.value,
-        "Quantity",
-        value
-      );
-    }
+  maxWidth="sm"
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      overflow: "hidden",
+      boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+    },
   }}
-  inputProps={{
-    inputMode: "decimal",
-  }}
-/>
-                          </TableCell>
+>
+  <DialogTitle
+    sx={{
+      background: "linear-gradient(135deg, #0B5E20, #238636)",
+      color: "#fff",
+      px: 3,
+      py: 2.5,
+    }}
+  >
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+    >
+      <Box display="flex" alignItems="center" gap={1.5}>
+        <Inventory2OutlinedIcon sx={{ fontSize: 32 }} />
+        <Box>
+          <Typography variant="h6" fontWeight={700}>
+            Stock Outward Details
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            Request ID: {selectedEntry?.id ?? "-"}
+          </Typography>
+        </Box>
+      </Box>
 
-                          <TableCell sx={{ minWidth: 150 }}>
-                            
-                       <TextField
-  size="small"
-  fullWidth
-  type="text"
-  value={values.Rate}
-  onChange={(event) => {
-    const value = event.target.value;
+      <IconButton
+        onClick={handleCloseView}
+        sx={{ color: "#fff" }}
+        aria-label="Close details"
+      >
+        <CloseIcon />
+      </IconButton>
+    </Box>
+  </DialogTitle>
 
-    // Allow only non-negative numbers and decimal values
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      updateProductValue(
-        product.value,
-        "Rate",
-        value
-      );
-    }
-  }}
-  inputProps={{
-    inputMode: "decimal",
-  }}
-/>
+  <DialogContent sx={{ p: 3, backgroundColor: "#f8faf9" }}>
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      alignItems="center"
+      flexWrap="wrap"
+      gap={1}
+      mb={2.5}
+      mt={1}
+    >
+      <Box>
+        <Typography variant="body2" color="text.secondary">
+          Request Date
+        </Typography>
+        <Typography fontWeight={600}>
+          {selectedEntry?.date
+            ? new Date(selectedEntry.date).toLocaleDateString("en-IN")
+            : "-"}
+        </Typography>
+      </Box>
 
-                          </TableCell>
+      <Chip
+        label={selectedEntry?.status || "Pending"}
+        color={
+          String(selectedEntry?.status).toLowerCase() === "approved"
+            ? "success"
+            : String(selectedEntry?.status).toLowerCase() === "rejected"
+            ? "error"
+            : "warning"
+        }
+        sx={{ fontWeight: 600 }}
+      />
+    </Box>
 
-                          <TableCell align="right">
-                            ₹ {amount.toFixed(2)}
-                          </TableCell>
+    <Paper
+      variant="outlined"
+      sx={{ borderRadius: 2, overflow: "hidden" }}
+    >
+      <Table size="small">
+        <TableHead>
+          <TableRow sx={{ backgroundColor: "#e8f5e9" }}>
+            <TableCell>
+              <strong>Product Name</strong>
+            </TableCell>
+            <TableCell align="right">
+              <strong>Quantity</strong>
+            </TableCell>
+          </TableRow>
+        </TableHead>
 
-                          <TableCell align="center">
-                            <Tooltip title="Reset Quantity">
-                              <IconButton
-                                color="error"
-                                size="small"
-                                onClick={() =>
-                                  clearProductQuantity(product.value)
-                                }
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+        <TableBody>
+          {selectedEntry?.details?.length ? (
+            selectedEntry.details.map((item, index) => (
+              <TableRow key={`${item.ProductId}-${index}`} hover>
+                <TableCell>
+                  <Typography fontWeight={500}>
+                    {item.ProductName || "Product"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Product ID: {item.ProductId ?? "-"}
+                  </Typography>
+                </TableCell>
 
-            {/* Total */}
-            <Box
-              display="flex"
-              justifyContent="flex-end"
-              alignItems="center"
-              mt={2}
-              p={1.8}
-              sx={{
-                backgroundColor: "#f7f7f7",
-                border: "1px solid #e0e0e0",
-                borderRadius: 1,
-              }}
-            >
-              <Typography fontWeight={700} fontSize="19px">
-                Total: ₹{" "}
-                {totalAmount.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Typography>
-            </Box>
+                <TableCell align="right">
+                  <Typography fontWeight={700}>
+                    {Number(item.Quantity || 0)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={2} align="center">
+                No product details available.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Paper>
 
-            <Box mt={1.5}>
-              <Chip
-                label="Approval Status: Pending (Frontend Preview)"
-                color="warning"
-                size="small"
-              />
-            </Box>
-          </DialogContent>
+    <Paper
+      elevation={0}
+      sx={{
+        mt: 2.5,
+        p: 2,
+        borderRadius: 2,
+        backgroundColor: "#e8f5e9",
+        border: "1px solid #c8e6c9",
+      }}
+    >
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <Typography color="#245b31" fontWeight={600}>
+          Total Quantity
+        </Typography>
 
-          <DialogActions
-            sx={{
-              px: 2.5,
-              py: 1.5,
-              justifyContent: "flex-start",
-              gap: 1,
-              borderTop: "1px solid #ddd",
-              backgroundColor: "#fff",
-              flexShrink: 0,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={handleSave}
-              disabled={saving || loadingProducts}
-              sx={{
-                minWidth: 100,
-                backgroundColor: "#0B5E20",
-                "&:hover": {
-                  backgroundColor: "#084719",
-                },
-                textTransform: "none",
-              }}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
+        <Typography variant="h5" fontWeight={800} color="#0B5E20">
+          {Number(selectedEntry?.totalQuantity || 0)}
+        </Typography>
+      </Box>
+    </Paper>
+  </DialogContent>
 
-            <Button
-              variant="outlined"
-              onClick={handleCloseForm}
-              disabled={saving}
-              sx={{
-                minWidth: 100,
-                color: "var(--complementary-color)",
-                borderColor: "var(--complementary-color)",
-                textTransform: "none",
-              }}
-            >
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
+  <DialogActions sx={{ px: 3, py: 2, backgroundColor: "#fff" }}>
+    <Button
+      variant="contained"
+      onClick={handleCloseView}
+      sx={{
+        backgroundColor: "#0B5E20",
+        textTransform: "none",
+        px: 3,
+        "&:hover": {
+          backgroundColor: "#084719",
+        },
+      }}
+    >
+      Close
+    </Button>
+  </DialogActions>
+</Dialog>
 
         {/* Delete confirmation for preview entries */}
         <Dialog
