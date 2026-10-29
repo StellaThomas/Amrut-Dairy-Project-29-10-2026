@@ -20367,10 +20367,18 @@ UpdatedBy: isEditing ? currentCreatedBy : undefined,
           : "Sales Entry Created successfully!",
       );
 
+     
       // 16. Reset edit mode and form
       setIsEditing(false);
       setEditId("");
       resetForm();
+
+      // 17. Focus on Product Selection after successful save
+      setTimeout(() => {
+        productRef.current?.focus();
+        setProductDropdownOpen(true);
+      }, 300);
+
 
       // 17. Refresh invoice table only once
       // Keep this GET so the table displays the saved invoice.
